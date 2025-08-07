@@ -26,15 +26,15 @@ class Config:
 PROFILE_TYPE_MAP = {
     "Laminados": "Perfis Laminados",
     "CS": "Perfis Compactos Soldados",
-    "CVS": "Vigas de Seção Variável",
-    "VS": "Vigas Soldadas"
+    "CVS": "Perfil de Seção Variável",
+    "VS": "Perfil Soldadas"
 }
 
 st.set_page_config(page_title="Calculadora Estrutural Versátil", layout="wide")
 
 HTML_TEMPLATE_CSS = """
 <style>
-    /* ... (CSS permanece o mesmo da versão anterior) ... */
+    /* Estilos do Memorial de Cálculo */
     @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Roboto+Slab:wght@400;700&display=swap');
     body { font-family: 'Roboto', sans-serif; line-height: 1.8; color: #333; background-color: #f0f4f8; }
     .container { max-width: 8.5in; margin: 20px auto; padding: 0.75in; background-color: white; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
@@ -59,7 +59,7 @@ HTML_TEMPLATE_CSS = """
 st.markdown(HTML_TEMPLATE_CSS, unsafe_allow_html=True)
 
 # ==============================================================================
-# 2. FUNÇÕES DE CÁLCULO DE ENGENHARIA (INCLUÍDAS)
+# 2. FUNÇÕES DE CÁLCULO DE ENGENHARIA (MANTIDAS)
 # ==============================================================================
 
 def calcular_esforcos_viga(tipo_viga, L_cm, q_kn_cm=0, p_load=None):
@@ -142,12 +142,12 @@ def get_profile_properties(profile_series):
     for key in required_keys:
         value = props.get(key)
         if value is None or pd.isna(value) or (isinstance(value, (int, float)) and value <= 0):
-             raise ValueError(f"Propriedade ESSENCIAL '{key}' inválida ou nula no Excel para '{profile_name}'. Verifique a planilha.")
+            raise ValueError(f"Propriedade ESSENCIAL '{key}' inválida ou nula no Excel para '{profile_name}'. Verifique a planilha.")
     for key in ['d', 'bf', 'tw', 'tf', 'h']: props[key] /= 10.0
     return props
 
 # ==============================================================================
-# 3. GERAÇÃO DO MEMORIAL DE CÁLCULO (INCLUÍDO)
+# 3. GERAÇÃO DO MEMORIAL DE CÁLCULO (MANTIDA)
 # ==============================================================================
 def gerar_memorial_completo(perfil_nome, perfil_tipo, resultados):
     html = f"""
@@ -160,7 +160,7 @@ def _build_verification_block_html(title, solicitante, s_symbol, resistente, r_s
     return f"""<h4>{title}</h4><div class="formula-block"><p class="formula">$$ {s_symbol} = {solicitante:.2f} \\, {unit} $$</p><p class="formula">$$ {r_symbol} = {resistente:.2f} \\, {unit} $$</p><p class="formula">$$ \\text{{Verificação: }} {s_symbol} {comp_symbol} {r_symbol} $$</p><p class="formula">$$ \\text{{Eficiência}} = \\frac{{{s_symbol}}}{{{r_symbol}}} = \\frac{{{solicitante:.2f}}}{{{resistente:.2f}}} = {eficiencia:.1f}\% $$</p><div class="final-status {status_class}">{status}</div></div>"""
 
 # ==============================================================================
-# 4. APLICAÇÃO PRINCIPAL STREAMLIT (COM AS ALTERAÇÕES)
+# 4. APLICAÇÃO PRINCIPAL STREAMLIT (AJUSTADA)
 # ==============================================================================
 
 # NOVA FUNÇÃO DE CARREGAMENTO AUTOMÁTICO
@@ -192,77 +192,79 @@ def main():
     if not all_sheets:
         st.stop()
 
-    # --- ENTRADA DE DADOS NA SIDEBAR ---
+    # --- ENTRADA DE DADOS NA BARRA LATERAL (AJUSTADA) ---
     with st.sidebar:
         st.header("⚙️ Parâmetros de Entrada")
-        
-        st.header("1. Modelo da Viga")
-        tipo_viga = st.selectbox("Tipo de Viga:", ('Bi-apoiada', 'Engastada e Livre (Balanço)', 'Bi-engastada', 'Engastada e Apoiada'))
-        L_cm = st.number_input("Comprimento da Viga (L, cm)", 10.0, value=500.0, step=10.0)
+        st.divider()
 
-        st.header("2. Modo de Carregamento")
-        input_mode = st.radio("Selecione o modo de entrada dos esforços:", ("Calcular a partir de Cargas na Viga", "Inserir Esforços Manualmente"), horizontal=True, label_visibility="collapsed")
+        with st.expander("1. Modelo da Viga e Geometria", expanded=True):
+            tipo_viga = st.selectbox("Tipo de Viga:", ('Bi-apoiada', 'Engastada e Livre (Balanço)', 'Bi-engastada', 'Engastada e Apoiada'))
+            L_cm = st.number_input("Comprimento da Viga (L, cm)", 10.0, value=500.0, step=10.0)
 
-        Msd, Vsd, q_servico_kn_cm, p_load_serv = 0, 0, 0, None
+        with st.expander("2. Cargas e Esforços", expanded=True):
+            input_mode = st.radio("Selecione o modo de entrada:", ("Calcular a partir de Cargas na Viga", "Inserir Esforços Manualmente"), horizontal=True, label_visibility="collapsed")
+            Msd, Vsd, q_servico_kn_cm, p_load_serv = 0, 0, 0, None
 
-        if input_mode == "Calcular a partir de Cargas na Viga":
-            with st.container(border=True):
-                st.subheader("Carga Distribuída (q)")
-                carga_area = st.number_input("Carga Distribuída (serviço, kN/m²)", 0.0, value=4.0, step=0.5)
-                larg_inf = st.number_input("Largura de Influência (m)", 0.0, value=5.0, step=0.5)
-                
-                st.subheader("Carga Pontual (P)")
-                add_p_load = st.checkbox("Adicionar Carga Pontual (ex: parede)")
-                if add_p_load:
-                    p_serv_kn = st.number_input("Valor da Carga P (serviço, kN)", min_value=0.0, value=10.0)
-                    p_pos_cm = st.number_input("Posição da Carga P (x, cm do apoio esquerdo)", min_value=0.0, max_value=L_cm, value=L_cm/2)
-                    p_load_serv = (p_serv_kn, p_pos_cm)
-
-                gamma_f = st.number_input("Coeficiente de Majoração de Cargas (γf)", 1.0, value=1.4, step=0.1)
+            if input_mode == "Calcular a partir de Cargas na Viga":
+                with st.container(border=True):
+                    st.subheader("Carga Distribuída (q)")
+                    carga_area = st.number_input("Carga Distribuída (serviço, kN/m²)", 0.0, value=4.0, step=0.5)
+                    larg_inf = st.number_input("Largura de Influência (m)", 0.0, value=5.0, step=0.5)
+                    
+                    st.subheader("Carga Pontual (P)")
+                    add_p_load = st.checkbox("Adicionar Carga Pontual")
+                    if add_p_load:
+                        p_serv_kn = st.number_input("Valor da Carga P (serviço, kN)", min_value=0.0, value=10.0)
+                        p_pos_cm = st.number_input("Posição da Carga P (x, cm)", min_value=0.0, max_value=L_cm, value=L_cm/2)
+                        p_load_serv = (p_serv_kn, p_pos_cm)
+                    
+                    gamma_f = st.number_input("Coeficiente de Majoração de Cargas (γf)", 1.0, value=1.4, step=0.1)
 
                 q_servico_kn_cm = (carga_area * larg_inf) / 100.0
                 q_ult_kn_cm = q_servico_kn_cm * gamma_f
                 p_load_ult = (p_load_serv[0] * gamma_f, p_load_serv[1]) if p_load_serv else None
-                
                 Msd, Vsd = calcular_esforcos_viga(tipo_viga, L_cm, q_ult_kn_cm, p_load_ult)
 
-        else: # Inserir Esforços Manualmente
-             with st.container(border=True):
-                st.warning("No modo manual, a verificação de flecha (ELS) não é realizada.")
-                msd_input = st.number_input("Momento Solicitante de Cálculo (Msd, kNm)", min_value=0.0, value=100.0)
-                Msd = msd_input * 100 # Convertendo para kN.cm
-                Vsd = st.number_input("Força Cortante Solicitante de Cálculo (Vsd, kN)", min_value=0.0, value=50.0)
+            else: # Inserir Esforços Manualmente
+                with st.container(border=True):
+                    st.warning("A verificação de flecha (ELS) não será realizada neste modo.")
+                    msd_input = st.number_input("Momento de Cálculo (Msd, kNm)", min_value=0.0, value=100.0)
+                    Msd = msd_input * 100 # Convertendo para kN.cm
+                    Vsd = st.number_input("Força Cortante de Cálculo (Vsd, kN)", min_value=0.0, value=50.0)
 
-        st.header("3. Parâmetros Gerais do Aço")
-        fy_aco = st.number_input("Tensão de Escoamento (fy, kN/cm²)", 20.0, 50.0, 34.5, 0.5)
-        Lb_projeto = st.number_input("Comprimento Destravado (Lb, cm)", 10.0, value=L_cm, step=10.0)
-        Cb_projeto = st.number_input("Fator de Modificação (Cb)", 1.0, 3.0, 1.10)
-        
-        st.header("4. Modo de Análise")
-        analysis_mode = st.radio("Selecione o modo de análise:", ("Análise em Lote com Otimização", "Memorial Detalhado de um Perfil"), horizontal=True, label_visibility="collapsed")
-    
-    # --- Lógica de execução da análise (agora fora do 'with st.sidebar:') ---
-    
-    display_names = [PROFILE_TYPE_MAP.get(name, name) for name in all_sheets.keys()]
-    reverse_name_map = {v: k for k, v in PROFILE_TYPE_MAP.items()}
+        with st.expander("3. Parâmetros do Perfil e do Aço", expanded=False):
+            fy_aco = st.number_input("Tensão de Escoamento (fy, kN/cm²)", 20.0, 50.0, 34.5, 0.5)
+            Lb_projeto = st.number_input("Comprimento Destravado (Lb, cm)", 10.0, value=L_cm, step=10.0)
+            Cb_projeto = st.number_input("Fator de Modificação (Cb)", 1.0, 3.0, 1.10)
+
+    # --- ÁREA PRINCIPAL DA APLICAÇÃO (AJUSTADA) ---
+    st.subheader("Modo de Análise")
+    analysis_mode = st.radio("Selecione o modo de análise:", ("Análise em Lote com Otimização", "Memorial Detalhado de um Perfil"), horizontal=True)
+    st.divider()
 
     if analysis_mode == "Memorial Detalhado de um Perfil":
-        st.header("🔍 Memorial de Cálculo Detalhado")
-        selected_display_name = st.selectbox("Selecione o Tipo de Perfil:", display_names)
-        sheet_name = reverse_name_map.get(selected_display_name, selected_display_name)
-        df_selecionado = all_sheets[sheet_name]
-        perfil_selecionado_nome = st.selectbox("Selecione o Perfil Específico:", df_selecionado['Bitola (mm x kg/m)'])
-        if st.button("Gerar Memorial Completo", type="primary", use_container_width=True):
+        st.subheader("Gerar Memorial de Cálculo")
+        col1, col2 = st.columns(2)
+        with col1:
+            display_names = [PROFILE_TYPE_MAP.get(name, name) for name in all_sheets.keys()]
+            reverse_name_map = {v: k for k, v in PROFILE_TYPE_MAP.items()}
+            selected_display_name = st.selectbox("Selecione o Tipo de Perfil:", display_names)
+        with col2:
+            sheet_name = reverse_name_map.get(selected_display_name, selected_display_name)
+            df_selecionado = all_sheets[sheet_name]
+            perfil_selecionado_nome = st.selectbox("Selecione o Perfil Específico:", df_selecionado['Bitola (mm x kg/m)'])
+
+        if st.button("Gerar e Visualizar Memorial", type="primary", use_container_width=True):
             run_detailed_analysis(df_selecionado, perfil_selecionado_nome, selected_display_name, fy_aco, Lb_projeto, Cb_projeto, L_cm, Msd, Vsd, q_servico_kn_cm, p_load_serv, tipo_viga, input_mode)
 
     elif analysis_mode == "Análise em Lote com Otimização":
-        st.header("📊 Pré-dimensionamento e Análise por Categoria")
+        st.subheader("Pré-dimensionamento e Análise por Categoria")
         st.info("Analisa todos os perfis e organiza os resultados em abas por tipo, destacando a opção mais leve de cada categoria.")
         if st.button("Iniciar Análise Otimizada", type="primary", use_container_width=True):
-            run_batch_analysis(all_sheets, fy_aco, Lb_projeto, Cb_projeto, L_cm, Msd, Vsd, q_servico_kn_cm, p_load_serv, tipo_viga, input_mode)
+            run_batch_analysis(all_sheets, fy_aco, Lb_projeto, Cb_projeto, L_cm, Msd, Vsd, q_servico_kn_cm, p_serv_load, tipo_viga, input_mode)
 
 # ==============================================================================
-# 5. FUNÇÕES DE ORQUESTRAÇÃO E ANÁLISE (INCLUÍDAS)
+# 5. FUNÇÕES DE ORQUESTRAÇÃO E ANÁLISE (MANTIDAS)
 # ==============================================================================
 
 def run_detailed_analysis(df, perfil_nome, perfil_tipo_display, fy, Lb, Cb, L, Msd, Vsd, q_serv_kn_cm, p_serv_load, tipo_viga, input_mode):
