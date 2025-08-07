@@ -39,8 +39,14 @@ HTML_TEMPLATE_CSS = """
     @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Roboto+Slab:wght@400;700&display=swap');
     body { font-family: 'Roboto', sans-serif; line-height: 1.8; color: #333; background-color: #f0f4f8; }
     
-    /* ESTA É A LINHA CORRIGIDA */
-    .container { width: 100%; max-width: 960px; margin: 20px auto; padding: 40px; background-color: white; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+    /* ESTA É A VERSÃO CORRIGIDA QUE FORÇA A LARGURA TOTAL */
+    .container { 
+        width: 100%; /* Usa 100% da largura do container que o Streamlit oferece */
+        padding: 20px; /* Mantém um pouco de espaço interno */
+        background-color: white; 
+        border-radius: 10px; 
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1); 
+    }
     
     h1, h2, h3, h4, h5 { font-family: 'Roboto Slab', serif; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 5px; margin-top: 30px; }
     h1 { text-align: center; border: none; font-size: 2.2em; }
@@ -60,7 +66,6 @@ HTML_TEMPLATE_CSS = """
     p { text-align: justify; }
 </style>
 """
-
 st.markdown(HTML_TEMPLATE_CSS, unsafe_allow_html=True)
 
 # ==============================================================================
