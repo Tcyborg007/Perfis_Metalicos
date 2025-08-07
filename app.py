@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import math
-import base64
 
 # ==============================================================================
 # 1. CONFIGURAÇÕES E CONSTANTES GLOBAIS
@@ -33,8 +32,34 @@ PROFILE_TYPE_MAP = {
 
 st.set_page_config(page_title="Calculadora Estrutural Versátil", layout="wide")
 
+HTML_TEMPLATE_CSS = """
+<style>
+    /* ... (CSS permanece o mesmo da versão anterior) ... */
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Roboto+Slab:wght@400;700&display=swap');
+    body { font-family: 'Roboto', sans-serif; line-height: 1.8; color: #333; background-color: #f0f4f8; }
+    .container { max-width: 8.5in; margin: 20px auto; padding: 0.75in; background-color: white; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+    h1, h2, h3, h4, h5 { font-family: 'Roboto Slab', serif; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 5px; margin-top: 30px; }
+    h1 { text-align: center; border: none; font-size: 2.2em; }
+    h5 { border-bottom: none; font-size: 1em; margin-top: 15px; color: #34495e;}
+    .summary-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 0.9em; }
+    .summary-table th, .summary-table td { border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: middle; }
+    .summary-table th { background-color: #34495e; color: white; }
+    .formula-block { background-color: #f9fbfc; border-left: 5px solid #3498db; padding: 20px; margin: 20px 0; border-radius: 5px; }
+    .pass { color: #27ae60; font-weight: bold; }
+    .fail { color: #e74c3c; font-weight: bold; }
+    .formula { font-size: 1.2em; text-align: center; margin: 10px 0; word-wrap: break-word; overflow-x: auto; padding: 8px; background-color: #f0f2f5; border-radius: 4px;}
+    .final-result { font-weight: bold; color: #3498db; text-align: center; display: block; margin-top: 15px; font-size: 1.2em; padding: 8px; border: 1px solid #3498db; border-radius: 5px; background-color: #eafaf1;}
+    .final-status { font-size: 1.5em; text-align: center; padding: 10px; border-radius: 5px; margin-top: 15px; }
+    .final-status.pass { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb;}
+    .final-status.fail { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;}
+    .ref-norma { font-size: 0.8em; color: #7f8c8d; text-align: right; margin-top: 15px; font-style: italic; }
+    p { text-align: justify; }
+</style>
+"""
+st.markdown(HTML_TEMPLATE_CSS, unsafe_allow_html=True)
+
 # ==============================================================================
-# 2. FUNÇÕES DE CÁLCULO DE ENGENHARIA
+# 2. FUNÇÕES DE CÁLCULO DE ENGENHARIA (INCLUÍDAS)
 # ==============================================================================
 
 def calcular_esforcos_viga(tipo_viga, L_cm, q_kn_cm=0, p_load=None):
@@ -117,159 +142,23 @@ def get_profile_properties(profile_series):
     for key in required_keys:
         value = props.get(key)
         if value is None or pd.isna(value) or (isinstance(value, (int, float)) and value <= 0):
-            raise ValueError(f"Propriedade ESSENCIAL '{key}' inválida ou nula no Excel para '{profile_name}'. Verifique a planilha.")
+             raise ValueError(f"Propriedade ESSENCIAL '{key}' inválida ou nula no Excel para '{profile_name}'. Verifique a planilha.")
     for key in ['d', 'bf', 'tw', 'tf', 'h']: props[key] /= 10.0
     return props
 
 # ==============================================================================
-# 3. FUNÇÕES DE GERAÇÃO DO MEMORIAL DE CÁLCULO (NATIVO STREAMLIT)
+# 3. GERAÇÃO DO MEMORIAL DE CÁLCULO (INCLUÍDO)
 # ==============================================================================
+def gerar_memorial_completo(perfil_nome, perfil_tipo, resultados):
+    html = f"""
+    <!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Memorial de Cálculo - {perfil_nome}</title>{HTML_TEMPLATE_CSS}<script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML"></script></head><body><div class="container"><h1>Memorial de Cálculo Estrutural</h1><h2>Perfil Metálico: {perfil_nome} ({perfil_tipo})</h2><p style="text-align:center; font-style:italic;">Cálculos baseados na norma: <b>{Config.NOME_NORMA}</b></p><h3>1. Resumo Final das Verificações</h3>{resultados['resumo_html']}{resultados['passo_a_passo_html']}</div></body></html>"""
+    return html
 
-def _build_verification_block_native(title, solicitante, s_symbol, resistente, r_symbol, eficiencia, status, unit):
-    """Renderiza um bloco de verificação usando st.latex() e st.info/success/error."""
-    status_emoji = "✅" if status == "APROVADO" else "❌"
-    comp_symbol = "≤" if status == "APROVADO" else ">"
-    
-    st.subheader(title)
-    
-    # Usando st.latex() para fórmulas
-    st.latex(f"{s_symbol} = {solicitante:.2f} \\, {unit}")
-    st.latex(f"{r_symbol} = {resistente:.2f} \\, {unit}")
-    st.latex(f"\\text{{Verificação: }} {s_symbol} {comp_symbol} {r_symbol}")
-    st.latex(f"\\text{{Eficiência}} = \\frac{{{s_symbol}}}{{{r_symbol}}} = \\frac{{{solicitante:.2f}}}{{{resistente:.2f}}} = {eficiencia:.1f}\\%")
-    
-    if status == "APROVADO":
-        st.success(f"{status_emoji} **Status: APROVADO**")
-    else:
-        st.error(f"{status_emoji} **Status: REPROVADO**")
-    st.divider()
+def _build_verification_block_html(title, solicitante, s_symbol, resistente, r_symbol, eficiencia, status, unit):
+    status_class = "pass" if status == "APROVADO" else "fail"
+    comp_symbol = "\\le" if status == "APROVADO" else ">"
+    return f"""<h4>{title}</h4><div class="formula-block"><p class="formula">$$ {s_symbol} = {solicitante:.2f} \\, {unit} $$</p><p class="formula">$$ {r_symbol} = {resistente:.2f} \\, {unit} $$</p><p class="formula">$$ \\text{{Verificação: }} {s_symbol} {comp_symbol} {r_symbol} $$</p><p class="formula">$$ \\text{{Eficiência}} = \\frac{{{s_symbol}}}{{{r_symbol}}} = \\frac{{{solicitante:.2f}}}{{{resistente:.2f}}} = {eficiencia:.1f}\% $$</p><div class="final-status {status_class}">{status}</div></div>"""
 
-def _add_verification_details_native(title, details_dict):
-    """Renderiza os detalhes de uma verificação usando componentes nativos."""
-    for key, value in details_dict.items():
-        if isinstance(value, dict) and 'formula' in value:
-            st.write(f"**{value['desc']}**")
-            
-            # Renderiza a fórmula usando st.latex()
-            st.latex(value['formula'])
-            
-            # Mostra os valores substituídos
-            formula_com_valores = value['formula']
-            for var, val_num in value['valores'].items():
-                formula_com_valores = formula_com_valores.replace(var, f"{val_num:.2f}")
-            
-            st.latex(f"{formula_com_valores} = {value['valor']:.2f} {value.get('unidade', '')}")
-            
-            # Referência da norma
-            if value.get('ref'):
-                st.caption(f"*Referência: {value['ref']}*")
-            
-            st.divider()
-    
-    # Resultado final
-    final_resistance = details_dict.get('Mrdx', details_dict.get('Vrd', 0))
-    unit = 'kNm' if 'Mrdx' in details_dict else 'kN'
-    if unit == 'kNm':
-        final_resistance /= 100
-    
-    st.info(f"**Resultado da Resistência: {final_resistance:.2f} {unit}**")
-
-def build_summary_table_native(Msd, Vsd, res_flexao, res_cisalhamento, res_flecha):
-    """Tabela de resumo usando componentes nativos do Streamlit"""
-    
-    # Dados da tabela
-    verificacoes = [
-        ('Flexão (M) - ELU', f"{Msd/100:.2f} kNm", f"{res_flexao['Mrd']/100:.2f} kNm", res_flexao['eficiencia'], res_flexao['status']),
-        ('Cisalhamento (V) - ELU', f"{Vsd:.2f} kN", f"{res_cisalhamento['Vrd']:.2f} kN", res_cisalhamento['eficiencia'], res_cisalhamento['status']),
-        ('Flecha (δ) - ELS',
-         f"{res_flecha['flecha_max']:.2f} cm" if res_flecha['status'] != "N/A" else "N/A",
-         f"≤ {res_flecha['flecha_limite']:.2f} cm" if res_flecha['status'] != "N/A" else "N/A",
-         res_flecha['eficiencia'], res_flecha['status'])
-    ]
-    
-    # Criar DataFrame para exibição
-    df_resumo = pd.DataFrame(verificacoes, columns=['Verificação', 'Solicitante/Atuante', 'Resistência/Limite', 'Eficiência (%)', 'Status'])
-    
-    # Função para colorir as células baseado no status
-    def color_status(val):
-        if val == "APROVADO":
-            return 'background-color: #d4edda; color: #155724'
-        elif val == "REPROVADO":
-            return 'background-color: #f8d7da; color: #721c24'
-        else:
-            return ''
-    
-    # Aplicar estilo e exibir
-    styled_df = df_resumo.style.applymap(color_status, subset=['Status'])
-    st.dataframe(styled_df, use_container_width=True)
-    
-    # Nota sobre interação
-    if res_flexao.get('nota_interacao'):
-        st.info(f"**Nota sobre Interação M-V:** {res_flexao['nota_interacao']}")
-
-def build_step_by_step_native(L, Msd, Vsd, res_flexao, res_cisalhamento, res_flecha, res_flt, res_flm, res_fla, res_vrd, input_mode):
-    """Renderiza o passo a passo completo usando componentes nativos do Streamlit."""
-    
-    st.header("2. Esforços de Cálculo")
-    col1, col2 = st.columns(2)
-    with col1:
-        st.latex(f"M_{{sd}} = {Msd/100:.2f} \\, kNm")
-    with col2:
-        st.latex(f"V_{{sd}} = {Vsd:.2f} \\, kN")
-    
-    st.header("3. Verificações de Resistência (ELU)")
-    
-    # 3.1 Flexão
-    st.subheader("3.1 Cálculo da Resistência à Flexão (Mrd)")
-    
-    # FLT
-    with st.expander("Flambagem Lateral com Torção (FLT)", expanded=True):
-        _add_verification_details_native("FLT", res_flt)
-    
-    # FLM 
-    with st.expander("Flambagem Local da Mesa (FLM)", expanded=True):
-        _add_verification_details_native("FLM", res_flm)
-    
-    # FLA
-    with st.expander("Flambagem Local da Alma (FLA)", expanded=True):
-        _add_verification_details_native("FLA", res_fla)
-    
-    # Verificação final de flexão
-    _build_verification_block_native(
-        "Verificação Final à Flexão", 
-        Msd/100, "M_{sd}", 
-        res_flexao['Mrd']/100, "M_{rd}", 
-        res_flexao['eficiencia'], res_flexao['status'], "kNm"
-    )
-    
-    # 3.2 Cisalhamento
-    st.subheader("3.2 Cálculo da Resistência ao Cisalhamento (Vrd)")
-    with st.expander("Força Cortante (VRd)", expanded=True):
-        _add_verification_details_native("VRd", res_vrd)
-    
-    _build_verification_block_native(
-        "Verificação ao Cisalhamento", 
-        Vsd, "V_{sd}", 
-        res_cisalhamento['Vrd'], "V_{rd}", 
-        res_cisalhamento['eficiencia'], res_cisalhamento['status'], "kN"
-    )
-    
-    # 4. ELS (se aplicável)
-    if input_mode == "Calcular a partir de Cargas na Viga":
-        st.header("4. Verificação de Serviço (ELS)")
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            st.latex(f"\\delta_{{max}} = {res_flecha['flecha_max']:.2f} \\, cm")
-        with col2:
-            st.latex(f"\\delta_{{lim}} = \\frac{{L}}{{{Config.LIMITE_FLECHA_TOTAL}}} = \\frac{{{L:.2f}}}{{{Config.LIMITE_FLECHA_TOTAL}}} = {res_flecha['flecha_limite']:.2f} \\, cm")
-        
-        _build_verification_block_native(
-            "Verificação da Flecha", 
-            res_flecha['flecha_max'], "\\delta_{max}", 
-            res_flecha['flecha_limite'], "\\delta_{lim}", 
-            res_flecha['eficiencia'], res_flecha['status'], "cm"
-        )
 # ==============================================================================
 # 4. APLICAÇÃO PRINCIPAL STREAMLIT (COM AS ALTERAÇÕES)
 # ==============================================================================
@@ -331,11 +220,11 @@ def main():
 
                 gamma_f = st.number_input("Coeficiente de Majoração de Cargas (γf)", 1.0, value=1.4, step=0.1)
 
-            q_servico_kn_cm = (carga_area * larg_inf) / 100.0
-            q_ult_kn_cm = q_servico_kn_cm * gamma_f
-            p_load_ult = (p_load_serv[0] * gamma_f, p_load_serv[1]) if p_load_serv else None
-            
-            Msd, Vsd = calcular_esforcos_viga(tipo_viga, L_cm, q_ult_kn_cm, p_load_ult)
+                q_servico_kn_cm = (carga_area * larg_inf) / 100.0
+                q_ult_kn_cm = q_servico_kn_cm * gamma_f
+                p_load_ult = (p_load_serv[0] * gamma_f, p_load_serv[1]) if p_load_serv else None
+                
+                Msd, Vsd = calcular_esforcos_viga(tipo_viga, L_cm, q_ult_kn_cm, p_load_ult)
 
         else: # Inserir Esforços Manualmente
              with st.container(border=True):
@@ -373,7 +262,7 @@ def main():
             run_batch_analysis(all_sheets, fy_aco, Lb_projeto, Cb_projeto, L_cm, Msd, Vsd, q_servico_kn_cm, p_load_serv, tipo_viga, input_mode)
 
 # ==============================================================================
-# 5. FUNÇÕES DE ORQUESTRAÇÃO E ANÁLISE
+# 5. FUNÇÕES DE ORQUESTRAÇÃO E ANÁLISE (INCLUÍDAS)
 # ==============================================================================
 
 def run_detailed_analysis(df, perfil_nome, perfil_tipo_display, fy, Lb, Cb, L, Msd, Vsd, q_serv_kn_cm, p_serv_load, tipo_viga, input_mode):
@@ -381,26 +270,13 @@ def run_detailed_analysis(df, perfil_nome, perfil_tipo_display, fy, Lb, Cb, L, M
         try:
             perfil_series = df[df['Bitola (mm x kg/m)'] == perfil_nome].iloc[0]
             props = get_profile_properties(perfil_series)
-            
-            # Chama a função de verificação e armazena os resultados
-            # A função perform_all_checks foi corrigida para retornar os valores de res_flx, res_cis, etc.
-            res_flexao_det, res_cis_det, res_flecha_det, res_flt_det, res_flm_det, res_fla_det, res_vrd_det = perform_all_checks(props, fy, Lb, Cb, L, Msd, Vsd, q_serv_kn_cm, p_serv_load, tipo_viga, input_mode)
-            
-            st.success(f"Análise concluída para {perfil_nome}!")
-            
-            # Cabeçalho
-            st.title("Memorial de Cálculo Estrutural")
-            st.subheader(f"Perfil Metálico: {perfil_nome} ({perfil_tipo_display})")
-            st.caption(f"Cálculos baseados na norma: **{Config.NOME_NORMA}**")
-            
-            # 1. Resumo
-            st.header("1. Resumo Final das Verificações")
-            build_summary_table_native(Msd, Vsd, res_flexao_det, res_cis_det, res_flecha_det)
-            
-            # 2. Detalhamento
-            st.header("2. Detalhamento dos Cálculos")
-            build_step_by_step_native(L, Msd, Vsd, res_flexao_det, res_cis_det, res_flecha_det, res_flt_det, res_flm_det, res_fla_det, res_vrd_det, input_mode)
-
+            res_flexao, res_cis, res_flecha, passo_a_passo = perform_all_checks(props, fy, Lb, Cb, L, Msd, Vsd, q_serv_kn_cm, p_serv_load, tipo_viga, input_mode, detalhado=True)
+            resumo_html = build_summary_html(Msd, Vsd, res_flexao, res_cis, res_flecha)
+            resultados = {'resumo_html': resumo_html, 'passo_a_passo_html': passo_a_passo}
+            html_content = gerar_memorial_completo(perfil_nome, perfil_tipo_display, resultados)
+            st.success("Análise concluída!")
+            st.components.v1.html(html_content, height=1000, scrolling=True)
+            st.download_button(label="📥 Baixar Memorial HTML", data=html_content.encode('utf-8'), file_name=f"Memorial_{perfil_nome.replace(' ', '_')}.html", mime="text/html")
         except (ValueError, KeyError) as e: st.error(f"❌ Erro nos Dados de Entrada: {e}")
         except Exception as e: st.error(f"❌ Ocorreu um erro inesperado: {e}")
 
@@ -416,7 +292,7 @@ def run_batch_analysis(all_sheets, fy, Lb, Cb, L, Msd, Vsd, q_serv_kn_cm, p_serv
                 progress_bar.progress(perfis_processados / total_perfis)
                 try:
                     props = get_profile_properties(row)
-                    res_flexao, res_cis, res_flecha, _, _, _, _ = perform_all_checks(props, fy, Lb, Cb, L, Msd, Vsd, q_servico_kn_cm, p_serv_load, tipo_viga, input_mode)
+                    res_flexao, res_cis, res_flecha, _ = perform_all_checks(props, fy, Lb, Cb, L, Msd, Vsd, q_serv_kn_cm, p_serv_load, tipo_viga, input_mode)
                     status_geral = "APROVADO" if max(res_flexao['ef_flt'], res_flexao['ef_flm'], res_flexao['ef_fla'], res_cis['eficiencia'], res_flecha['eficiencia']) <= 100.1 else "REPROVADO"
                     all_results.append({'Tipo': sheet_name, 'Perfil': row['Bitola (mm x kg/m)'], 'Peso (kg/m)': props.get('Peso', 0), 'Status': status_geral, 'Ef. FLT (%)': res_flexao['ef_flt'], 'Ef. FLM (%)': res_flexao['ef_flm'], 'Ef. FLA (%)': res_flexao['ef_fla'], 'Ef. Cisalhamento (%)': res_cis['eficiencia'], 'Ef. Flecha (%)': res_flecha['eficiencia']})
                 except (ValueError, KeyError): continue
@@ -457,38 +333,73 @@ def run_batch_analysis(all_sheets, fy, Lb, Cb, L, Msd, Vsd, q_serv_kn_cm, p_serv
                 with st.expander("Ver perfis reprovados desta categoria"):
                     st.dataframe(style_dataframe(reprovados), use_container_width=True)
 
-def perform_all_checks(props, fy, Lb, Cb, L, Msd, Vsd, q_servico_kn_cm, p_serv_load, tipo_viga, input_mode, detalhado=False):
+def perform_all_checks(props, fy, Lb, Cb, L, Msd, Vsd, q_serv_kn_cm, p_serv_load, tipo_viga, input_mode, detalhado=False):
     res_flt = _calcular_mrdx_flt(props, Lb, Cb, fy)
     res_flm = _calcular_mrdx_flm(props, fy)
     res_fla = _calcular_mrdx_fla(props, fy)
     res_vrd = _calcular_vrd(props, fy)
-    
     Vrd = res_vrd['Vrd']
     Mrd_final = min(res_flt['Mrdx'], res_flm['Mrdx'], res_fla['Mrdx'])
-    
     nota_interacao = "Vsd ≤ 0.5*Vrd. Interação desconsiderada."
     if Vrd > 0 and Vsd > 0.5 * Vrd: nota_interacao = "Vsd > 0.5*Vrd. Interação deve ser considerada."
-    
     ef_geral = (Msd / Mrd_final) * 100 if Mrd_final > 0 else float('inf')
     ef_flt = (Msd / res_flt['Mrdx']) * 100 if res_flt['Mrdx'] > 0 else float('inf')
     ef_flm = (Msd / res_flm['Mrdx']) * 100 if res_flm['Mrdx'] > 0 else float('inf')
     ef_fla = (Msd / res_fla['Mrdx']) * 100 if res_fla['Mrdx'] > 0 else float('inf')
     status_flexao = "APROVADO" if ef_geral <= 100.1 else "REPROVADO"
     res_flexao = {'Mrd': Mrd_final, 'eficiencia': ef_geral, 'status': status_flexao, 'ef_flt': ef_flt, 'ef_flm': ef_flm, 'ef_fla': ef_fla, 'nota_interacao': nota_interacao}
-    
     eficiencia_cisalhamento = (Vsd / Vrd) * 100 if Vrd > 0 else float('inf')
     status_cisalhamento = "APROVADO" if eficiencia_cisalhamento <= 100.1 else "REPROVADO"
     res_cisalhamento = {'Vrd': Vrd, 'eficiencia': eficiencia_cisalhamento, 'status': status_cisalhamento}
 
     flecha_max, flecha_limite, eficiencia_flecha, status_flecha = 0, 0, 0, "N/A"
     if input_mode == "Calcular a partir de Cargas na Viga":
-        flecha_max = calcular_flecha_maxima(tipo_viga, L, Config.E_ACO, props['Ix'], q_servico_kn_cm, p_serv_load)
+        flecha_max = calcular_flecha_maxima(tipo_viga, L, Config.E_ACO, props['Ix'], q_serv_kn_cm, p_serv_load)
         flecha_limite = L / Config.LIMITE_FLECHA_TOTAL if L > 0 else 0
         eficiencia_flecha = (flecha_max / flecha_limite) * 100 if flecha_limite > 0 else float('inf')
         status_flecha = "APROVADO" if eficiencia_flecha <= 100.1 else "REPROVADO"
     res_flecha = {'flecha_max': flecha_max, 'flecha_limite': flecha_limite, 'eficiencia': eficiencia_flecha, 'status': status_flecha, 'Ix': props['Ix']}
     
-    return res_flexao, res_cisalhamento, res_flecha, res_flt, res_flm, res_fla, res_vrd
+    passo_a_passo_html = ""
+    if detalhado:
+        passo_a_passo_html = build_step_by_step_html(L, Msd, Vsd, res_flexao, res_cisalhamento, res_flecha, res_flt, res_flm, res_fla, res_vrd, input_mode)
+    return res_flexao, res_cisalhamento, res_flecha, passo_a_passo_html
+
+def build_summary_html(Msd, Vsd, res_flexao, res_cisalhamento, res_flecha):
+    verificacoes = [('Flexão (M) - ELU', f"{Msd/100:.2f} kNm", f"{res_flexao['Mrd']/100:.2f} kNm", res_flexao['eficiencia'], res_flexao['status']),('Cisalhamento (V) - ELU', f"{Vsd:.2f} kN", f"{res_cisalhamento['Vrd']:.2f} kN", res_cisalhamento['eficiencia'], res_cisalhamento['status']),('Flecha (δ) - ELS', f"{res_flecha['flecha_max']:.2f} cm" if res_flecha['status'] != "N/A" else "N/A", f"≤ {res_flecha['flecha_limite']:.2f} cm" if res_flecha['status'] != "N/A" else "N/A", res_flecha['eficiencia'], res_flecha['status'])]
+    rows_html = ""
+    for nome, sol, res, efic, status in verificacoes:
+        status_class = "pass" if status == "APROVADO" else "fail"
+        rows_html += f"""<tr><td>{nome}</td><td>{sol}</td><td>{res}</td><td>{efic:.1f}%</td><td class="{status_class}">{status}</td></tr>"""
+    return f"""<table class="summary-table"><tr><th>Verificação</th><th>Solicitante / Atuante</th><th>Resistência / Limite</th><th>Eficiência</th><th>Status</th></tr>{rows_html}</table><p style="text-align:justify; font-size:0.9em;"><b>Nota sobre Interação M-V:</b> {res_flexao['nota_interacao']}</p>"""
+
+def build_step_by_step_html(L, Msd, Vsd, res_flexao, res_cisalhamento, res_flecha, res_flt, res_flm, res_fla, res_vrd, input_mode):
+    html = f"""<h2>2. Esforços de Cálculo</h2><div class="formula-block"><p class="formula">$$ M_{{sd}} = {Msd/100:.2f} \\, kNm $$</p><p class="formula">$$ V_{{sd}} = {Vsd:.2f} \\, kN $$</p></div><h2>3. Verificações de Resistência (ELU)</h2><h3>3.1 Cálculo da Resistência à Flexão (Mrd)</h3>"""
+    html += _add_verification_details("Flambagem Lateral com Torção (FLT)", res_flt)
+    html += _add_verification_details("Flambagem Local da Mesa (FLM)", res_flm)
+    html += _add_verification_details("Flambagem Local da Alma (FLA)", res_fla)
+    html += _build_verification_block_html("Verificação Final à Flexão", Msd/100, "M_{sd}", res_flexao['Mrd']/100, "M_{rd}", res_flexao['eficiencia'], res_flexao['status'], "kNm")
+    html += f"<h3>3.2 Cálculo da Resistência ao Cisalhamento (Vrd)</h3>"
+    html += _add_verification_details("Força Cortante (VRd)", res_vrd)
+    html += _build_verification_block_html("Verificação ao Cisalhamento", Vsd, "V_{sd}", res_cisalhamento['Vrd'], "V_{rd}", res_cisalhamento['eficiencia'], res_cisalhamento['status'], "kN")
+    if input_mode == "Calcular a partir de Cargas na Viga":
+        html += f"""<h2>4. Verificação de Serviço (ELS)</h2><div class="formula-block"><h4>a. Flecha Máxima Atuante (δ_max)</h4><p class="formula">$$ \\delta_{{max}} = {res_flecha['flecha_max']:.2f} \\, cm $$</p><h4>b. Flecha Limite (δ_lim)</h4><p class="formula">$$ \\delta_{{lim}} = \\frac{{L}}{{{Config.LIMITE_FLECHA_TOTAL}}} = \\frac{{{L:.2f}}}{{{Config.LIMITE_FLECHA_TOTAL}}} = {res_flecha['flecha_limite']:.2f} \\, cm $$</p></div>"""
+        html += _build_verification_block_html("Verificação da Flecha", res_flecha['flecha_max'], "\\delta_{max}", res_flecha['flecha_limite'], "\\delta_{lim}", res_flecha['eficiencia'], res_flecha['status'], "cm")
+    return html
+
+def _add_verification_details(title, details_dict):
+    html = f"<h4>{title}</h4><div class='formula-block'>"
+    for key, value in details_dict.items():
+        if isinstance(value, dict) and 'formula' in value:
+            formula_valores = value['formula']
+            for var, val_num in value['valores'].items():
+                formula_valores = formula_valores.replace(var, f"\\mathbf{{{val_num:.2f}}}")
+            html += f"""<h5>{value['desc']}</h5><p class="formula">$$ {value['formula']} $$</p><p class="formula">$$ {formula_valores} = \\mathbf{{{value['valor']:.2f} {value.get('unidade', '')}}} $$</p><p class="ref-norma">{value.get('ref', '')}</p>"""
+    final_resistance = details_dict.get('Mrdx', details_dict.get('Vrd', 0))
+    unit = 'kNm' if 'Mrdx' in details_dict else 'kN'
+    if unit == 'kNm': final_resistance /= 100
+    html += f"<h5>Resultado da Resistência</h5><p class='final-result'>{title.split('(')[0].strip()} Resistente = {final_resistance:.2f} {unit}</p></div>"
+    return html
 
 def _calcular_mrdx_flt(props, Lb, Cb, fy):
     Zx, ry, Iy, Cw, J, Wx = props['Zx'], props['ry'], props['Iy'], props['Cw'], props['J'], props['Wx']
@@ -508,7 +419,7 @@ def _calcular_mrdx_flt(props, Lb, Cb, fy):
             termo_sqrt1 = 1 + (27 * Cw * (beta1**2) / Iy)
             termo_sqrt2 = 1 + math.sqrt(termo_sqrt1) if termo_sqrt1 >= 0 else 1
             lambda_r = (1.38 * math.sqrt(Iy * J) / (ry * beta1 * J)) * math.sqrt(termo_sqrt2)
-        detalhes['lambda_r'] = {'desc': 'Esbeltez Limite (Inelástica)', 'symbol': '\\lambda_r', 'formula': '\\lambda_r = 1.38 \\sqrt{\\frac{I_y \\cdot J}{r_y^2 \\cdot J^2 \\cdot \\beta_1^2}} \\sqrt{1 + \\sqrt{1 + \\frac{27 \\cdot C_w \\cdot \\beta_1^2}{I_y}}}', 'valores': {'I_y': Iy, 'J': J, 'r_y': ry, '\\beta_1': beta1, 'C_w': Cw}, 'valor': lambda_r, 'ref': 'Eq. F-3'}
+        detalhes['lambda_r'] = {'desc': 'Esbeltez Limite (Inelástica)', 'symbol': '\\lambda_r', 'formula': '\\lambda_r = \\frac{1.38 \\sqrt{I_y \\cdot J}}{r_y \\cdot J \\cdot \\beta_1} \\sqrt{1 + \\sqrt{1 + \\frac{27 \\cdot C_w \\cdot \\beta_1^2}{I_y}}}', 'valores': {'I_y': Iy, 'J': J, 'r_y': ry, '\\beta_1': beta1, 'C_w': Cw}, 'valor': lambda_r, 'ref': 'Eq. F-3'}
         if lambda_val <= lambda_r:
             termo_interp = (Mp - Mr) * ((lambda_val - lambda_p) / (lambda_r - lambda_p))
             Mrdx_calc = (Cb / Config.GAMMA_A1) * (Mp - termo_interp)
