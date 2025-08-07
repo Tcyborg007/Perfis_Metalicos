@@ -34,10 +34,12 @@ st.set_page_config(page_title="Calculadora Estrutural Versátil", layout="wide")
 
 HTML_TEMPLATE_CSS = """
 <style>
-    /* ... (CSS permanece o mesmo da versão anterior) ... */
     @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Roboto+Slab:wght@400;700&display=swap');
     body { font-family: 'Roboto', sans-serif; line-height: 1.8; color: #333; background-color: #f0f4f8; }
-    .container { max-width: 8.5in; margin: 20px auto; padding: 0.75in; background-color: white; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+    
+    /* ESTA É A LINHA CORRIGIDA */
+    .container { width: 100%; max-width: 960px; margin: 20px auto; padding: 40px; background-color: white; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+    
     h1, h2, h3, h4, h5 { font-family: 'Roboto Slab', serif; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 5px; margin-top: 30px; }
     h1 { text-align: center; border: none; font-size: 2.2em; }
     h5 { border-bottom: none; font-size: 1em; margin-top: 15px; color: #34495e;}
@@ -55,7 +57,6 @@ HTML_TEMPLATE_CSS = """
     .ref-norma { font-size: 0.8em; color: #7f8c8d; text-align: right; margin-top: 15px; font-style: italic; }
     p { text-align: justify; }
 </style>
-"""
 st.markdown(HTML_TEMPLATE_CSS, unsafe_allow_html=True)
 
 # ==============================================================================
