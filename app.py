@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import math
 
+st.set_page_config(layout="wide")
+
 # ==============================================================================
 # 1. CONFIGURAÇÕES E CONSTANTES GLOBAIS
 # ==============================================================================
