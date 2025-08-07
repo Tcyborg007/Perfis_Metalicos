@@ -160,7 +160,7 @@ def _build_verification_block_html(title, solicitante, s_symbol, resistente, r_s
     return f"""<h4>{title}</h4><div class="formula-block"><p class="formula">$$ {s_symbol} = {solicitante:.2f} \\, {unit} $$</p><p class="formula">$$ {r_symbol} = {resistente:.2f} \\, {unit} $$</p><p class="formula">$$ \\text{{Verificação: }} {s_symbol} {comp_symbol} {r_symbol} $$</p><p class="formula">$$ \\text{{Eficiência}} = \\frac{{{s_symbol}}}{{{r_symbol}}} = \\frac{{{solicitante:.2f}}}{{{resistente:.2f}}} = {eficiencia:.1f}\% $$</p><div class="final-status {status_class}">{status}</div></div>"""
 
 # ==============================================================================
-# 4. APLICAÇÃO PRINCIPAL STREAMLIT (AJUSTADA)
+# 4. APLICAÇÃO PRINCIPAL STREAMLIT (CORRIGIDA)
 # ==============================================================================
 
 # NOVA FUNÇÃO DE CARREGAMENTO AUTOMÁTICO
@@ -213,6 +213,7 @@ def main():
                     
                     st.subheader("Carga Pontual (P)")
                     add_p_load = st.checkbox("Adicionar Carga Pontual")
+                    p_load_serv = None
                     if add_p_load:
                         p_serv_kn = st.number_input("Valor da Carga P (serviço, kN)", min_value=0.0, value=10.0)
                         p_pos_cm = st.number_input("Posição da Carga P (x, cm)", min_value=0.0, max_value=L_cm, value=L_cm/2)
@@ -231,9 +232,10 @@ def main():
                     msd_input = st.number_input("Momento de Cálculo (Msd, kNm)", min_value=0.0, value=100.0)
                     Msd = msd_input * 100 # Convertendo para kN.cm
                     Vsd = st.number_input("Força Cortante de Cálculo (Vsd, kN)", min_value=0.0, value=50.0)
-                    # Adicionado para evitar o NameError ao chamar run_batch_analysis
+                    # Assegura que as variáveis existam mesmo no modo manual
                     q_servico_kn_cm = 0
                     p_load_serv = None
+
 
         with st.expander("3. Parâmetros do Perfil e do Aço", expanded=False):
             fy_aco = st.number_input("Tensão de Escoamento (fy, kN/cm²)", 20.0, 50.0, 34.5, 0.5)
@@ -264,7 +266,7 @@ def main():
         st.subheader("Pré-dimensionamento e Análise por Categoria")
         st.info("Analisa todos os perfis e organiza os resultados em abas por tipo, destacando a opção mais leve de cada categoria.")
         if st.button("Iniciar Análise Otimizada", type="primary", use_container_width=True):
-            run_batch_analysis(all_sheets, fy_aco, Lb_projeto, Cb_projeto, L_cm, Msd, Vsd, q_servico_kn_cm, p_serv_load, tipo_viga, input_mode)
+            run_batch_analysis(all_sheets, fy_aco, Lb_projeto, Cb_projeto, L_cm, Msd, Vsd, q_servico_kn_cm, p_load_serv, tipo_viga, input_mode)
 
 # ==============================================================================
 # 5. FUNÇÕES DE ORQUESTRAÇÃO E ANÁLISE (AJUSTADAS)
@@ -279,14 +281,18 @@ def run_detailed_analysis(df, perfil_nome, perfil_tipo_display, fy, Lb, Cb, L, M
             resumo_html = build_summary_html(Msd, Vsd, res_flexao, res_cis, res_flecha)
             resultados = {'resumo_html': resumo_html, 'passo_a_passo_html': passo_a_passo}
             html_content = gerar_memorial_completo(perfil_nome, perfil_tipo_display, resultados)
-            st.success(f"Análise concluída para {perfil_nome}! O memorial de cálculo está pronto para download.")
-            # Remove a visualização embutida para evitar a limitação de espaço.
-            # Apenas o botão de download será exibido.
+            st.success(f"Análise concluída para {perfil_nome}! Abaixo você pode visualizar o memorial de cálculo ou fazer o download.")
+            
+            # Re-introduz a visualização do memorial
+            with st.expander("Visualizar Memorial de Cálculo", expanded=True):
+                st.components.v1.html(html_content, height=800, scrolling=True)
+            
+            # Mantém o botão de download
             st.download_button(label="📥 Baixar Memorial HTML", data=html_content.encode('utf-8'), file_name=f"Memorial_{perfil_nome.replace(' ', '_')}.html", mime="text/html", use_container_width=True)
         except (ValueError, KeyError) as e: st.error(f"❌ Erro nos Dados de Entrada: {e}")
         except Exception as e: st.error(f"❌ Ocorreu um erro inesperado: {e}")
 
-def run_batch_analysis(all_sheets, fy, Lb, Cb, L, Msd, Vsd, q_serv_kn_cm, p_serv_load, tipo_viga, input_mode):
+def run_batch_analysis(all_sheets, fy, Lb, Cb, L, Msd, Vsd, q_servico_kn_cm, p_serv_load, tipo_viga, input_mode):
     all_results = []
     progress_bar = st.progress(0, text="Analisando perfis...")
     total_perfis = sum(len(df) for df in all_sheets.values())
@@ -339,7 +345,7 @@ def run_batch_analysis(all_sheets, fy, Lb, Cb, L, Msd, Vsd, q_serv_kn_cm, p_serv
                 with st.expander("Ver perfis reprovados desta categoria"):
                     st.dataframe(style_dataframe(reprovados), use_container_width=True)
 
-def perform_all_checks(props, fy, Lb, Cb, L, Msd, Vsd, q_serv_kn_cm, p_serv_load, tipo_viga, input_mode, detalhado=False):
+def perform_all_checks(props, fy, Lb, Cb, L, Msd, Vsd, q_servico_kn_cm, p_serv_load, tipo_viga, input_mode, detalhado=False):
     res_flt = _calcular_mrdx_flt(props, Lb, Cb, fy)
     res_flm = _calcular_mrdx_flm(props, fy)
     res_fla = _calcular_mrdx_fla(props, fy)
@@ -360,7 +366,7 @@ def perform_all_checks(props, fy, Lb, Cb, L, Msd, Vsd, q_serv_kn_cm, p_serv_load
 
     flecha_max, flecha_limite, eficiencia_flecha, status_flecha = 0, 0, 0, "N/A"
     if input_mode == "Calcular a partir de Cargas na Viga":
-        flecha_max = calcular_flecha_maxima(tipo_viga, L, Config.E_ACO, props['Ix'], q_serv_kn_cm, p_serv_load)
+        flecha_max = calcular_flecha_maxima(tipo_viga, L, Config.E_ACO, props['Ix'], q_servico_kn_cm, p_serv_load)
         flecha_limite = L / Config.LIMITE_FLECHA_TOTAL if L > 0 else 0
         eficiencia_flecha = (flecha_max / flecha_limite) * 100 if flecha_limite > 0 else float('inf')
         status_flecha = "APROVADO" if eficiencia_flecha <= 100.1 else "REPROVADO"
