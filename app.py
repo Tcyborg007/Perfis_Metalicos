@@ -30,15 +30,9 @@ PROFILE_TYPE_MAP = {
     "VS": "Vigas Soldadas"
 }
 
-# CSS foi simplificado para não precisar ser injetado no HTML do memorial
 HTML_GLOBAL_STYLE = """
 <style>
-    /* Regra de Ouro: Força o componente HTML (iframe) a ocupar toda a largura */
-    iframe {
-        width: 100%;
-    }
-
-    /* Estilos para o conteúdo DENTRO do iframe (seu memorial) */
+    iframe { width: 100%; }
     .container {
         width: 100%; padding: 20px; background-color: white; border-radius: 10px;
         box-shadow: 0 4px 20px rgba(0,0,0,0.1); font-family: 'Roboto', sans-serif;
@@ -64,34 +58,23 @@ HTML_GLOBAL_STYLE = """
 """
 
 # ==============================================================================
-# 2. TODAS AS FUNÇÕES DE BACKEND (Simplificado onde necessário)
+# 2. TODAS AS FUNÇÕES DE BACKEND
 # ==============================================================================
 
-def gerar_memorial_completo(perfil_nome, perfil_tipo, resultados):
-    # O HTML agora é muito mais limpo, sem o CSS embutido.
-    html_body = f"""
-    <div class="container">
-        <h1>Memorial de Cálculo Estrutural</h1>
-        <h2>Perfil Metálico: {perfil_nome} ({perfil_tipo})</h2>
-        <p style="text-align:center; font-style:italic;">Cálculos baseados na norma: <b>{Config.NOME_NORMA}</b></p>
-        <h3>1. Resumo Final das Verificações</h3>
-        {resultados['resumo_html']}
-        {resultados['passo_a_passo_html']}
-    </div>
-    """
-    # Adicionamos o script do MathJax para renderizar as fórmulas
-    return f"""
-    <!DOCTYPE html>
-    <html lang="pt-BR">
-    <head>
-        <meta charset="UTF-8">
-        <title>Memorial de Cálculo - {perfil_nome}</title>
-        <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML"></script>
-    </head>
-    <body>{html_body}</body>
-    </html>
-    """
-# Restante do código (lógica, cálculos, etc)
+# FUNÇÃO DE CARREGAMENTO DE DADOS (A QUE ESTAVA FALTANDO)
+@st.cache_data
+def load_data_from_local_file():
+    """ Carrega os dados diretamente do arquivo 'perfis.xlsx'. """
+    try:
+        return pd.read_excel('perfis.xlsx', sheet_name=None)
+    except FileNotFoundError:
+        st.error("Erro Crítico: Arquivo 'perfis.xlsx' não encontrado. Verifique se ele foi enviado para o repositório GitHub.")
+        return None
+    except Exception as e:
+        st.error(f"Erro ao ler o arquivo Excel: {e}")
+        return None
+
+# RESTANTE DAS FUNÇÕES
 def calcular_esforcos_viga(tipo_viga, L_cm, q_kn_cm=0, p_load=None):
     msd_q, vsd_q, msd_p, vsd_p = 0, 0, 0, 0
     L = L_cm
@@ -136,6 +119,10 @@ def get_profile_properties(profile_series):
         if value is None or pd.isna(value) or (isinstance(value, (int, float)) and value <= 0): raise ValueError(f"Propriedade ESSENCIAL '{key}' inválida ou nula para '{profile_name}'. Verifique a planilha.")
     for key in ['d', 'bf', 'tw', 'tf', 'h']: props[key] /= 10.0
     return props
+
+def gerar_memorial_completo(perfil_nome, perfil_tipo, resultados):
+    html_body = f"""<div class="container"><h1>Memorial de Cálculo Estrutural</h1><h2>Perfil Metálico: {perfil_nome} ({perfil_tipo})</h2><p style="text-align:center; font-style:italic;">Cálculos baseados na norma: <b>{Config.NOME_NORMA}</b></p><h3>1. Resumo Final das Verificações</h3>{resultados['resumo_html']}{resultados['passo_a_passo_html']}</div>"""
+    return f"""<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Memorial de Cálculo - {perfil_nome}</title><script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML"></script></head><body>{html_body}</body></html>"""
 
 def _build_verification_block_html(title, solicitante, s_symbol, resistente, r_symbol, eficiencia, status, unit):
     status_class = "pass" if status == "APROVADO" else "fail"; comp_symbol = "\\le" if status == "APROVADO" else ">"; return f"""<h4>{title}</h4><div class="formula-block"><p class="formula">$$ {s_symbol} = {solicitante:.2f} \\, {unit} $$</p><p class="formula">$$ {r_symbol} = {resistente:.2f} \\, {unit} $$</p><p class="formula">$$ \\text{{Verificação: }} {s_symbol} {comp_symbol} {r_symbol} $$</p><p class="formula">$$ \\text{{Eficiência}} = \\frac{{{s_symbol}}}{{{r_symbol}}} = \\frac{{{solicitante:.2f}}}{{{resistente:.2f}}} = {eficiencia:.1f}\% $$</p><div class="final-status {status_class}">{status}</div></div>"""
@@ -318,16 +305,9 @@ def _calcular_vrd(props, fy):
 # ==============================================================================
 # 3. APLICAÇÃO PRINCIPAL
 # ==============================================================================
-
 def main():
-    # ---- ESTRUTURA DE EXECUÇÃO CORRETA ----
-    # 1. Configuração da página como o PRIMEIRO comando st
     st.set_page_config(page_title="Calculadora Estrutural Versátil", layout="wide")
-    
-    # 2. Injeção do CSS GLOBAL para corrigir o layout do iframe do componente HTML
     st.markdown(HTML_GLOBAL_STYLE, unsafe_allow_html=True)
-
-    # 3. Restante da aplicação
     st.title("🏛️ Calculadora Estrutural Versátil")
     st.caption(f"Utilizando a norma: {Config.NOME_NORMA}")
     
@@ -336,66 +316,39 @@ def main():
         st.warning("Não foi possível carregar os dados dos perfis. A aplicação será interrompida.")
         st.stop()
     
-    # --- ENTRADA DE DADOS NA SIDEBAR ---
     with st.sidebar:
         st.header("⚙️ Parâmetros de Entrada")
-        
-        st.header("1. Modelo da Viga")
-        tipo_viga = st.selectbox("Tipo de Viga:", ('Bi-apoiada', 'Engastada e Livre (Balanço)', 'Bi-engastada', 'Engastada e Apoiada'))
-        L_cm = st.number_input("Comprimento da Viga (L, cm)", 10.0, value=500.0, step=10.0)
-
-        st.header("2. Modo de Carregamento")
-        input_mode = st.radio("Selecione:", ("Calcular a partir de Cargas", "Inserir Esforços Manualmente"), horizontal=True, label_visibility="collapsed")
-
+        st.header("1. Modelo da Viga"); tipo_viga = st.selectbox("Tipo de Viga:", ('Bi-apoiada', 'Engastada e Livre (Balanço)', 'Bi-engastada', 'Engastada e Apoiada')); L_cm = st.number_input("Comprimento da Viga (L, cm)", 10.0, value=500.0, step=10.0)
+        st.header("2. Modo de Carregamento"); input_mode = st.radio("Selecione:", ("Calcular a partir de Cargas", "Inserir Esforços Manualmente"), horizontal=True, label_visibility="collapsed")
         Msd, Vsd, q_servico_kn_cm, p_load_serv = 0, 0, 0, None
         if input_mode == "Calcular a partir de Cargas":
             with st.container(border=True):
                 st.subheader("Carga Distribuída (q)"); carga_area = st.number_input("Carga (serviço, kN/m²)", 0.0, value=4.0, step=0.5); larg_inf = st.number_input("Largura de Influência (m)", 0.0, value=5.0, step=0.5)
                 st.subheader("Carga Pontual (P)"); add_p_load = st.checkbox("Adicionar Carga Pontual")
-                if add_p_load: p_serv_kn = st.number_input("Valor da Carga P (serviço, kN)", 0.0, value=10.0); p_pos_cm = st.number_input("Posição (x, cm)", 0.0, max_value=L_cm, value=L_cm/2); p_load_serv = (p_serv_kn, p_pos_cm)
+                if add_p_load: p_serv_kn = st.number_input("Valor P (serviço, kN)", 0.0, value=10.0); p_pos_cm = st.number_input("Posição (x, cm)", 0.0, max_value=L_cm, value=L_cm/2); p_load_serv = (p_serv_kn, p_pos_cm)
                 gamma_f = st.number_input("Coef. Majoração (γf)", 1.0, value=1.4, step=0.1)
                 q_servico_kn_cm = (carga_area * larg_inf) / 100.0
                 p_load_ult = (p_load_serv[0] * gamma_f, p_load_serv[1]) if p_load_serv else None
                 Msd, Vsd = calcular_esforcos_viga(tipo_viga, L_cm, q_servico_kn_cm * gamma_f, p_load_ult)
-        else: # Inserir Esforços Manualmente
+        else:
              with st.container(border=True):
-                st.warning("ELS de flecha não será verificado no modo manual.")
-                Msd = st.number_input("Momento Solicitante (Msd, kNm)", 0.0, value=100.0) * 100
-                Vsd = st.number_input("Cortante Solicitante (Vsd, kN)", 0.0, value=50.0)
-
-        st.header("3. Parâmetros Gerais do Aço")
-        fy_aco = st.number_input("fy (kN/cm²)", 20.0, 50.0, 34.5, 0.5)
-        Lb_projeto = st.number_input("Comprimento Destravado (Lb, cm)", 10.0, value=L_cm, step=10.0)
-        Cb_projeto = st.number_input("Fator de Modificação (Cb)", 1.0, 3.0, 1.10)
+                st.warning("ELS de flecha não será verificado no modo manual."); Msd = st.number_input("Momento (Msd, kNm)", 0.0, value=100.0) * 100; Vsd = st.number_input("Cortante (Vsd, kN)", 0.0, value=50.0)
+        st.header("3. Parâmetros Gerais do Aço"); fy_aco = st.number_input("fy (kN/cm²)", 20.0, 50.0, 34.5, 0.5); Lb_projeto = st.number_input("Destravamento (Lb, cm)", 10.0, value=L_cm, step=10.0); Cb_projeto = st.number_input("Fator de Modificação (Cb)", 1.0, 3.0, 1.10)
     
-    # --- LÓGICA DAS ABAS NA TELA PRINCIPAL ---
     tab1, tab2 = st.tabs(["📊 Análise em Lote e Otimização", "🔍 Memorial de Cálculo Detalhado"])
-
     with tab1:
         st.header("Análise Otimizada de Todos os Perfis")
-        st.info("Esta ferramenta analisa todos os perfis da planilha sob os esforços definidos na barra lateral. Os resultados são organizados por tipo, destacando a opção mais leve e econômica de cada categoria.")
-        if st.button("Iniciar Análise Otimizada", type="primary", use_container_width=True, key="btn_lote"):
-            run_batch_analysis(all_sheets, fy_aco, Lb_projeto, Cb_projeto, L_cm, Msd, Vsd, q_servico_kn_cm, p_load_serv, tipo_viga, input_mode)
-
+        st.info("Esta ferramenta analisa todos os perfis da planilha sob os esforços definidos na barra lateral, destacando a opção mais leve e econômica de cada categoria.")
+        if st.button("Iniciar Análise Otimizada", type="primary", use_container_width=True, key="btn_lote"): run_batch_analysis(all_sheets, fy_aco, Lb_projeto, Cb_projeto, L_cm, Msd, Vsd, q_servico_kn_cm, p_load_serv, tipo_viga, input_mode)
     with tab2:
         st.header("Análise Detalhada de um Único Perfil")
-        st.info("Selecione um perfil específico para gerar um memorial de cálculo completo e detalhado, mostrando todas as etapas de verificação.")
-        
-        display_names = [PROFILE_TYPE_MAP.get(name, name) for name in all_sheets.keys()]
-        reverse_name_map = {v: k for k, v in PROFILE_TYPE_MAP.items()}
-
+        st.info("Selecione um perfil específico para gerar um memorial de cálculo completo, mostrando todas as etapas de verificação.")
+        display_names = [PROFILE_TYPE_MAP.get(name, name) for name in all_sheets.keys()]; reverse_name_map = {v: k for k, v in PROFILE_TYPE_MAP.items()}
         col1, col2 = st.columns(2)
-        with col1:
-            selected_display_name = st.selectbox("Selecione o Tipo de Perfil:", display_names, key="tipo_perfil_memorial")
-        
-        sheet_name = reverse_name_map.get(selected_display_name, selected_display_name)
-        df_selecionado = all_sheets[sheet_name]
-        
-        with col2:
-            perfil_selecionado_nome = st.selectbox("Selecione o Perfil Específico:", df_selecionado['Bitola (mm x kg/m)'], key="nome_perfil_memorial")
-        
-        if st.button("Gerar Memorial Completo", type="primary", use_container_width=True, key="btn_memorial"):
-            run_detailed_analysis(df_selecionado, perfil_selecionado_nome, selected_display_name, fy_aco, Lb_projeto, Cb_projeto, L_cm, Msd, Vsd, q_servico_kn_cm, p_serv_load, tipo_viga, input_mode)
+        with col1: selected_display_name = st.selectbox("Selecione o Tipo de Perfil:", display_names, key="tipo_perfil_memorial")
+        sheet_name = reverse_name_map.get(selected_display_name, selected_display_name); df_selecionado = all_sheets[sheet_name]
+        with col2: perfil_selecionado_nome = st.selectbox("Selecione o Perfil Específico:", df_selecionado['Bitola (mm x kg/m)'], key="nome_perfil_memorial")
+        if st.button("Gerar Memorial Completo", type="primary", use_container_width=True, key="btn_memorial"): run_detailed_analysis(df_selecionado, perfil_selecionado_nome, selected_display_name, fy_aco, Lb_projeto, Cb_projeto, L_cm, Msd, Vsd, q_servico_kn_cm, p_serv_load, tipo_viga, input_mode)
 
 if __name__ == '__main__':
     main()
