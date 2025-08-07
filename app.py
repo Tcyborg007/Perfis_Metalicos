@@ -26,8 +26,8 @@ class Config:
 PROFILE_TYPE_MAP = {
     "Laminados": "Perfis Laminados",
     "CS": "Perfis Compactos Soldados",
-    "CVS": "Perfil de Seção Variável",
-    "VS": "Perfil Soldadas"
+    "CVS": "Vigas de Seção Variável",
+    "VS": "Vigas Soldadas"
 }
 
 st.set_page_config(page_title="Calculadora Estrutural Versátil", layout="wide")
@@ -231,6 +231,9 @@ def main():
                     msd_input = st.number_input("Momento de Cálculo (Msd, kNm)", min_value=0.0, value=100.0)
                     Msd = msd_input * 100 # Convertendo para kN.cm
                     Vsd = st.number_input("Força Cortante de Cálculo (Vsd, kN)", min_value=0.0, value=50.0)
+                    # Adicionado para evitar o NameError ao chamar run_batch_analysis
+                    q_servico_kn_cm = 0
+                    p_load_serv = None
 
         with st.expander("3. Parâmetros do Perfil e do Aço", expanded=False):
             fy_aco = st.number_input("Tensão de Escoamento (fy, kN/cm²)", 20.0, 50.0, 34.5, 0.5)
@@ -264,7 +267,7 @@ def main():
             run_batch_analysis(all_sheets, fy_aco, Lb_projeto, Cb_projeto, L_cm, Msd, Vsd, q_servico_kn_cm, p_serv_load, tipo_viga, input_mode)
 
 # ==============================================================================
-# 5. FUNÇÕES DE ORQUESTRAÇÃO E ANÁLISE (MANTIDAS)
+# 5. FUNÇÕES DE ORQUESTRAÇÃO E ANÁLISE (AJUSTADAS)
 # ==============================================================================
 
 def run_detailed_analysis(df, perfil_nome, perfil_tipo_display, fy, Lb, Cb, L, Msd, Vsd, q_serv_kn_cm, p_serv_load, tipo_viga, input_mode):
@@ -276,9 +279,10 @@ def run_detailed_analysis(df, perfil_nome, perfil_tipo_display, fy, Lb, Cb, L, M
             resumo_html = build_summary_html(Msd, Vsd, res_flexao, res_cis, res_flecha)
             resultados = {'resumo_html': resumo_html, 'passo_a_passo_html': passo_a_passo}
             html_content = gerar_memorial_completo(perfil_nome, perfil_tipo_display, resultados)
-            st.success("Análise concluída!")
-            st.components.v1.html(html_content, height=1000, scrolling=True)
-            st.download_button(label="📥 Baixar Memorial HTML", data=html_content.encode('utf-8'), file_name=f"Memorial_{perfil_nome.replace(' ', '_')}.html", mime="text/html")
+            st.success(f"Análise concluída para {perfil_nome}! O memorial de cálculo está pronto para download.")
+            # Remove a visualização embutida para evitar a limitação de espaço.
+            # Apenas o botão de download será exibido.
+            st.download_button(label="📥 Baixar Memorial HTML", data=html_content.encode('utf-8'), file_name=f"Memorial_{perfil_nome.replace(' ', '_')}.html", mime="text/html", use_container_width=True)
         except (ValueError, KeyError) as e: st.error(f"❌ Erro nos Dados de Entrada: {e}")
         except Exception as e: st.error(f"❌ Ocorreu um erro inesperado: {e}")
 
@@ -294,7 +298,7 @@ def run_batch_analysis(all_sheets, fy, Lb, Cb, L, Msd, Vsd, q_serv_kn_cm, p_serv
                 progress_bar.progress(perfis_processados / total_perfis)
                 try:
                     props = get_profile_properties(row)
-                    res_flexao, res_cis, res_flecha, _ = perform_all_checks(props, fy, Lb, Cb, L, Msd, Vsd, q_serv_kn_cm, p_serv_load, tipo_viga, input_mode)
+                    res_flexao, res_cis, res_flecha, _ = perform_all_checks(props, fy, Lb, Cb, L, Msd, Vsd, q_servico_kn_cm, p_serv_load, tipo_viga, input_mode)
                     status_geral = "APROVADO" if max(res_flexao['ef_flt'], res_flexao['ef_flm'], res_flexao['ef_fla'], res_cis['eficiencia'], res_flecha['eficiencia']) <= 100.1 else "REPROVADO"
                     all_results.append({'Tipo': sheet_name, 'Perfil': row['Bitola (mm x kg/m)'], 'Peso (kg/m)': props.get('Peso', 0), 'Status': status_geral, 'Ef. FLT (%)': res_flexao['ef_flt'], 'Ef. FLM (%)': res_flexao['ef_flm'], 'Ef. FLA (%)': res_flexao['ef_fla'], 'Ef. Cisalhamento (%)': res_cis['eficiencia'], 'Ef. Flecha (%)': res_flecha['eficiencia']})
                 except (ValueError, KeyError): continue
