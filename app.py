@@ -255,6 +255,9 @@ def _build_verification_block_html(title, solicitante, s_symbol, resistente, r_s
 # ==============================================================================
 # 4. APLICAÇÃO PRINCIPAL STREAMLIT (COM AS ALTERAÇÕES)
 # ==============================================================================
+def toggle_memorial_view():
+    """Alterna o estado de visualização do memorial."""
+    st.session_state.show_preview = not st.session_state.show_preview
 
 # NOVA FUNÇÃO DE CARREGAMENTO AUTOMÁTICO
 @st.cache_data
@@ -280,6 +283,8 @@ def main():
         st.session_state.analysis_results = None
     if 'detailed_analysis_html' not in st.session_state:
         st.session_state.detailed_analysis_html = None
+    if 'show_preview' not in st.session_state:
+        st.session_state.show_preview = False
     
     st.title("🏛️ Calculadora Estrutural - Perfis Metálicos")
     st.caption(f"Utilizando a norma: {Config.NOME_NORMA}")
@@ -422,13 +427,28 @@ def main():
         sheet_name = reverse_name_map.get(selected_display_name, selected_display_name)
         df_selecionado = all_sheets[sheet_name]
         perfil_selecionado_nome = st.selectbox("Selecione o Perfil Específico:", df_selecionado['Bitola (mm x kg/m)'])
+        
+        # Botão para gerar o memorial. Ele também define show_preview para True.
         if st.button("Gerar Memorial Completo", type="primary", use_container_width=True):
             run_detailed_analysis(df_selecionado, perfil_selecionado_nome, selected_display_name, st.session_state.input_parameters)
+            st.session_state.show_preview = True
 
+        # Se o memorial foi gerado, exibe os botões de ação e o conteúdo
         if st.session_state.detailed_analysis_html:
-            st.components.v1.html(st.session_state.detailed_analysis_html, height=1000, scrolling=True)
-            st.download_button(label="📥 Baixar Memorial HTML", data=st.session_state.detailed_analysis_html.encode('utf-8'), file_name=f"Memorial_{perfil_selecionado_nome.replace(' ', '_')}.html", mime="text/html")
+            st.subheader("Ações do Memorial")
+            col1, col2 = st.columns([1, 1])
+            with col1:
+                # Botão para visualizar/ocultar
+                button_label = "Ocultar Memorial" if st.session_state.show_preview else "Visualizar Memorial"
+                if st.button(button_label, use_container_width=True):
+                    st.session_state.show_preview = not st.session_state.show_preview
+            with col2:
+                st.download_button(label="📥 Baixar Memorial HTML", data=st.session_state.detailed_analysis_html.encode('utf-8'), file_name=f"Memorial_{perfil_selecionado_nome.replace(' ', '_')}.html", mime="text/html", use_container_width=True)
 
+            if st.session_state.show_preview:
+                st.info("O memorial de cálculo é exibido abaixo. Use o botão acima para fechar esta visualização.")
+                with st.container(border=True):
+                    st.components.v1.html(st.session_state.detailed_analysis_html, height=1000, scrolling=True)
 
     elif analysis_mode == "Análise em Lote com Otimização":
         st.header("📊 Pré-dimensionamento e Análise por Categoria")
