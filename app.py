@@ -26,11 +26,11 @@ class Config:
 PROFILE_TYPE_MAP = {
     "Laminados": "Perfis Laminados",
     "CS": "Perfis Compactos Soldados",
-    "CVS": "Vigas de Seção Variável",
-    "VS": "Vigas Soldadas"
+    "CVS": "Perfil de Seção Variável",
+    "VS": "Perfil Soldadas"
 }
 
-st.set_page_config(page_title="Calculadora Estrutural Versátil", layout="wide")
+st.set_page_config(page_title="Calculadora Estrutural - Perfis Metálicos", layout="wide")
 
 HTML_TEMPLATE_CSS = """
 <style>
