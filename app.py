@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import math
+import base64
 
 # ==============================================================================
 # 1. CONFIGURAÇÕES E CONSTANTES GLOBAIS
@@ -280,20 +281,36 @@ def run_detailed_analysis(df, perfil_nome, perfil_tipo_display, fy, Lb, Cb, L, M
             res_flexao, res_cis, res_flecha, passo_a_passo = perform_all_checks(props, fy, Lb, Cb, L, Msd, Vsd, q_serv_kn_cm, p_serv_load, tipo_viga, input_mode, detalhado=True)
             resumo_html = build_summary_html(Msd, Vsd, res_flexao, res_cis, res_flecha)
             
-            # Nova maneira de exibir o memorial
             st.success(f"Análise concluída para {perfil_nome}!")
-            st.markdown(f"<h2>Memorial de Cálculo Estrutural</h2>" + 
-                        f"<h2>Perfil Metálico: {perfil_nome} ({perfil_tipo_display})</h2>" +
-                        f"<p style='text-align:center; font-style:italic;'>Cálculos baseados na norma: <b>{Config.NOME_NORMA}</b></p>", 
-                        unsafe_allow_html=True)
-            st.markdown("<h3>1. Resumo Final das Verificações</h3>", unsafe_allow_html=True)
-            st.markdown(resumo_html, unsafe_allow_html=True)
-            st.markdown("<h3>2. Detalhamento dos Cálculos</h3>", unsafe_allow_html=True)
-            st.markdown(passo_a_passo, unsafe_allow_html=True)
 
+            # Combina o HTML do memorial de cálculo
+            html_content = (
+                f"<h1>Memorial de Cálculo Estrutural</h1>"
+                f"<h2>Perfil Metálico: {perfil_nome} ({perfil_tipo_display})</h2>"
+                f"<p style='text-align:center; font-style:italic;'>Cálculos baseados na norma: <b>{Config.NOME_NORMA}</b></p>"
+                f"<h3>1. Resumo Final das Verificações</h3>"
+                f"{resumo_html}"
+                f"<h3>2. Detalhamento dos Cálculos</h3>"
+                f"{passo_a_passo}"
+            )
+            
+            # Adiciona o script do MathJax para renderizar as fórmulas
+            mathjax_script = """
+            <script type="text/javascript" async
+              src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
+            </script>
+            """
+            
+            # Exibe o memorial de cálculo diretamente na página principal, agora com o script
+            with st.expander("Visualizar Memorial de Cálculo", expanded=True):
+                st.markdown(HTML_TEMPLATE_CSS, unsafe_allow_html=True)
+                st.markdown(mathjax_script, unsafe_allow_html=True)
+                st.markdown(f"<div class='container'>{html_content}</div>", unsafe_allow_html=True)
+            
             # Botão para download do arquivo completo
             html_content_full = gerar_memorial_completo(perfil_nome, perfil_tipo_display, {'resumo_html': resumo_html, 'passo_a_passo_html': passo_a_passo})
             st.download_button(label="📥 Baixar Memorial HTML", data=html_content_full.encode('utf-8'), file_name=f"Memorial_{perfil_nome.replace(' ', '_')}.html", mime="text/html", use_container_width=True)
+
         except (ValueError, KeyError) as e: st.error(f"❌ Erro nos Dados de Entrada: {e}")
         except Exception as e: st.error(f"❌ Ocorreu um erro inesperado: {e}")
 
@@ -391,18 +408,41 @@ def build_summary_html(Msd, Vsd, res_flexao, res_cisalhamento, res_flecha):
     return f"""<table class="summary-table"><tr><th>Verificação</th><th>Solicitante / Atuante</th><th>Resistência / Limite</th><th>Eficiência</th><th>Status</th></tr>{rows_html}</table><p style="text-align:justify; font-size:0.9em;"><b>Nota sobre Interação M-V:</b> {res_flexao['nota_interacao']}</p>"""
 
 def build_step_by_step_html(L, Msd, Vsd, res_flexao, res_cisalhamento, res_flecha, res_flt, res_flm, res_fla, res_vrd, input_mode):
-    html = f"""<h2>2. Esforços de Cálculo</h2><div class="formula-block"><p class="formula">$$ M_{{sd}} = {Msd/100:.2f} \\, kNm $$</p><p class="formula">$$ V_{{sd}} = {Vsd:.2f} \\, kN $$</p></div><h2>3. Verificações de Resistência (ELU)</h2><h3>3.1 Cálculo da Resistência à Flexão (Mrd)</h3>"""
-    html += _add_verification_details("Flambagem Lateral com Torção (FLT)", res_flt)
-    html += _add_verification_details("Flambagem Local da Mesa (FLM)", res_flm)
-    html += _add_verification_details("Flambagem Local da Alma (FLA)", res_fla)
-    html += _build_verification_block_html("Verificação Final à Flexão", Msd/100, "M_{sd}", res_flexao['Mrd']/100, "M_{rd}", res_flexao['eficiencia'], res_flexao['status'], "kNm")
-    html += f"<h3>3.2 Cálculo da Resistência ao Cisalhamento (Vrd)</h3>"
-    html += _add_verification_details("Força Cortante (VRd)", res_vrd)
-    html += _build_verification_block_html("Verificação ao Cisalhamento", Vsd, "V_{sd}", res_cisalhamento['Vrd'], "V_{rd}", res_cisalhamento['eficiencia'], res_cisalhamento['status'], "kN")
+    # A string HTML é construída de forma modular para permitir a renderização via st.markdown
+    html_parts = []
+    
+    html_parts.append(f"""
+    <div class="formula-block">
+        <h2>2. Esforços de Cálculo</h2>
+        <p class="formula">$$ M_{{sd}} = {Msd/100:.2f} \\, kNm $$</p>
+        <p class="formula">$$ V_{{sd}} = {Vsd:.2f} \\, kN $$</p>
+    </div>
+    <h2>3. Verificações de Resistência (ELU)</h2>
+    <h3>3.1 Cálculo da Resistência à Flexão (Mrd)</h3>
+    """)
+    
+    html_parts.append(_add_verification_details("Flambagem Lateral com Torção (FLT)", res_flt))
+    html_parts.append(_add_verification_details("Flambagem Local da Mesa (FLM)", res_flm))
+    html_parts.append(_add_verification_details("Flambagem Local da Alma (FLA)", res_fla))
+    html_parts.append(_build_verification_block_html("Verificação Final à Flexão", Msd/100, "M_{sd}", res_flexao['Mrd']/100, "M_{rd}", res_flexao['eficiencia'], res_flexao['status'], "kNm"))
+    
+    html_parts.append(f"<h3>3.2 Cálculo da Resistência ao Cisalhamento (Vrd)</h3>")
+    html_parts.append(_add_verification_details("Força Cortante (VRd)", res_vrd))
+    html_parts.append(_build_verification_block_html("Verificação ao Cisalhamento", Vsd, "V_{sd}", res_cisalhamento['Vrd'], "V_{rd}", res_cisalhamento['eficiencia'], res_cisalhamento['status'], "kN"))
+    
     if input_mode == "Calcular a partir de Cargas na Viga":
-        html += f"""<h2>4. Verificação de Serviço (ELS)</h2><div class="formula-block"><h4>a. Flecha Máxima Atuante (δ_max)</h4><p class="formula">$$ \\delta_{{max}} = {res_flecha['flecha_max']:.2f} \\, cm $$</p><h4>b. Flecha Limite (δ_lim)</h4><p class="formula">$$ \\delta_{{lim}} = \\frac{{L}}{{{Config.LIMITE_FLECHA_TOTAL}}} = \\frac{{{L:.2f}}}{{{Config.LIMITE_FLECHA_TOTAL}}} = {res_flecha['flecha_limite']:.2f} \\, cm $$</p></div>"""
-        html += _build_verification_block_html("Verificação da Flecha", res_flecha['flecha_max'], "\\delta_{max}", res_flecha['flecha_limite'], "\\delta_{lim}", res_flecha['eficiencia'], res_flecha['status'], "cm")
-    return html
+        html_parts.append(f"""
+        <h2>4. Verificação de Serviço (ELS)</h2>
+        <div class="formula-block">
+            <h4>a. Flecha Máxima Atuante (δ_max)</h4>
+            <p class="formula">$$ \\delta_{{max}} = {res_flecha['flecha_max']:.2f} \\, cm $$</p>
+            <h4>b. Flecha Limite (δ_lim)</h4>
+            <p class="formula">$$ \\delta_{{lim}} = \\frac{{L}}{{{Config.LIMITE_FLECHA_TOTAL}}} = \\frac{{{L:.2f}}}{{{Config.LIMITE_FLECHA_TOTAL}}} = {res_flecha['flecha_limite']:.2f} \\, cm $$</p>
+        </div>
+        """)
+        html_parts.append(_build_verification_block_html("Verificação da Flecha", res_flecha['flecha_max'], "\\delta_{max}", res_flecha['flecha_limite'], "\\delta_{lim}", res_flecha['eficiencia'], res_flecha['status'], "cm"))
+        
+    return "".join(html_parts)
 
 def _add_verification_details(title, details_dict):
     html = f"<h4>{title}</h4><div class='formula-block'>"
@@ -497,8 +537,9 @@ def _calcular_mrdx_fla(props, fy):
             Mrdx = (1 / Config.GAMMA_A1) * (Mp - termo_interp)
             detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Alma Semicompacta)', 'symbol': 'M_{rd}', 'formula': 'M_{rd} = \\frac{1}{\\gamma_{a1}} [M_p - (M_p - M_r) (\\frac{\\lambda - \\lambda_p}{\\lambda_r - \\lambda_p})]', 'valores': {'M_p': Mp, 'M_r': Mr, '\\lambda': lambda_val, '\\lambda_p': lambda_p, '\\lambda_r': lambda_r}, 'valor': Mrdx, 'unidade': 'kN.cm'}
         else:
-            Mrdx = 0
-            detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Alma Esbelta)', 'symbol': 'M_{rd}', 'formula': 'N/A', 'valores': {}, 'valor': Mrdx, 'unidade': 'kN.cm', 'ref': 'Perfil com alma esbelta. Ver Anexo H.'}
+            Mcr = (0.69 * Config.E_ACO * Wx) / (lambda_val**2) if lambda_val > 0 else 0
+            Mrdx = Mcr / Config.GAMMA_A1
+            detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Mesa Esbelta)', 'symbol': 'M_{rd}', 'formula': 'M_{rd} = \\frac{0.69 E W_x}{\\lambda^2 \\gamma_{a1}}', 'valores': {'E': Config.E_ACO, 'W_x': Wx, '\\lambda': lambda_val, '\\gamma_{a1}': Config.GAMMA_A1}, 'valor': Mrdx, 'unidade': 'kN.cm'}
     detalhes['Mrdx'] = Mrdx
     return detalhes
 
