@@ -2,8 +2,6 @@ import streamlit as st
 import pandas as pd
 import math
 
-st.set_page_config(layout="wide")
-
 # ==============================================================================
 # 1. CONFIGURAÇÕES E CONSTANTES GLOBAIS
 # ==============================================================================
@@ -32,17 +30,14 @@ PROFILE_TYPE_MAP = {
     "VS": "Vigas Soldadas"
 }
 
-st.set_page_config(page_title="Calculadora Estrutural Versátil", layout="wide")
-
 HTML_TEMPLATE_CSS = """
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Roboto+Slab:wght@400;700&display=swap');
     body { font-family: 'Roboto', sans-serif; line-height: 1.8; color: #333; background-color: #f0f4f8; }
     
-    /* ESTA É A VERSÃO CORRIGIDA QUE FORÇA A LARGURA TOTAL */
     .container { 
-        width: 100%; /* Usa 100% da largura do container que o Streamlit oferece */
-        padding: 20px; /* Mantém um pouco de espaço interno */
+        width: 100%;
+        padding: 20px;
         background-color: white; 
         border-radius: 10px; 
         box-shadow: 0 4px 20px rgba(0,0,0,0.1); 
@@ -66,10 +61,9 @@ HTML_TEMPLATE_CSS = """
     p { text-align: justify; }
 </style>
 """
-st.markdown(HTML_TEMPLATE_CSS, unsafe_allow_html=True)
 
 # ==============================================================================
-# 2. FUNÇÕES DE CÁLCULO DE ENGENHARIA (INCLUÍDAS)
+# 2. TODAS AS FUNÇÕES DE BACKEND
 # ==============================================================================
 
 def calcular_esforcos_viga(tipo_viga, L_cm, q_kn_cm=0, p_load=None):
@@ -78,67 +72,40 @@ def calcular_esforcos_viga(tipo_viga, L_cm, q_kn_cm=0, p_load=None):
     
     # Parte da carga distribuída (q)
     if q_kn_cm > 0:
-        if tipo_viga == 'Bi-apoiada':
-            msd_q = (q_kn_cm * L**2) / 8
-            vsd_q = (q_kn_cm * L) / 2
-        elif tipo_viga == 'Engastada e Livre (Balanço)':
-            msd_q = (q_kn_cm * L**2) / 2
-            vsd_q = q_kn_cm * L
-        elif tipo_viga == 'Bi-engastada':
-            msd_q = (q_kn_cm * L**2) / 12 # Momento no engaste
-            vsd_q = (q_kn_cm * L) / 2
-        elif tipo_viga == 'Engastada e Apoiada':
-            msd_q = (q_kn_cm * L**2) / 8
-            vsd_q = (5 * q_kn_cm * L) / 8
+        if tipo_viga == 'Bi-apoiada': msd_q, vsd_q = (q_kn_cm * L**2) / 8, (q_kn_cm * L) / 2
+        elif tipo_viga == 'Engastada e Livre (Balanço)': msd_q, vsd_q = (q_kn_cm * L**2) / 2, q_kn_cm * L
+        elif tipo_viga == 'Bi-engastada': msd_q, vsd_q = (q_kn_cm * L**2) / 12, (q_kn_cm * L) / 2
+        elif tipo_viga == 'Engastada e Apoiada': msd_q, vsd_q = (q_kn_cm * L**2) / 8, (5 * q_kn_cm * L) / 8
             
     # Parte da carga pontual (P)
     if p_load:
         P, x = p_load # P em kN, x em cm
-        a = x
-        b = L - a
-        if tipo_viga == 'Bi-apoiada':
-            msd_p = (P * a * b) / L
-            vsd_p = max((P * b) / L, (P * a) / L)
-        elif tipo_viga == 'Engastada e Livre (Balanço)':
-            msd_p = P * a # Momento no engaste
-            vsd_p = P
-        elif tipo_viga == 'Bi-engastada':
-            msd_p = max((P * a * b**2) / L**2, (P * a**2 * b) / L**2)
-            vsd_p = max((P * b**2 * (3*a + b)) / L**3, (P * a**2 * (a + 3*b)) / L**3)
-        elif tipo_viga == 'Engastada e Apoiada':
-            msd_p = max((P*b*(L**2 - b**2))/(2*L**2), (P*a*(3*L**2 - a**2))/(2*L**3)*a)
-            vsd_p = max(P*b*(3*L**2-b**2)/(2*L**3), P*a*(3*L-a)/(2*L**2))
+        a, b = x, L - x
+        if tipo_viga == 'Bi-apoiada': msd_p, vsd_p = (P * a * b) / L, max((P * b) / L, (P * a) / L)
+        elif tipo_viga == 'Engastada e Livre (Balanço)': msd_p, vsd_p = P * a, P
+        elif tipo_viga == 'Bi-engastada': msd_p, vsd_p = max((P * a * b**2) / L**2, (P * a**2 * b) / L**2), max((P * b**2 * (3*a + b)) / L**3, (P * a**2 * (a + 3*b)) / L**3)
+        elif tipo_viga == 'Engastada e Apoiada': msd_p, vsd_p = max((P*b*(L**2 - b**2))/(2*L**2), (P*a*(3*L**2 - a**2))/(2*L**3)*a), max(P*b*(3*L**2-b**2)/(2*L**3), P*a*(3*L-a)/(2*L**2))
 
-    msd_total = msd_q + msd_p
-    vsd_total = vsd_q + vsd_p
-    
-    return msd_total, vsd_total
+    return msd_q + msd_p, vsd_q + vsd_p
 
 def calcular_flecha_maxima(tipo_viga, L_cm, E, Ix, q_serv_kn_cm=0, p_serv_load=None):
     delta_q, delta_p = 0, 0
     L = L_cm
     
     if q_serv_kn_cm > 0:
-        if tipo_viga == 'Bi-apoiada':
-            delta_q = (5 * q_serv_kn_cm * L**4) / (384 * E * Ix)
-        elif tipo_viga == 'Engastada e Livre (Balanço)':
-            delta_q = (q_serv_kn_cm * L**4) / (8 * E * Ix)
-        elif tipo_viga == 'Bi-engastada':
-            delta_q = (q_serv_kn_cm * L**4) / (384 * E * Ix)
-        elif tipo_viga == 'Engastada e Apoiada':
-            delta_q = (q_serv_kn_cm * L**4) / (185 * E * Ix)
+        if tipo_viga == 'Bi-apoiada': delta_q = (5 * q_serv_kn_cm * L**4) / (384 * E * Ix)
+        elif tipo_viga == 'Engastada e Livre (Balanço)': delta_q = (q_serv_kn_cm * L**4) / (8 * E * Ix)
+        elif tipo_viga == 'Bi-engastada': delta_q = (q_serv_kn_cm * L**4) / (384 * E * Ix)
+        elif tipo_viga == 'Engastada e Apoiada': delta_q = (q_serv_kn_cm * L**4) / (185 * E * Ix)
             
     if p_serv_load:
         P, x = p_serv_load
-        a = x
-        b = L-a
+        a, b = x, L-a
         if tipo_viga == 'Bi-apoiada':
             if a >= L/2: a,b = b,a 
             delta_p = (P * a * (L**2 - a**2)**1.5) / (9 * math.sqrt(3) * E * Ix * L) if a < L else 0
-        elif tipo_viga == 'Engastada e Livre (Balanço)':
-            delta_p = (P * a**2 * (3*L - a)) / (6 * E * Ix)
-        elif tipo_viga == 'Bi-engastada':
-            delta_p = (P * a**3 * b**3) / (3 * E * Ix * L**3)
+        elif tipo_viga == 'Engastada e Livre (Balanço)': delta_p = (P * a**2 * (3*L - a)) / (6 * E * Ix)
+        elif tipo_viga == 'Bi-engastada': delta_p = (P * a**3 * b**3) / (3 * E * Ix * L**3)
         elif tipo_viga == 'Engastada e Apoiada':
             if a < b: delta_p = (P * a**2 * b**2 * (3*L+a))/(12*E*Ix*L**3)
             else: delta_p = (P * b * (L**2 - b**2)**1.5)/(9*math.sqrt(3)*E*Ix*L)
@@ -156,124 +123,14 @@ def get_profile_properties(profile_series):
     for key in ['d', 'bf', 'tw', 'tf', 'h']: props[key] /= 10.0
     return props
 
-# ==============================================================================
-# 3. GERAÇÃO DO MEMORIAL DE CÁLCULO (INCLUÍDO)
-# ==============================================================================
 def gerar_memorial_completo(perfil_nome, perfil_tipo, resultados):
-    html = f"""
-    <!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Memorial de Cálculo - {perfil_nome}</title>{HTML_TEMPLATE_CSS}<script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML"></script></head><body><div class="container"><h1>Memorial de Cálculo Estrutural</h1><h2>Perfil Metálico: {perfil_nome} ({perfil_tipo})</h2><p style="text-align:center; font-style:italic;">Cálculos baseados na norma: <b>{Config.NOME_NORMA}</b></p><h3>1. Resumo Final das Verificações</h3>{resultados['resumo_html']}{resultados['passo_a_passo_html']}</div></body></html>"""
+    html = f"""<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Memorial de Cálculo - {perfil_nome}</title>{HTML_TEMPLATE_CSS}<script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML"></script></head><body><div class="container"><h1>Memorial de Cálculo Estrutural</h1><h2>Perfil Metálico: {perfil_nome} ({perfil_tipo})</h2><p style="text-align:center; font-style:italic;">Cálculos baseados na norma: <b>{Config.NOME_NORMA}</b></p><h3>1. Resumo Final das Verificações</h3>{resultados['resumo_html']}{resultados['passo_a_passo_html']}</div></body></html>"""
     return html
 
 def _build_verification_block_html(title, solicitante, s_symbol, resistente, r_symbol, eficiencia, status, unit):
     status_class = "pass" if status == "APROVADO" else "fail"
     comp_symbol = "\\le" if status == "APROVADO" else ">"
     return f"""<h4>{title}</h4><div class="formula-block"><p class="formula">$$ {s_symbol} = {solicitante:.2f} \\, {unit} $$</p><p class="formula">$$ {r_symbol} = {resistente:.2f} \\, {unit} $$</p><p class="formula">$$ \\text{{Verificação: }} {s_symbol} {comp_symbol} {r_symbol} $$</p><p class="formula">$$ \\text{{Eficiência}} = \\frac{{{s_symbol}}}{{{r_symbol}}} = \\frac{{{solicitante:.2f}}}{{{resistente:.2f}}} = {eficiencia:.1f}\% $$</p><div class="final-status {status_class}">{status}</div></div>"""
-
-# ==============================================================================
-# 4. APLICAÇÃO PRINCIPAL STREAMLIT (COM AS ALTERAÇÕES)
-# ==============================================================================
-
-# NOVA FUNÇÃO DE CARREGAMENTO AUTOMÁTICO
-@st.cache_data
-def load_data_from_local_file():
-    """
-    Esta função carrega os dados diretamente do arquivo 'perfis.xlsx' 
-    que está na mesma pasta do projeto.
-    """
-    try:
-        # O nome do arquivo Excel deve ser exatamente este
-        caminho_arquivo_excel = 'perfis.xlsx' 
-        return pd.read_excel(caminho_arquivo_excel, sheet_name=None)
-    except FileNotFoundError:
-        st.error(f"Erro: Arquivo '{caminho_arquivo_excel}' não foi encontrado. Verifique se ele está no mesmo repositório do GitHub que o arquivo 'app.py'.")
-        return None
-    except Exception as e:
-        st.error(f"Erro ao ler o arquivo Excel: {e}")
-        return None
-
-def main():
-    st.title("🏛️ Calculadora Estrutural Versátil")
-    st.caption(f"Utilizando a norma: {Config.NOME_NORMA}")
-
-    # CARREGAMENTO AUTOMÁTICO DOS DADOS
-    all_sheets = load_data_from_local_file()
-
-    # Para a aplicação se os dados não puderem ser carregados
-    if not all_sheets:
-        st.stop()
-
-    # --- ENTRADA DE DADOS NA SIDEBAR ---
-    with st.sidebar:
-        st.header("⚙️ Parâmetros de Entrada")
-        
-        st.header("1. Modelo da Viga")
-        tipo_viga = st.selectbox("Tipo de Viga:", ('Bi-apoiada', 'Engastada e Livre (Balanço)', 'Bi-engastada', 'Engastada e Apoiada'))
-        L_cm = st.number_input("Comprimento da Viga (L, cm)", 10.0, value=500.0, step=10.0)
-
-        st.header("2. Modo de Carregamento")
-        input_mode = st.radio("Selecione o modo de entrada dos esforços:", ("Calcular a partir de Cargas na Viga", "Inserir Esforços Manualmente"), horizontal=True, label_visibility="collapsed")
-
-        Msd, Vsd, q_servico_kn_cm, p_load_serv = 0, 0, 0, None
-
-        if input_mode == "Calcular a partir de Cargas na Viga":
-            with st.container(border=True):
-                st.subheader("Carga Distribuída (q)")
-                carga_area = st.number_input("Carga Distribuída (serviço, kN/m²)", 0.0, value=4.0, step=0.5)
-                larg_inf = st.number_input("Largura de Influência (m)", 0.0, value=5.0, step=0.5)
-                
-                st.subheader("Carga Pontual (P)")
-                add_p_load = st.checkbox("Adicionar Carga Pontual (ex: parede)")
-                if add_p_load:
-                    p_serv_kn = st.number_input("Valor da Carga P (serviço, kN)", min_value=0.0, value=10.0)
-                    p_pos_cm = st.number_input("Posição da Carga P (x, cm do apoio esquerdo)", min_value=0.0, max_value=L_cm, value=L_cm/2)
-                    p_load_serv = (p_serv_kn, p_pos_cm)
-
-                gamma_f = st.number_input("Coeficiente de Majoração de Cargas (γf)", 1.0, value=1.4, step=0.1)
-
-                q_servico_kn_cm = (carga_area * larg_inf) / 100.0
-                q_ult_kn_cm = q_servico_kn_cm * gamma_f
-                p_load_ult = (p_load_serv[0] * gamma_f, p_load_serv[1]) if p_load_serv else None
-                
-                Msd, Vsd = calcular_esforcos_viga(tipo_viga, L_cm, q_ult_kn_cm, p_load_ult)
-
-        else: # Inserir Esforços Manualmente
-             with st.container(border=True):
-                st.warning("No modo manual, a verificação de flecha (ELS) não é realizada.")
-                msd_input = st.number_input("Momento Solicitante de Cálculo (Msd, kNm)", min_value=0.0, value=100.0)
-                Msd = msd_input * 100 # Convertendo para kN.cm
-                Vsd = st.number_input("Força Cortante Solicitante de Cálculo (Vsd, kN)", min_value=0.0, value=50.0)
-
-        st.header("3. Parâmetros Gerais do Aço")
-        fy_aco = st.number_input("Tensão de Escoamento (fy, kN/cm²)", 20.0, 50.0, 34.5, 0.5)
-        Lb_projeto = st.number_input("Comprimento Destravado (Lb, cm)", 10.0, value=L_cm, step=10.0)
-        Cb_projeto = st.number_input("Fator de Modificação (Cb)", 1.0, 3.0, 1.10)
-        
-        st.header("4. Modo de Análise")
-        analysis_mode = st.radio("Selecione o modo de análise:", ("Análise em Lote com Otimização", "Memorial Detalhado de um Perfil"), horizontal=True, label_visibility="collapsed")
-    
-    # --- Lógica de execução da análise (agora fora do 'with st.sidebar:') ---
-    
-    display_names = [PROFILE_TYPE_MAP.get(name, name) for name in all_sheets.keys()]
-    reverse_name_map = {v: k for k, v in PROFILE_TYPE_MAP.items()}
-
-    if analysis_mode == "Memorial Detalhado de um Perfil":
-        st.header("🔍 Memorial de Cálculo Detalhado")
-        selected_display_name = st.selectbox("Selecione o Tipo de Perfil:", display_names)
-        sheet_name = reverse_name_map.get(selected_display_name, selected_display_name)
-        df_selecionado = all_sheets[sheet_name]
-        perfil_selecionado_nome = st.selectbox("Selecione o Perfil Específico:", df_selecionado['Bitola (mm x kg/m)'])
-        if st.button("Gerar Memorial Completo", type="primary", use_container_width=True):
-            run_detailed_analysis(df_selecionado, perfil_selecionado_nome, selected_display_name, fy_aco, Lb_projeto, Cb_projeto, L_cm, Msd, Vsd, q_servico_kn_cm, p_load_serv, tipo_viga, input_mode)
-
-    elif analysis_mode == "Análise em Lote com Otimização":
-        st.header("📊 Pré-dimensionamento e Análise por Categoria")
-        st.info("Analisa todos os perfis e organiza os resultados em abas por tipo, destacando a opção mais leve de cada categoria.")
-        if st.button("Iniciar Análise Otimizada", type="primary", use_container_width=True):
-            run_batch_analysis(all_sheets, fy_aco, Lb_projeto, Cb_projeto, L_cm, Msd, Vsd, q_servico_kn_cm, p_load_serv, tipo_viga, input_mode)
-
-# ==============================================================================
-# 5. FUNÇÕES DE ORQUESTRAÇÃO E ANÁLISE (INCLUÍDAS)
-# ==============================================================================
 
 def run_detailed_analysis(df, perfil_nome, perfil_tipo_display, fy, Lb, Cb, L, Msd, Vsd, q_serv_kn_cm, p_serv_load, tipo_viga, input_mode):
     with st.spinner(f"Gerando análise completa para {perfil_nome}..."):
@@ -363,7 +220,7 @@ def perform_all_checks(props, fy, Lb, Cb, L, Msd, Vsd, q_serv_kn_cm, p_serv_load
     res_cisalhamento = {'Vrd': Vrd, 'eficiencia': eficiencia_cisalhamento, 'status': status_cisalhamento}
 
     flecha_max, flecha_limite, eficiencia_flecha, status_flecha = 0, 0, 0, "N/A"
-    if input_mode == "Calcular a partir de Cargas na Viga":
+    if input_mode == "Calcular a partir de Cargas":
         flecha_max = calcular_flecha_maxima(tipo_viga, L, Config.E_ACO, props['Ix'], q_serv_kn_cm, p_serv_load)
         flecha_limite = L / Config.LIMITE_FLECHA_TOTAL if L > 0 else 0
         eficiencia_flecha = (flecha_max / flecha_limite) * 100 if flecha_limite > 0 else float('inf')
@@ -392,7 +249,7 @@ def build_step_by_step_html(L, Msd, Vsd, res_flexao, res_cisalhamento, res_flech
     html += f"<h3>3.2 Cálculo da Resistência ao Cisalhamento (Vrd)</h3>"
     html += _add_verification_details("Força Cortante (VRd)", res_vrd)
     html += _build_verification_block_html("Verificação ao Cisalhamento", Vsd, "V_{sd}", res_cisalhamento['Vrd'], "V_{rd}", res_cisalhamento['eficiencia'], res_cisalhamento['status'], "kN")
-    if input_mode == "Calcular a partir de Cargas na Viga":
+    if input_mode == "Calcular a partir de Cargas":
         html += f"""<h2>4. Verificação de Serviço (ELS)</h2><div class="formula-block"><h4>a. Flecha Máxima Atuante (δ_max)</h4><p class="formula">$$ \\delta_{{max}} = {res_flecha['flecha_max']:.2f} \\, cm $$</p><h4>b. Flecha Limite (δ_lim)</h4><p class="formula">$$ \\delta_{{lim}} = \\frac{{L}}{{{Config.LIMITE_FLECHA_TOTAL}}} = \\frac{{{L:.2f}}}{{{Config.LIMITE_FLECHA_TOTAL}}} = {res_flecha['flecha_limite']:.2f} \\, cm $$</p></div>"""
         html += _build_verification_block_html("Verificação da Flecha", res_flecha['flecha_max'], "\\delta_{max}", res_flecha['flecha_limite'], "\\delta_{lim}", res_flecha['eficiencia'], res_flecha['status'], "cm")
     return html
@@ -421,101 +278,182 @@ def _calcular_mrdx_flt(props, Lb, Cb, fy):
         Mrdx = Mp / Config.GAMMA_A1
         detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Plastificação)', 'symbol': 'M_{rd}', 'formula': 'M_{rd} = \\frac{M_p}{\\gamma_{a1}}', 'valores': {'M_p': Mp, '\\gamma_{a1}': Config.GAMMA_A1}, 'valor': Mrdx, 'unidade': 'kN.cm', 'ref': 'Eq. F-1'}
     else:
-        sigma_r = Config.FATOR_SIGMA_R * fy
-        Mr = (fy - sigma_r) * Wx
-        beta1 = ((fy - sigma_r) * Wx) / (Config.E_ACO * J) if Config.E_ACO * J != 0 else 0
+        sigma_r = Config.FATOR_SIGMA_R * fy; Mr = (fy - sigma_r) * Wx; beta1 = ((fy - sigma_r) * Wx) / (Config.E_ACO * J) if Config.E_ACO * J != 0 else 0
         lambda_r = float('inf')
         if ry > 0 and beta1 > 0 and J > 0 and Cw > 0 and Iy > 0:
-            termo_sqrt1 = 1 + (27 * Cw * (beta1**2) / Iy)
-            termo_sqrt2 = 1 + math.sqrt(termo_sqrt1) if termo_sqrt1 >= 0 else 1
+            termo_sqrt1 = 1 + (27 * Cw * (beta1**2) / Iy); termo_sqrt2 = 1 + math.sqrt(termo_sqrt1) if termo_sqrt1 >= 0 else 1
             lambda_r = (1.38 * math.sqrt(Iy * J) / (ry * beta1 * J)) * math.sqrt(termo_sqrt2)
         detalhes['lambda_r'] = {'desc': 'Esbeltez Limite (Inelástica)', 'symbol': '\\lambda_r', 'formula': '\\lambda_r = \\frac{1.38 \\sqrt{I_y \\cdot J}}{r_y \\cdot J \\cdot \\beta_1} \\sqrt{1 + \\sqrt{1 + \\frac{27 \\cdot C_w \\cdot \\beta_1^2}{I_y}}}', 'valores': {'I_y': Iy, 'J': J, 'r_y': ry, '\\beta_1': beta1, 'C_w': Cw}, 'valor': lambda_r, 'ref': 'Eq. F-3'}
-        if lambda_val <= lambda_r:
-            termo_interp = (Mp - Mr) * ((lambda_val - lambda_p) / (lambda_r - lambda_p))
-            Mrdx_calc = (Cb / Config.GAMMA_A1) * (Mp - termo_interp)
-            Mrdx = min(Mrdx_calc, Mp / Config.GAMMA_A1)
+        if lambda_r > lambda_p and lambda_val <= lambda_r:
+            termo_interp = (Mp - Mr) * ((lambda_val - lambda_p) / (lambda_r - lambda_p)); Mrdx_calc = (Cb / Config.GAMMA_A1) * (Mp - termo_interp); Mrdx = min(Mrdx_calc, Mp / Config.GAMMA_A1)
             detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Inelástico)', 'symbol': 'M_{rd}', 'formula': 'M_{rd} = \\frac{C_b}{\\gamma_{a1}} [M_p - (M_p - M_r) (\\frac{\\lambda - \\lambda_p}{\\lambda_r - \\lambda_p})] \\le \\frac{M_p}{\\gamma_{a1}}', 'valores': {'C_b': Cb, 'M_p': Mp, 'M_r': Mr, '\\lambda': lambda_val, '\\lambda_p': lambda_p, '\\lambda_r': lambda_r}, 'valor': Mrdx, 'unidade': 'kN.cm', 'ref': 'Eq. F-1'}
         else:
             Mcr = 0
             if Lb**2 > 0 and Iy > 0 and Cw > 0 and J > 0:
-                Mcr_termo1 = (Cb * (math.pi**2) * Config.E_ACO * Iy) / (Lb**2)
-                Mcr_termo2 = math.sqrt((Cw/Iy) * (1 + (0.039 * J * (Lb**2) / Cw)))
-                Mcr = Mcr_termo1 * Mcr_termo2
+                Mcr = ((Cb * (math.pi**2) * Config.E_ACO * Iy) / (Lb**2)) * math.sqrt((Cw/Iy) * (1 + (0.039 * J * (Lb**2) / Cw)))
             Mrdx = Mcr / Config.GAMMA_A1
             detalhes['Mcr'] = {'desc': 'Momento Crítico Elástico', 'symbol': 'M_{cr}', 'formula': 'M_{cr} = \\frac{C_b \\pi^2 E I_y}{L_b^2} \\sqrt{\\frac{C_w}{I_y}(1 + 0.039 \\frac{J L_b^2}{C_w})}', 'valores': {'C_b': Cb, 'E': Config.E_ACO, 'I_y': Iy, 'L_b': Lb, 'C_w': Cw, 'J': J}, 'valor': Mcr, 'unidade': 'kN.cm', 'ref': 'Eq. F-4'}
             detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Elástico)', 'symbol': 'M_{rd}', 'formula': 'M_{rd} = \\frac{M_{cr}}{\\gamma_{a1}}', 'valores': {'M_{cr}': Mcr, '\\gamma_{a1}': Config.GAMMA_A1}, 'valor': Mrdx, 'unidade': 'kN.cm', 'ref': 'Eq. F-1'}
-    detalhes['Mrdx'] = Mrdx
-    return detalhes
+    detalhes['Mrdx'] = Mrdx; return detalhes
 
 def _calcular_mrdx_flm(props, fy):
     bf, tf, Zx, Wx = props['bf'], props['tf'], props['Zx'], props['Wx']
-    Mp = Zx * fy
-    lambda_val = (bf / 2) / tf if tf > 0 else float('inf')
+    Mp = Zx * fy; lambda_val = (bf / 2) / tf if tf > 0 else float('inf')
     lambda_p = Config.FATOR_LAMBDA_P_FLM * math.sqrt(Config.E_ACO / fy)
     detalhes = {'lambda': {'desc': 'Esbeltez da Mesa', 'symbol': '\\lambda', 'formula': '\\lambda = \\frac{b_f/2}{t_f}', 'valores': {'b_f': bf, 't_f': tf}, 'valor': lambda_val},'lambda_p': {'desc': 'Esbeltez Limite (Plástica)', 'symbol': '\\lambda_p', 'formula': '\\lambda_p = 0.38 \\sqrt{\\frac{E}{f_y}}', 'valores': {'E': Config.E_ACO, 'f_y': fy}, 'valor': lambda_p, 'ref': 'Tabela F.1'}}
     if lambda_val <= lambda_p:
-        Mrdx = Mp / Config.GAMMA_A1
-        detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Mesa Compacta)', 'symbol': 'M_{rd}', 'formula': 'M_{rd} = \\frac{M_p}{\\gamma_{a1}}', 'valores': {'M_p': Mp, '\\gamma_{a1}': Config.GAMMA_A1}, 'valor': Mrdx, 'unidade': 'kN.cm'}
+        Mrdx = Mp / Config.GAMMA_A1; detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Mesa Compacta)', 'symbol': 'M_{rd}', 'formula': 'M_{rd} = \\frac{M_p}{\\gamma_{a1}}', 'valores': {'M_p': Mp, '\\gamma_{a1}': Config.GAMMA_A1}, 'valor': Mrdx, 'unidade': 'kN.cm'}
     else:
         sigma_r = Config.FATOR_SIGMA_R * fy
         lambda_r = Config.FATOR_LAMBDA_R_FLM_LAMINADO * math.sqrt(Config.E_ACO / (fy - sigma_r)) if (fy - sigma_r) > 0 else float('inf')
-        Mr = (fy - sigma_r) * Wx
-        detalhes['lambda_r'] = {'desc': 'Esbeltez Limite (Inelástica)', 'symbol': '\\lambda_r', 'formula': '\\lambda_r = 0.83 \\sqrt{\\frac{E}{f_y - f_r}}', 'valores': {'E': Config.E_ACO, 'f_y': fy, 'f_r': sigma_r}, 'valor': lambda_r, 'ref': 'Tabela F.1'}
-        if lambda_val <= lambda_r:
-            termo_interp = (Mp - Mr) * ((lambda_val - lambda_p) / (lambda_r - lambda_p))
-            Mrdx = (1 / Config.GAMMA_A1) * (Mp - termo_interp)
+        Mr = (fy - sigma_r) * Wx; detalhes['lambda_r'] = {'desc': 'Esbeltez Limite (Inelástica)', 'symbol': '\\lambda_r', 'formula': '\\lambda_r = 0.83 \\sqrt{\\frac{E}{f_y - f_r}}', 'valores': {'E': Config.E_ACO, 'f_y': fy, 'f_r': sigma_r}, 'valor': lambda_r, 'ref': 'Tabela F.1'}
+        if lambda_r > lambda_p and lambda_val <= lambda_r:
+            Mrdx = (1 / Config.GAMMA_A1) * (Mp - ((Mp - Mr) * ((lambda_val - lambda_p) / (lambda_r - lambda_p))))
             detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Mesa Semicompacta)', 'symbol': 'M_{rd}', 'formula': 'M_{rd} = \\frac{1}{\\gamma_{a1}} [M_p - (M_p - M_r) (\\frac{\\lambda - \\lambda_p}{\\lambda_r - \\lambda_p})]', 'valores': {'M_p': Mp, 'M_r': Mr, '\\lambda': lambda_val, '\\lambda_p': lambda_p, '\\lambda_r': lambda_r}, 'valor': Mrdx, 'unidade': 'kN.cm'}
         else:
-            Mcr = (0.69 * Config.E_ACO * Wx) / (lambda_val**2) if lambda_val > 0 else 0
-            Mrdx = Mcr / Config.GAMMA_A1
+            Mrdx = ((0.69 * Config.E_ACO * Wx) / (lambda_val**2)) / Config.GAMMA_A1 if lambda_val > 0 else 0
             detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Mesa Esbelta)', 'symbol': 'M_{rd}', 'formula': 'M_{rd} = \\frac{0.69 E W_x}{\\lambda^2 \\gamma_{a1}}', 'valores': {'E': Config.E_ACO, 'W_x': Wx, '\\lambda': lambda_val, '\\gamma_{a1}': Config.GAMMA_A1}, 'valor': Mrdx, 'unidade': 'kN.cm'}
-    detalhes['Mrdx'] = Mrdx
-    return detalhes
+    detalhes['Mrdx'] = Mrdx; return detalhes
 
 def _calcular_mrdx_fla(props, fy):
     h, tw, Zx, Wx = props['h'], props['tw'], props['Zx'], props['Wx']
-    Mp = Zx * fy
-    lambda_val = h / tw if tw > 0 else float('inf')
+    Mp = Zx * fy; lambda_val = h / tw if tw > 0 else float('inf')
     lambda_p = Config.FATOR_LAMBDA_P_FLA * math.sqrt(Config.E_ACO / fy)
     detalhes = {'lambda': {'desc': 'Esbeltez da Alma', 'symbol': '\\lambda', 'formula': '\\lambda = \\frac{h}{t_w}', 'valores': {'h': h, 't_w': tw}, 'valor': lambda_val},'lambda_p': {'desc': 'Esbeltez Limite (Plástica)', 'symbol': '\\lambda_p', 'formula': '\\lambda_p = 3.76 \\sqrt{\\frac{E}{f_y}}', 'valores': {'E': Config.E_ACO, 'f_y': fy}, 'valor': lambda_p, 'ref': 'Tabela F.1'}}
     if lambda_val <= lambda_p:
-        Mrdx = Mp / Config.GAMMA_A1
-        detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Alma Compacta)', 'symbol': 'M_{rd}', 'formula': 'M_{rd} = \\frac{M_p}{\\gamma_{a1}}', 'valores': {'M_p': Mp, '\\gamma_{a1}': Config.GAMMA_A1}, 'valor': Mrdx, 'unidade': 'kN.cm'}
+        Mrdx = Mp / Config.GAMMA_A1; detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Alma Compacta)', 'symbol': 'M_{rd}', 'formula': 'M_{rd} = \\frac{M_p}{\\gamma_{a1}}', 'valores': {'M_p': Mp, '\\gamma_{a1}': Config.GAMMA_A1}, 'valor': Mrdx, 'unidade': 'kN.cm'}
     else:
-        lambda_r = Config.FATOR_LAMBDA_R_FLA * math.sqrt(Config.E_ACO / fy)
-        Mr = fy * Wx
+        lambda_r = Config.FATOR_LAMBDA_R_FLA * math.sqrt(Config.E_ACO / fy); Mr = fy * Wx
         detalhes['lambda_r'] = {'desc': 'Esbeltez Limite (Inelástica)', 'symbol': '\\lambda_r', 'formula': '\\lambda_r = 5.70 \\sqrt{\\frac{E}{f_y}}', 'valores': {'E': Config.E_ACO, 'f_y': fy}, 'valor': lambda_r, 'ref': 'Tabela F.1'}
-        if lambda_val <= lambda_r:
-            termo_interp = (Mp - Mr) * ((lambda_val - lambda_p) / (lambda_r - lambda_p))
-            Mrdx = (1 / Config.GAMMA_A1) * (Mp - termo_interp)
+        if lambda_r > lambda_p and lambda_val <= lambda_r:
+            Mrdx = (1 / Config.GAMMA_A1) * (Mp - (Mp - Mr) * ((lambda_val - lambda_p) / (lambda_r - lambda_p)))
             detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Alma Semicompacta)', 'symbol': 'M_{rd}', 'formula': 'M_{rd} = \\frac{1}{\\gamma_{a1}} [M_p - (M_p - M_r) (\\frac{\\lambda - \\lambda_p}{\\lambda_r - \\lambda_p})]', 'valores': {'M_p': Mp, 'M_r': Mr, '\\lambda': lambda_val, '\\lambda_p': lambda_p, '\\lambda_r': lambda_r}, 'valor': Mrdx, 'unidade': 'kN.cm'}
         else:
-            Mrdx = 0
-            detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Alma Esbelta)', 'symbol': 'M_{rd}', 'formula': 'N/A', 'valores': {}, 'valor': Mrdx, 'unidade': 'kN.cm', 'ref': 'Perfil com alma esbelta. Ver Anexo H.'}
-    detalhes['Mrdx'] = Mrdx
-    return detalhes
+            Mrdx = 0; detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Alma Esbelta)', 'symbol': 'M_{rd}', 'formula': 'N/A', 'valores': {}, 'valor': Mrdx, 'unidade': 'kN.cm', 'ref': 'Perfil com alma esbelta. Ver Anexo H.'}
+    detalhes['Mrdx'] = Mrdx; return detalhes
 
 def _calcular_vrd(props, fy):
     d, h, tw = props['d'], props['h'], props['tw']
-    Vpl = Config.FATOR_VP * d * tw * fy
-    lambda_val = h / tw if tw > 0 else float('inf')
-    kv = Config.KV_ALMA_SEM_ENRIJECEDORES
+    Vpl = Config.FATOR_VP * d * tw * fy; lambda_val = h / tw if tw > 0 else float('inf'); kv = Config.KV_ALMA_SEM_ENRIJECEDORES
     lambda_p = Config.FATOR_LAMBDA_P_VRD * math.sqrt((kv * Config.E_ACO) / fy)
-    detalhes = {'Vpl': {'desc': 'Força Cortante de Plastificação', 'symbol': 'V_{pl}', 'formula': 'V_{pl} = 0.60 \\cdot d_{perfil} \\cdot t_{w,alma} \\cdot f_{y,aco}', 'valores': {'d_{perfil}': d, 't_{w,alma}': tw, 'f_{y,aco}': fy}, 'valor': Vpl, 'unidade': 'kN', 'ref': 'Eq. 5.23 / G.2.1(a)'}, 'lambda': {'desc': 'Esbeltez da Alma (Cisalhamento)', 'symbol': '\\lambda', 'formula': '\\lambda = \\frac{h}{t_w}', 'valores': {'h': h, 't_w': tw}, 'valor': lambda_val},'lambda_p': {'desc': 'Esbeltez Limite (Plástica)', 'symbol': '\\lambda_p', 'formula': '\\lambda_p = 1.10 \\sqrt{\\frac{k_v \\cdot E}{f_y}}', 'valores': {'k_v': kv, 'E': Config.E_ACO, 'f_y': fy}, 'valor': lambda_p, 'ref': 'Eq. 5.25 / G-4'}}
+    detalhes = {'Vpl': {'desc': 'Força Cortante de Plastificação', 'symbol': 'V_{pl}', 'formula': 'V_{pl} = 0.60 \\cdot d_{perfil} \\cdot t_{w,alma} \\cdot f_{y,aco}', 'valores': {'d_perfil': d, 't_{w,alma}': tw, 'f_{y,aco}': fy}, 'valor': Vpl, 'unidade': 'kN', 'ref': 'Eq. 5.23 / G.2.1(a)'}, 'lambda': {'desc': 'Esbeltez da Alma (Cisalhamento)', 'symbol': '\\lambda', 'formula': '\\lambda = \\frac{h}{t_w}', 'valores': {'h': h, 't_w': tw}, 'valor': lambda_val},'lambda_p': {'desc': 'Esbeltez Limite (Plástica)', 'symbol': '\\lambda_p', 'formula': '\\lambda_p = 1.10 \\sqrt{\\frac{k_v \\cdot E}{f_y}}', 'valores': {'k_v': kv, 'E': Config.E_ACO, 'f_y': fy}, 'valor': lambda_p, 'ref': 'Eq. 5.25 / G-4'}}
     if lambda_val <= lambda_p:
-        Vrd = Vpl / Config.GAMMA_A1
-        detalhes['Vrd_calc'] = {'desc': 'Cortante Resistente (Escoamento)', 'symbol': 'V_{rd}', 'formula': 'V_{rd} = \\frac{V_{pl}}{\\gamma_{a1}}', 'valores': {'V_{pl}': Vpl, '\\gamma_{a1}': Config.GAMMA_A1}, 'valor': Vrd, 'unidade': 'kN', 'ref': 'Eq. 5.24 / G-3a'}
+        Vrd = Vpl / Config.GAMMA_A1; detalhes['Vrd_calc'] = {'desc': 'Cortante Resistente (Escoamento)', 'symbol': 'V_{rd}', 'formula': 'V_{rd} = \\frac{V_{pl}}{\\gamma_{a1}}', 'valores': {'V_{pl}': Vpl, '\\gamma_{a1}': Config.GAMMA_A1}, 'valor': Vrd, 'unidade': 'kN', 'ref': 'Eq. 5.24 / G-3a'}
     else:
         lambda_r = Config.FATOR_LAMBDA_R_VRD * math.sqrt((kv * Config.E_ACO) / fy)
         detalhes['lambda_r'] = {'desc': 'Esbeltez Limite (Inelástica)', 'symbol': '\\lambda_r', 'formula': '\\lambda_r = 1.37 \\sqrt{\\frac{k_v \\cdot E}{f_y}}', 'valores': {'k_v': kv, 'E': Config.E_ACO, 'f_y': fy}, 'valor': lambda_r, 'ref': 'Eq. 5.27 / G-4'}
-        if lambda_val <= lambda_r:
+        if lambda_r > lambda_p and lambda_val <= lambda_r:
             Vrd = (lambda_p / lambda_val) * (Vpl / Config.GAMMA_A1) if lambda_val > 0 else 0
             detalhes['Vrd_calc'] = {'desc': 'Cortante Resistente (Inelástico)', 'symbol': 'V_{rd}', 'formula': 'V_{rd} = \\frac{\\lambda_p}{\\lambda} \\frac{V_{pl}}{\\gamma_{a1}}', 'valores': {'\\lambda_p': lambda_p, '\\lambda': lambda_val, 'V_{pl}': Vpl, '\\gamma_{a1}': Config.GAMMA_A1}, 'valor': Vrd, 'unidade': 'kN', 'ref': 'Eq. 5.26 / G-3b'}
         else:
             Vrd = (Config.FATOR_VRD_ELASTICO * (lambda_p / lambda_val)**2) * (Vpl / Config.GAMMA_A1) if lambda_val > 0 else 0
             detalhes['Vrd_calc'] = {'desc': 'Cortante Resistente (Elástico)', 'symbol': 'V_{rd}', 'formula': 'V_{rd} = 1.24 (\\frac{\\lambda_p}{\\lambda})^2 \\frac{V_{pl}}{\\gamma_{a1}}', 'valores': {'\\lambda_p': lambda_p, '\\lambda': lambda_val, 'V_{pl}': Vpl, '\\gamma_{a1}': Config.GAMMA_A1}, 'valor': Vrd, 'unidade': 'kN', 'ref': 'Eq. 5.28 / G-3c'}
-    detalhes['Vrd'] = Vrd
-    return detalhes
+    detalhes['Vrd'] = Vrd; return detalhes
+
+
+# ==============================================================================
+# 3. APLICAÇÃO PRINCIPAL (UI + LÓGICA DE ABAS)
+# ==============================================================================
+
+@st.cache_data
+def load_data_from_local_file():
+    """ Carrega os dados diretamente do arquivo 'perfis.xlsx'. """
+    try:
+        return pd.read_excel('perfis.xlsx', sheet_name=None)
+    except FileNotFoundError:
+        st.error("Erro Crítico: Arquivo 'perfis.xlsx' não encontrado. Verifique se ele foi enviado para o repositório GitHub.")
+        return None
+    except Exception as e:
+        st.error(f"Erro ao ler o arquivo Excel: {e}")
+        return None
+
+def main():
+    # ---- ORDEM DE EXECUÇÃO CORRIGIDA ----
+    # 1. Primeiro, configuramos a página. Esta DEVE ser a primeira chamada de st.
+    st.set_page_config(page_title="Calculadora Estrutural Versátil", layout="wide")
+    
+    # 2. Em segundo, injetamos nosso CSS.
+    st.markdown(HTML_TEMPLATE_CSS, unsafe_allow_html=True)
+
+    # 3. Agora, o restante da aplicação.
+    st.title("🏛️ Calculadora Estrutural Versátil")
+    st.caption(f"Utilizando a norma: {Config.NOME_NORMA}")
+    
+    all_sheets = load_data_from_local_file()
+    if not all_sheets:
+        st.warning("Não foi possível carregar os dados dos perfis. A aplicação será interrompida.")
+        st.stop()
+    
+    # --- ENTRADA DE DADOS NA SIDEBAR ---
+    with st.sidebar:
+        st.header("⚙️ Parâmetros de Entrada")
+        
+        st.header("1. Modelo da Viga")
+        tipo_viga = st.selectbox("Tipo de Viga:", ('Bi-apoiada', 'Engastada e Livre (Balanço)', 'Bi-engastada', 'Engastada e Apoiada'))
+        L_cm = st.number_input("Comprimento da Viga (L, cm)", 10.0, value=500.0, step=10.0)
+
+        st.header("2. Modo de Carregamento")
+        input_mode = st.radio("Selecione:", ("Calcular a partir de Cargas", "Inserir Esforços Manualmente"), horizontal=True, label_visibility="collapsed")
+
+        Msd, Vsd, q_servico_kn_cm, p_load_serv = 0, 0, 0, None
+        if input_mode == "Calcular a partir de Cargas":
+            with st.container(border=True):
+                st.subheader("Carga Distribuída (q)")
+                carga_area = st.number_input("Carga (serviço, kN/m²)", 0.0, value=4.0, step=0.5)
+                larg_inf = st.number_input("Largura de Influência (m)", 0.0, value=5.0, step=0.5)
+                
+                st.subheader("Carga Pontual (P)")
+                add_p_load = st.checkbox("Adicionar Carga Pontual")
+                if add_p_load:
+                    p_serv_kn = st.number_input("Valor da Carga P (serviço, kN)", 0.0, value=10.0)
+                    p_pos_cm = st.number_input("Posição (x, cm)", 0.0, max_value=L_cm, value=L_cm/2)
+                    p_load_serv = (p_serv_kn, p_pos_cm)
+                
+                gamma_f = st.number_input("Coef. Majoração (γf)", 1.0, value=1.4, step=0.1)
+                
+                q_servico_kn_cm = (carga_area * larg_inf) / 100.0
+                p_load_ult = (p_load_serv[0] * gamma_f, p_load_serv[1]) if p_load_serv else None
+                Msd, Vsd = calcular_esforcos_viga(tipo_viga, L_cm, q_servico_kn_cm * gamma_f, p_load_ult)
+
+        else: # Inserir Esforços Manualmente
+             with st.container(border=True):
+                st.warning("ELS de flecha não será verificado no modo manual.")
+                Msd = st.number_input("Momento Solicitante (Msd, kNm)", 0.0, value=100.0) * 100
+                Vsd = st.number_input("Cortante Solicitante (Vsd, kN)", 0.0, value=50.0)
+
+        st.header("3. Parâmetros Gerais do Aço")
+        fy_aco = st.number_input("fy (kN/cm²)", 20.0, 50.0, 34.5, 0.5)
+        Lb_projeto = st.number_input("Comprimento Destravado (Lb, cm)", 10.0, value=L_cm, step=10.0)
+        Cb_projeto = st.number_input("Fator de Modificação (Cb)", 1.0, 3.0, 1.10)
+    
+    # --- LÓGICA DAS ABAS NA TELA PRINCIPAL ---
+    tab1, tab2 = st.tabs(["📊 Análise em Lote e Otimização", "🔍 Memorial de Cálculo Detalhado"])
+
+    with tab1:
+        st.header("Análise Otimizada de Todos os Perfis")
+        st.info("Esta ferramenta analisa todos os perfis da planilha sob os esforços definidos na barra lateral. Os resultados são organizados por tipo, destacando a opção mais leve e econômica de cada categoria.")
+        if st.button("Iniciar Análise Otimizada", type="primary", use_container_width=True, key="btn_lote"):
+            run_batch_analysis(all_sheets, fy_aco, Lb_projeto, Cb_projeto, L_cm, Msd, Vsd, q_servico_kn_cm, p_load_serv, tipo_viga, input_mode)
+
+    with tab2:
+        st.header("Análise Detalhada de um Único Perfil")
+        st.info("Selecione um perfil específico para gerar um memorial de cálculo completo e detalhado, mostrando todas as etapas de verificação.")
+        
+        display_names = [PROFILE_TYPE_MAP.get(name, name) for name in all_sheets.keys()]
+        reverse_name_map = {v: k for k, v in PROFILE_TYPE_MAP.items()}
+
+        col1, col2 = st.columns(2)
+        with col1:
+            selected_display_name = st.selectbox("Selecione o Tipo de Perfil:", display_names, key="tipo_perfil_memorial")
+        
+        sheet_name = reverse_name_map.get(selected_display_name, selected_display_name)
+        df_selecionado = all_sheets[sheet_name]
+        
+        with col2:
+            perfil_selecionado_nome = st.selectbox("Selecione o Perfil Específico:", df_selecionado['Bitola (mm x kg/m)'], key="nome_perfil_memorial")
+        
+        if st.button("Gerar Memorial Completo", type="primary", use_container_width=True, key="btn_memorial"):
+            run_detailed_analysis(df_selecionado, perfil_selecionado_nome, selected_display_name, fy_aco, Lb_projeto, Cb_projeto, L_cm, Msd, Vsd, q_servico_kn_cm, p_load_serv, tipo_viga, input_mode)
 
 if __name__ == '__main__':
     main()
