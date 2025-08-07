@@ -32,7 +32,9 @@ PROFILE_TYPE_MAP = {
 
 HTML_GLOBAL_STYLE = """
 <style>
-    iframe { width: 100%; }
+    iframe {
+        width: 100%;
+    }
     .container {
         width: 100%; padding: 20px; background-color: white; border-radius: 10px;
         box-shadow: 0 4px 20px rgba(0,0,0,0.1); font-family: 'Roboto', sans-serif;
@@ -58,10 +60,10 @@ HTML_GLOBAL_STYLE = """
 """
 
 # ==============================================================================
-# 2. TODAS AS FUNÇÕES DE BACKEND
+# 2. TODAS AS FUNÇÕES DE BACKEND (AGORA PRESENTES)
 # ==============================================================================
 
-# FUNÇÃO DE CARREGAMENTO DE DADOS (A QUE ESTAVA FALTANDO)
+# ---- FUNÇÃO DE CARREGAMENTO DE DADOS ----
 @st.cache_data
 def load_data_from_local_file():
     """ Carrega os dados diretamente do arquivo 'perfis.xlsx'. """
@@ -74,7 +76,7 @@ def load_data_from_local_file():
         st.error(f"Erro ao ler o arquivo Excel: {e}")
         return None
 
-# RESTANTE DAS FUNÇÕES
+# ---- FUNÇÕES DE CÁLCULO DE ENGENHARIA ----
 def calcular_esforcos_viga(tipo_viga, L_cm, q_kn_cm=0, p_load=None):
     msd_q, vsd_q, msd_p, vsd_p = 0, 0, 0, 0
     L = L_cm
@@ -120,82 +122,13 @@ def get_profile_properties(profile_series):
     for key in ['d', 'bf', 'tw', 'tf', 'h']: props[key] /= 10.0
     return props
 
+# ---- FUNÇÕES DE GERAÇÃO DE HTML ----
 def gerar_memorial_completo(perfil_nome, perfil_tipo, resultados):
     html_body = f"""<div class="container"><h1>Memorial de Cálculo Estrutural</h1><h2>Perfil Metálico: {perfil_nome} ({perfil_tipo})</h2><p style="text-align:center; font-style:italic;">Cálculos baseados na norma: <b>{Config.NOME_NORMA}</b></p><h3>1. Resumo Final das Verificações</h3>{resultados['resumo_html']}{resultados['passo_a_passo_html']}</div>"""
     return f"""<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Memorial de Cálculo - {perfil_nome}</title><script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML"></script></head><body>{html_body}</body></html>"""
 
 def _build_verification_block_html(title, solicitante, s_symbol, resistente, r_symbol, eficiencia, status, unit):
     status_class = "pass" if status == "APROVADO" else "fail"; comp_symbol = "\\le" if status == "APROVADO" else ">"; return f"""<h4>{title}</h4><div class="formula-block"><p class="formula">$$ {s_symbol} = {solicitante:.2f} \\, {unit} $$</p><p class="formula">$$ {r_symbol} = {resistente:.2f} \\, {unit} $$</p><p class="formula">$$ \\text{{Verificação: }} {s_symbol} {comp_symbol} {r_symbol} $$</p><p class="formula">$$ \\text{{Eficiência}} = \\frac{{{s_symbol}}}{{{r_symbol}}} = \\frac{{{solicitante:.2f}}}{{{resistente:.2f}}} = {eficiencia:.1f}\% $$</p><div class="final-status {status_class}">{status}</div></div>"""
-
-def run_detailed_analysis(df, perfil_nome, perfil_tipo_display, fy, Lb, Cb, L, Msd, Vsd, q_serv_kn_cm, p_serv_load, tipo_viga, input_mode):
-    with st.spinner(f"Gerando análise completa para {perfil_nome}..."):
-        try:
-            perfil_series = df[df['Bitola (mm x kg/m)'] == perfil_nome].iloc[0]; props = get_profile_properties(perfil_series)
-            res_flexao, res_cis, res_flecha, passo_a_passo = perform_all_checks(props, fy, Lb, Cb, L, Msd, Vsd, q_serv_kn_cm, p_serv_load, tipo_viga, input_mode, detalhado=True)
-            resumo_html = build_summary_html(Msd, Vsd, res_flexao, res_cis, res_flecha); resultados = {'resumo_html': resumo_html, 'passo_a_passo_html': passo_a_passo}
-            html_content = gerar_memorial_completo(perfil_nome, perfil_tipo_display, resultados)
-            st.success("Análise concluída!"); st.components.v1.html(html_content, height=1200, scrolling=True)
-            st.download_button(label="📥 Baixar Memorial HTML", data=html_content.encode('utf-8'), file_name=f"Memorial_{perfil_nome.replace(' ', '_')}.html", mime="text/html")
-        except (ValueError, KeyError) as e: st.error(f"❌ Erro nos Dados de Entrada: {e}")
-        except Exception as e: st.error(f"❌ Ocorreu um erro inesperado: {e}")
-
-def run_batch_analysis(all_sheets, fy, Lb, Cb, L, Msd, Vsd, q_serv_kn_cm, p_serv_load, tipo_viga, input_mode):
-    all_results = []; progress_bar = st.progress(0, text="Analisando perfis...")
-    total_perfis = sum(len(df) for df in all_sheets.values()); perfis_processados = 0
-    with st.spinner("Processando todos os perfis..."):
-        for sheet_name, df in all_sheets.items():
-            for _, row in df.iterrows():
-                perfis_processados += 1; progress_bar.progress(perfis_processados / total_perfis)
-                try:
-                    props = get_profile_properties(row)
-                    res_flexao, res_cis, res_flecha, _ = perform_all_checks(props, fy, Lb, Cb, L, Msd, Vsd, q_serv_kn_cm, p_serv_load, tipo_viga, input_mode)
-                    status_geral = "APROVADO" if max(res_flexao['ef_flt'], res_flexao['ef_flm'], res_flexao['ef_fla'], res_cis['eficiencia'], res_flecha['eficiencia']) <= 100.1 else "REPROVADO"
-                    all_results.append({'Tipo': sheet_name, 'Perfil': row['Bitola (mm x kg/m)'], 'Peso (kg/m)': props.get('Peso', 0), 'Status': status_geral, 'Ef. FLT (%)': res_flexao['ef_flt'], 'Ef. FLM (%)': res_flexao['ef_flm'], 'Ef. FLA (%)': res_flexao['ef_fla'], 'Ef. Cisalhamento (%)': res_cis['eficiencia'], 'Ef. Flecha (%)': res_flecha['eficiencia']})
-                except (ValueError, KeyError): continue
-    progress_bar.empty()
-    if not all_results: st.error("Não foi possível analisar nenhum perfil."); return
-    df_all_results = pd.DataFrame(all_results); st.success(f"{len(df_all_results)} perfis analisados.")
-    tab_names = [PROFILE_TYPE_MAP.get(name, name) for name in all_sheets.keys()]
-    tabs = st.tabs(tab_names)
-    def style_dataframe(df):
-        def color_efficiency(val):
-            if pd.isna(val) or not isinstance(val, (int, float)): return ''
-            color = '#f8d7da' if val > 100 else ('#ffeeba' if val > 95 else ('#fff3cd' if val > 80 else '#d4edda'))
-            return f'background-color: {color}'
-        return df.style.applymap(color_efficiency, subset=[col for col in df.columns if '%' in col]).format("{:.1f}", subset=[col for col in df.columns if '%' in col])
-    for i, sheet_name in enumerate(all_sheets.keys()):
-        with tabs[i]:
-            df_type = df_all_results[df_all_results['Tipo'] == sheet_name].drop(columns=['Tipo'])
-            if df_type.empty: st.write("Nenhum perfil desta categoria foi analisado."); continue
-            aprovados = df_type[df_type['Status'] == 'APROVADO'].copy()
-            reprovados = df_type[df_type['Status'] == 'REPROVADO'].copy()
-            if not aprovados.empty:
-                aprovados.sort_values(by='Peso (kg/m)', inplace=True)
-                st.subheader("🏆 Perfil Mais Leve Aprovado (Otimizado)"); st.dataframe(style_dataframe(aprovados.head(1)), use_container_width=True)
-                with st.expander("Ver todos os perfis aprovados desta categoria"): st.dataframe(style_dataframe(aprovados), use_container_width=True)
-            else: st.info("Nenhum perfil desta categoria foi aprovado.")
-            if not reprovados.empty:
-                with st.expander("Ver perfis reprovados desta categoria"): st.dataframe(style_dataframe(reprovados), use_container_width=True)
-
-def perform_all_checks(props, fy, Lb, Cb, L, Msd, Vsd, q_serv_kn_cm, p_serv_load, tipo_viga, input_mode, detalhado=False):
-    res_flt = _calcular_mrdx_flt(props, Lb, Cb, fy); res_flm = _calcular_mrdx_flm(props, fy); res_fla = _calcular_mrdx_fla(props, fy); res_vrd = _calcular_vrd(props, fy)
-    Vrd = res_vrd['Vrd']; Mrd_final = min(res_flt['Mrdx'], res_flm['Mrdx'], res_fla['Mrdx'])
-    nota_interacao = "Vsd ≤ 0.5*Vrd. Interação desconsiderada." if Vrd <= 0 or Vsd <= 0.5 * Vrd else "Vsd > 0.5*Vrd. Interação deve ser considerada."
-    ef_geral = (Msd / Mrd_final) * 100 if Mrd_final > 0 else float('inf')
-    ef_flt = (Msd / res_flt['Mrdx']) * 100 if res_flt['Mrdx'] > 0 else float('inf'); ef_flm = (Msd / res_flm['Mrdx']) * 100 if res_flm['Mrdx'] > 0 else float('inf'); ef_fla = (Msd / res_fla['Mrdx']) * 100 if res_fla['Mrdx'] > 0 else float('inf')
-    status_flexao = "APROVADO" if ef_geral <= 100.1 else "REPROVADO"
-    res_flexao = {'Mrd': Mrd_final, 'eficiencia': ef_geral, 'status': status_flexao, 'ef_flt': ef_flt, 'ef_flm': ef_flm, 'ef_fla': ef_fla, 'nota_interacao': nota_interacao}
-    eficiencia_cisalhamento = (Vsd / Vrd) * 100 if Vrd > 0 else float('inf')
-    status_cisalhamento = "APROVADO" if eficiencia_cisalhamento <= 100.1 else "REPROVADO"; res_cisalhamento = {'Vrd': Vrd, 'eficiencia': eficiencia_cisalhamento, 'status': status_cisalhamento}
-    flecha_max, flecha_limite, eficiencia_flecha, status_flecha = 0, 0, 0, "N/A"
-    if input_mode == "Calcular a partir de Cargas":
-        flecha_max = calcular_flecha_maxima(tipo_viga, L, Config.E_ACO, props['Ix'], q_serv_kn_cm, p_serv_load)
-        flecha_limite = L / Config.LIMITE_FLECHA_TOTAL if L > 0 else 0
-        eficiencia_flecha = (flecha_max / flecha_limite) * 100 if flecha_limite > 0 else float('inf')
-        status_flecha = "APROVADO" if eficiencia_flecha <= 100.1 else "REPROVADO"
-    res_flecha = {'flecha_max': flecha_max, 'flecha_limite': flecha_limite, 'eficiencia': eficiencia_flecha, 'status': status_flecha, 'Ix': props['Ix']}
-    passo_a_passo_html = build_step_by_step_html(L, Msd, Vsd, res_flexao, res_cisalhamento, res_flecha, res_flt, res_flm, res_fla, res_vrd, input_mode) if detalhado else ""
-    return res_flexao, res_cisalhamento, res_flecha, passo_a_passo_html
 
 def build_summary_html(Msd, Vsd, res_flexao, res_cisalhamento, res_flecha):
     verificacoes = [('Flexão (M) - ELU', f"{Msd/100:.2f} kNm", f"{res_flexao['Mrd']/100:.2f} kNm", res_flexao['eficiencia'], res_flexao['status']), ('Cisalhamento (V) - ELU', f"{Vsd:.2f} kN", f"{res_cisalhamento['Vrd']:.2f} kN", res_cisalhamento['eficiencia'], res_cisalhamento['status']), ('Flecha (δ) - ELS', f"{res_flecha['flecha_max']:.2f} cm" if res_flecha['status'] != "N/A" else "N/A", f"≤ {res_flecha['flecha_limite']:.2f} cm" if res_flecha['status'] != "N/A" else "N/A", res_flecha['eficiencia'], res_flecha['status'])]
@@ -225,6 +158,7 @@ def _add_verification_details(title, details_dict):
     html += f"<h5>Resultado da Resistência</h5><p class='final-result'>{title.split('(')[0].strip()} Resistente = {final_resistance:.2f} {unit}</p></div>"
     return html
 
+# ---- FUNÇÕES DE CÁLCULO ESPECÍFICAS (PERFIS) ----
 def _calcular_mrdx_flt(props, Lb, Cb, fy):
     Zx, ry, Iy, Cw, J, Wx = props['Zx'], props['ry'], props['Iy'], props['Cw'], props['J'], props['Wx']
     Mp = Zx * fy; lambda_val = Lb / ry if ry > 0 else float('inf'); lambda_p = Config.FATOR_LAMBDA_P_FLT * math.sqrt(Config.E_ACO / fy)
@@ -301,9 +235,78 @@ def _calcular_vrd(props, fy):
             detalhes['Vrd_calc'] = {'desc': 'Cortante Resistente (Elástico)', 'formula': 'V_{rd} = 1.24 (\\frac{\\lambda_p}{\\lambda})^2 \\frac{V_{pl}}{\\gamma_{a1}}', 'valores': {'\\lambda_p': lambda_p, '\\lambda': lambda_val, 'V_{pl}': Vpl, '\\gamma_{a1}': Config.GAMMA_A1}, 'valor': Vrd, 'unidade': 'kN', 'ref': 'Eq. 5.28 / G-3c'}
     detalhes['Vrd'] = Vrd; return detalhes
 
+# ---- FUNÇÕES DE ORQUESTRAÇÃO DA ANÁLISE ----
+def run_detailed_analysis(df, perfil_nome, perfil_tipo_display, fy, Lb, Cb, L, Msd, Vsd, q_serv_kn_cm, p_serv_load, tipo_viga, input_mode):
+    with st.spinner(f"Gerando análise completa para {perfil_nome}..."):
+        try:
+            perfil_series = df[df['Bitola (mm x kg/m)'] == perfil_nome].iloc[0]; props = get_profile_properties(perfil_series)
+            res_flexao, res_cis, res_flecha, passo_a_passo = perform_all_checks(props, fy, Lb, Cb, L, Msd, Vsd, q_serv_kn_cm, p_serv_load, tipo_viga, input_mode, detalhado=True)
+            resumo_html = build_summary_html(Msd, Vsd, res_flexao, res_cis, res_flecha); resultados = {'resumo_html': resumo_html, 'passo_a_passo_html': passo_a_passo}
+            html_content = gerar_memorial_completo(perfil_nome, perfil_tipo_display, resultados)
+            st.success("Análise concluída!"); st.components.v1.html(html_content, height=1200, scrolling=True)
+            st.download_button(label="📥 Baixar Memorial HTML", data=html_content.encode('utf-8'), file_name=f"Memorial_{perfil_nome.replace(' ', '_')}.html", mime="text/html")
+        except (ValueError, KeyError) as e: st.error(f"❌ Erro nos Dados de Entrada: {e}")
+        except Exception as e: st.error(f"❌ Ocorreu um erro inesperado: {e}")
+
+def run_batch_analysis(all_sheets, fy, Lb, Cb, L, Msd, Vsd, q_serv_kn_cm, p_serv_load, tipo_viga, input_mode):
+    all_results = []; progress_bar = st.progress(0, text="Analisando perfis...")
+    total_perfis = sum(len(df) for df in all_sheets.values()); perfis_processados = 0
+    with st.spinner("Processando todos os perfis..."):
+        for sheet_name, df in all_sheets.items():
+            for _, row in df.iterrows():
+                perfis_processados += 1; progress_bar.progress(perfis_processados / total_perfis)
+                try:
+                    props = get_profile_properties(row)
+                    res_flexao, res_cis, res_flecha, _ = perform_all_checks(props, fy, Lb, Cb, L, Msd, Vsd, q_serv_kn_cm, p_serv_load, tipo_viga, input_mode)
+                    status_geral = "APROVADO" if max(res_flexao['ef_flt'], res_flexao['ef_flm'], res_flexao['ef_fla'], res_cis['eficiencia'], res_flecha['eficiencia']) <= 100.1 else "REPROVADO"
+                    all_results.append({'Tipo': sheet_name, 'Perfil': row['Bitola (mm x kg/m)'], 'Peso (kg/m)': props.get('Peso', 0), 'Status': status_geral, 'Ef. FLT (%)': res_flexao['ef_flt'], 'Ef. FLM (%)': res_flexao['ef_flm'], 'Ef. FLA (%)': res_flexao['ef_fla'], 'Ef. Cisalhamento (%)': res_cis['eficiencia'], 'Ef. Flecha (%)': res_flecha['eficiencia']})
+                except (ValueError, KeyError): continue
+    progress_bar.empty()
+    if not all_results: st.error("Não foi possível analisar nenhum perfil."); return
+    df_all_results = pd.DataFrame(all_results); st.success(f"{len(df_all_results)} perfis analisados.")
+    tab_names = [PROFILE_TYPE_MAP.get(name, name) for name in all_sheets.keys()]
+    tabs = st.tabs(tab_names)
+    def style_dataframe(df):
+        def color_efficiency(val):
+            if pd.isna(val) or not isinstance(val, (int, float)): return ''
+            color = '#f8d7da' if val > 100 else ('#ffeeba' if val > 95 else ('#fff3cd' if val > 80 else '#d4edda'))
+            return f'background-color: {color}'
+        return df.style.applymap(color_efficiency, subset=[col for col in df.columns if '%' in col]).format("{:.1f}", subset=[col for col in df.columns if '%' in col])
+    for i, sheet_name in enumerate(all_sheets.keys()):
+        with tabs[i]:
+            df_type = df_all_results[df_all_results['Tipo'] == sheet_name].drop(columns=['Tipo'])
+            if df_type.empty: st.write("Nenhum perfil desta categoria foi analisado."); continue
+            aprovados = df_type[df_type['Status'] == 'APROVADO'].copy(); reprovados = df_type[df_type['Status'] == 'REPROVADO'].copy()
+            if not aprovados.empty:
+                aprovados.sort_values(by='Peso (kg/m)', inplace=True)
+                st.subheader("🏆 Perfil Mais Leve Aprovado (Otimizado)"); st.dataframe(style_dataframe(aprovados.head(1)), use_container_width=True)
+                with st.expander("Ver todos os perfis aprovados desta categoria"): st.dataframe(style_dataframe(aprovados), use_container_width=True)
+            else: st.info("Nenhum perfil desta categoria foi aprovado.")
+            if not reprovados.empty:
+                with st.expander("Ver perfis reprovados desta categoria"): st.dataframe(style_dataframe(reprovados), use_container_width=True)
+
+def perform_all_checks(props, fy, Lb, Cb, L, Msd, Vsd, q_serv_kn_cm, p_serv_load, tipo_viga, input_mode, detalhado=False):
+    res_flt = _calcular_mrdx_flt(props, Lb, Cb, fy); res_flm = _calcular_mrdx_flm(props, fy); res_fla = _calcular_mrdx_fla(props, fy); res_vrd = _calcular_vrd(props, fy)
+    Vrd = res_vrd['Vrd']; Mrd_final = min(res_flt['Mrdx'], res_flm['Mrdx'], res_fla['Mrdx'])
+    nota_interacao = "Vsd ≤ 0.5*Vrd. Interação desconsiderada." if Vrd <= 0 or Vsd <= 0.5 * Vrd else "Vsd > 0.5*Vrd. Interação deve ser considerada."
+    ef_geral = (Msd / Mrd_final) * 100 if Mrd_final > 0 else float('inf')
+    ef_flt = (Msd / res_flt['Mrdx']) * 100 if res_flt['Mrdx'] > 0 else float('inf'); ef_flm = (Msd / res_flm['Mrdx']) * 100 if res_flm['Mrdx'] > 0 else float('inf'); ef_fla = (Msd / res_fla['Mrdx']) * 100 if res_fla['Mrdx'] > 0 else float('inf')
+    status_flexao = "APROVADO" if ef_geral <= 100.1 else "REPROVADO"
+    res_flexao = {'Mrd': Mrd_final, 'eficiencia': ef_geral, 'status': status_flexao, 'ef_flt': ef_flt, 'ef_flm': ef_flm, 'ef_fla': ef_fla, 'nota_interacao': nota_interacao}
+    eficiencia_cisalhamento = (Vsd / Vrd) * 100 if Vrd > 0 else float('inf')
+    status_cisalhamento = "APROVADO" if eficiencia_cisalhamento <= 100.1 else "REPROVADO"; res_cisalhamento = {'Vrd': Vrd, 'eficiencia': eficiencia_cisalhamento, 'status': status_cisalhamento}
+    flecha_max, flecha_limite, eficiencia_flecha, status_flecha = 0, 0, 0, "N/A"
+    if input_mode == "Calcular a partir de Cargas":
+        flecha_max = calcular_flecha_maxima(tipo_viga, L, Config.E_ACO, props['Ix'], q_serv_kn_cm, p_serv_load)
+        flecha_limite = L / Config.LIMITE_FLECHA_TOTAL if L > 0 else 0
+        eficiencia_flecha = (flecha_max / flecha_limite) * 100 if flecha_limite > 0 else float('inf')
+        status_flecha = "APROVADO" if eficiencia_flecha <= 100.1 else "REPROVADO"
+    res_flecha = {'flecha_max': flecha_max, 'flecha_limite': flecha_limite, 'eficiencia': eficiencia_flecha, 'status': status_flecha, 'Ix': props['Ix']}
+    passo_a_passo_html = build_step_by_step_html(L, Msd, Vsd, res_flexao, res_cisalhamento, res_flecha, res_flt, res_flm, res_fla, res_vrd, input_mode) if detalhado else ""
+    return res_flexao, res_cisalhamento, res_flecha, passo_a_passo_html
 
 # ==============================================================================
-# 3. APLICAÇÃO PRINCIPAL
+# 3. APLICAÇÃO PRINCIPAL (UI + LÓGICA DE ABAS)
 # ==============================================================================
 def main():
     st.set_page_config(page_title="Calculadora Estrutural Versátil", layout="wide")
@@ -339,7 +342,7 @@ def main():
     with tab1:
         st.header("Análise Otimizada de Todos os Perfis")
         st.info("Esta ferramenta analisa todos os perfis da planilha sob os esforços definidos na barra lateral, destacando a opção mais leve e econômica de cada categoria.")
-        if st.button("Iniciar Análise Otimizada", type="primary", use_container_width=True, key="btn_lote"): run_batch_analysis(all_sheets, fy_aco, Lb_projeto, Cb_projeto, L_cm, Msd, Vsd, q_servico_kn_cm, p_load_serv, tipo_viga, input_mode)
+        if st.button("Iniciar Análise Otimizada", type="primary", use_container_width=True, key="btn_lote"): run_batch_analysis(all_sheets, fy_aco, Lb_projeto, Cb_projeto, L_cm, Msd, Vsd, q_servico_kn_cm, p_serv_load, tipo_viga, input_mode)
     with tab2:
         st.header("Análise Detalhada de um Único Perfil")
         st.info("Selecione um perfil específico para gerar um memorial de cálculo completo, mostrando todas as etapas de verificação.")
