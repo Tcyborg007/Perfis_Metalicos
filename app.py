@@ -160,7 +160,7 @@ def _build_verification_block_html(title, solicitante, s_symbol, resistente, r_s
     return f"""<h4>{title}</h4><div class="formula-block"><p class="formula">$$ {s_symbol} = {solicitante:.2f} \\, {unit} $$</p><p class="formula">$$ {r_symbol} = {resistente:.2f} \\, {unit} $$</p><p class="formula">$$ \\text{{Verificação: }} {s_symbol} {comp_symbol} {r_symbol} $$</p><p class="formula">$$ \\text{{Eficiência}} = \\frac{{{s_symbol}}}{{{r_symbol}}} = \\frac{{{solicitante:.2f}}}{{{resistente:.2f}}} = {eficiencia:.1f}\% $$</p><div class="final-status {status_class}">{status}</div></div>"""
 
 # ==============================================================================
-# 4. APLICAÇÃO PRINCIPAL STREAMLIT (CORRIGIDA)
+# 4. APLICAÇÃO PRINCIPAL STREAMLIT (AJUSTADA NOVAMENTE)
 # ==============================================================================
 
 # NOVA FUNÇÃO DE CARREGAMENTO AUTOMÁTICO
@@ -192,7 +192,7 @@ def main():
     if not all_sheets:
         st.stop()
 
-    # --- ENTRADA DE DADOS NA BARRA LATERAL (AJUSTADA) ---
+    # --- ENTRADA DE DADOS NA BARRA LATERAL ---
     with st.sidebar:
         st.header("⚙️ Parâmetros de Entrada")
         st.divider()
@@ -232,7 +232,7 @@ def main():
                     msd_input = st.number_input("Momento de Cálculo (Msd, kNm)", min_value=0.0, value=100.0)
                     Msd = msd_input * 100 # Convertendo para kN.cm
                     Vsd = st.number_input("Força Cortante de Cálculo (Vsd, kN)", min_value=0.0, value=50.0)
-                    # Assegura que as variáveis existam mesmo no modo manual
+                    # Assegura que as variáveis existam mesmo no modo manual para a análise em lote
                     q_servico_kn_cm = 0
                     p_load_serv = None
 
@@ -279,16 +279,21 @@ def run_detailed_analysis(df, perfil_nome, perfil_tipo_display, fy, Lb, Cb, L, M
             props = get_profile_properties(perfil_series)
             res_flexao, res_cis, res_flecha, passo_a_passo = perform_all_checks(props, fy, Lb, Cb, L, Msd, Vsd, q_serv_kn_cm, p_serv_load, tipo_viga, input_mode, detalhado=True)
             resumo_html = build_summary_html(Msd, Vsd, res_flexao, res_cis, res_flecha)
-            resultados = {'resumo_html': resumo_html, 'passo_a_passo_html': passo_a_passo}
-            html_content = gerar_memorial_completo(perfil_nome, perfil_tipo_display, resultados)
-            st.success(f"Análise concluída para {perfil_nome}! Abaixo você pode visualizar o memorial de cálculo ou fazer o download.")
             
-            # Re-introduz a visualização do memorial
-            with st.expander("Visualizar Memorial de Cálculo", expanded=True):
-                st.components.v1.html(html_content, height=800, scrolling=True)
-            
-            # Mantém o botão de download
-            st.download_button(label="📥 Baixar Memorial HTML", data=html_content.encode('utf-8'), file_name=f"Memorial_{perfil_nome.replace(' ', '_')}.html", mime="text/html", use_container_width=True)
+            # Nova maneira de exibir o memorial
+            st.success(f"Análise concluída para {perfil_nome}!")
+            st.markdown(f"<h2>Memorial de Cálculo Estrutural</h2>" + 
+                        f"<h2>Perfil Metálico: {perfil_nome} ({perfil_tipo_display})</h2>" +
+                        f"<p style='text-align:center; font-style:italic;'>Cálculos baseados na norma: <b>{Config.NOME_NORMA}</b></p>", 
+                        unsafe_allow_html=True)
+            st.markdown("<h3>1. Resumo Final das Verificações</h3>", unsafe_allow_html=True)
+            st.markdown(resumo_html, unsafe_allow_html=True)
+            st.markdown("<h3>2. Detalhamento dos Cálculos</h3>", unsafe_allow_html=True)
+            st.markdown(passo_a_passo, unsafe_allow_html=True)
+
+            # Botão para download do arquivo completo
+            html_content_full = gerar_memorial_completo(perfil_nome, perfil_tipo_display, {'resumo_html': resumo_html, 'passo_a_passo_html': passo_a_passo})
+            st.download_button(label="📥 Baixar Memorial HTML", data=html_content_full.encode('utf-8'), file_name=f"Memorial_{perfil_nome.replace(' ', '_')}.html", mime="text/html", use_container_width=True)
         except (ValueError, KeyError) as e: st.error(f"❌ Erro nos Dados de Entrada: {e}")
         except Exception as e: st.error(f"❌ Ocorreu um erro inesperado: {e}")
 
