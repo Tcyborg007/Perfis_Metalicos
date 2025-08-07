@@ -119,59 +119,80 @@ def calcular_esforcos_viga(tipo_viga, L_cm, q_kn_cm=0, p_load=None):
     msd_q, vsd_q, msd_p, vsd_p = 0, 0, 0, 0
     L = L_cm
     
-    msd_q_formula, vsd_q_formula = "", ""
-    msd_p_formula, vsd_p_formula = "", ""
+    # Dicionários para armazenar as fórmulas e valores detalhados
+    detalhes_esforcos = {
+        'Msd_q': {'valor': 0, 'formula_simbolica': "", 'formula_numerica': "", 'unidade': 'kN.cm'},
+        'Vsd_q': {'valor': 0, 'formula_simbolica': "", 'formula_numerica': "", 'unidade': 'kN'},
+        'Msd_p': {'valor': 0, 'formula_simbolica': "", 'formula_numerica': "", 'unidade': 'kN.cm'},
+        'Vsd_p': {'valor': 0, 'formula_simbolica': "", 'formula_numerica': "", 'unidade': 'kN'}
+    }
     
     # Parte da carga distribuída (q)
     if q_kn_cm > 0:
         if tipo_viga == 'Bi-apoiada':
             msd_q = (q_kn_cm * L**2) / 8
             vsd_q = (q_kn_cm * L) / 2
-            msd_q_formula = f"M_{{sd, q}} = \\frac{{q_{{última}} \\cdot L^2}}{8}"
-            vsd_q_formula = f"V_{{sd, q}} = \\frac{{q_{{última}} \\cdot L}}{2}"
+            detalhes_esforcos['Msd_q']['formula_simbolica'] = f"M_{{sd, q}} = \\frac{{q_{{última}} \\cdot L^2}}{{8}}"
+            detalhes_esforcos['Msd_q']['formula_numerica'] = f"\\frac{{ \\mathbf{{{q_kn_cm*100:.2f}}} \\, kN/m \\cdot (\\mathbf{{{L_cm/100:.2f}}} \\, m)^2}}{{8}}"
+            detalhes_esforcos['Vsd_q']['formula_simbolica'] = f"V_{{sd, q}} = \\frac{{q_{{última}} \\cdot L}}{{2}}"
+            detalhes_esforcos['Vsd_q']['formula_numerica'] = f"\\frac{{ \\mathbf{{{q_kn_cm*100:.2f}}} \\, kN/m \\cdot \\mathbf{{{L_cm/100:.2f}}} \\, m}}{{2}}"
         elif tipo_viga == 'Engastada e Livre (Balanço)':
             msd_q = (q_kn_cm * L**2) / 2
             vsd_q = q_kn_cm * L
-            msd_q_formula = f"M_{{sd, q}} = \\frac{{q_{{última}} \\cdot L^2}}{2}"
-            vsd_q_formula = f"V_{{sd, q}} = q_{{última}} \\cdot L"
+            detalhes_esforcos['Msd_q']['formula_simbolica'] = f"M_{{sd, q}} = \\frac{{q_{{última}} \\cdot L^2}}{{2}}"
+            detalhes_esforcos['Msd_q']['formula_numerica'] = f"\\frac{{ \\mathbf{{{q_kn_cm*100:.2f}}} \\, kN/m \\cdot (\\mathbf{{{L_cm/100:.2f}}} \\, m)^2}}{{2}}"
+            detalhes_esforcos['Vsd_q']['formula_simbolica'] = f"V_{{sd, q}} = q_{{última}} \\cdot L"
+            detalhes_esforcos['Vsd_q']['formula_numerica'] = f"\\mathbf{{{q_kn_cm*100:.2f}}} \\, kN/m \\cdot \\mathbf{{{L_cm/100:.2f}}} \\, m"
         elif tipo_viga == 'Bi-engastada':
             msd_q = (q_kn_cm * L**2) / 12 # Momento no engaste
             vsd_q = (q_kn_cm * L) / 2
-            msd_q_formula = f"M_{{sd, q}} = \\frac{{q_{{última}} \\cdot L^2}}{12}"
-            vsd_q_formula = f"V_{{sd, q}} = \\frac{{q_{{última}} \\cdot L}}{2}"
+            detalhes_esforcos['Msd_q']['formula_simbolica'] = f"M_{{sd, q}} = \\frac{{q_{{última}} \\cdot L^2}}{{12}}"
+            detalhes_esforcos['Msd_q']['formula_numerica'] = f"\\frac{{ \\mathbf{{{q_kn_cm*100:.2f}}} \\, kN/m \\cdot (\\mathbf{{{L_cm/100:.2f}}} \\, m)^2}}{{12}}"
+            detalhes_esforcos['Vsd_q']['formula_simbolica'] = f"V_{{sd, q}} = \\frac{{q_{{última}} \\cdot L}}{{2}}"
+            detalhes_esforcos['Vsd_q']['formula_numerica'] = f"\\frac{{ \\mathbf{{{q_kn_cm*100:.2f}}} \\, kN/m \\cdot \\mathbf{{{L_cm/100:.2f}}} \\, m}}{{2}}"
         elif tipo_viga == 'Engastada e Apoiada':
             msd_q = (q_kn_cm * L**2) / 8
             vsd_q = (5 * q_kn_cm * L) / 8
-            msd_q_formula = f"M_{{sd, q}} = \\frac{{q_{{última}} \\cdot L^2}}{8}"
-            vsd_q_formula = f"V_{{sd, q}} = \\frac{{5 \\cdot q_{{última}} \\cdot L}}{8}"
-            
+            detalhes_esforcos['Msd_q']['formula_simbolica'] = f"M_{{sd, q}} = \\frac{{q_{{última}} \\cdot L^2}}{{8}}"
+            detalhes_esforcos['Msd_q']['formula_numerica'] = f"\\frac{{ \\mathbf{{{q_kn_cm*100:.2f}}} \\, kN/m \\cdot (\\mathbf{{{L_cm/100:.2f}}} \\, m)^2}}{{8}}"
+            detalhes_esforcos['Vsd_q']['formula_simbolica'] = f"V_{{sd, q}} = \\frac{{5 \\cdot q_{{última}} \\cdot L}}{{8}}"
+            detalhes_esforcos['Vsd_q']['formula_numerica'] = f"\\frac{{5 \\cdot \\mathbf{{{q_kn_cm*100:.2f}}} \\, kN/m \\cdot \\mathbf{{{L_cm/100:.2f}}} \\, m}}{{8}}"
+    
     # Parte da carga pontual (P)
     if p_load:
         P, x = p_load # P em kN, x em cm
-        a = x
-        b = L - a
+        # Conversão de unidades para o cálculo (se a função está em kN.cm, mantenho)
+        P_kn = P
+        L_m = L / 100.0
+        x_m = x / 100.0
+        a = x_m
+        b = L_m - a
+
         if tipo_viga == 'Bi-apoiada':
-            msd_p = (P * a * b) / L
-            vsd_p = max((P * b) / L, (P * a) / L)
-            msd_p_formula = f"M_{{sd, P}} = \\frac{{P_{{última}} \\cdot a \\cdot b}}{L}"
-            vsd_p_formula = f"V_{{sd, P}} = \\max(\\frac{{P_{{última}} \\cdot b}}{L}, \\frac{{P_{{última}} \\cdot a}}{L})"
+            msd_p = (P_kn * a * b) / L_m
+            vsd_p = max((P_kn * b) / L_m, (P_kn * a) / L_m)
+            detalhes_esforcos['Msd_p']['formula_simbolica'] = f"M_{{sd, P}} = \\frac{{P_{{última}} \\cdot a \\cdot b}}{{L}}"
+            detalhes_esforcos['Msd_p']['formula_numerica'] = f"\\frac{{ \\mathbf{{{P_kn:.2f}}} \\, kN \\cdot \\mathbf{{{a:.2f}}} \\, m \\cdot \\mathbf{{{b:.2f}}} \\, m}}{{\\mathbf{{{L_m:.2f}}} \\, m}}"
+            detalhes_esforcos['Vsd_p']['formula_simbolica'] = f"V_{{sd, P}} = \\max(\\frac{{P_{{última}} \\cdot b}}{{L}}, \\frac{{P_{{última}} \\cdot a}}{{L}})"
+            detalhes_esforcos['Vsd_p']['formula_numerica'] = f"\\max(\\frac{{ \\mathbf{{{P_kn:.2f}}} \\cdot \\mathbf{{{b:.2f}}} }}{{\\mathbf{{{L_m:.2f}}}}}, \\frac{{ \\mathbf{{{P_kn:.2f}}} \\cdot \\mathbf{{{a:.2f}}} }}{{\\mathbf{{{L_m:.2f}}}}} )"
         elif tipo_viga == 'Engastada e Livre (Balanço)':
-            msd_p = P * a # Momento no engaste
-            vsd_p = P
-            msd_p_formula = f"M_{{sd, P}} = P_{{última}} \\cdot a"
-            vsd_p_formula = f"V_{{sd, P}} = P_{{última}}"
-        # Simplificando para tipos de viga complexos, como no código original
-        # para evitar cálculos excessivamente complexos no memorial
+            msd_p = P_kn * a 
+            vsd_p = P_kn
+            detalhes_esforcos['Msd_p']['formula_simbolica'] = f"M_{{sd, P}} = P_{{última}} \\cdot a"
+            detalhes_esforcos['Msd_p']['formula_numerica'] = f"\\mathbf{{{P_kn:.2f}}} \\, kN \\cdot \\mathbf{{{a:.2f}}} \\, m"
+            detalhes_esforcos['Vsd_p']['formula_simbolica'] = f"V_{{sd, P}} = P_{{última}}"
+            detalhes_esforcos['Vsd_p']['formula_numerica'] = f"\\mathbf{{{P_kn:.2f}}} \\, kN"
         
+        # Converte o momento para kN.cm para ser compatível com o resto do código
+        msd_p *= 100 
+    
+    detalhes_esforcos['Msd_q']['valor'] = msd_q
+    detalhes_esforcos['Vsd_q']['valor'] = vsd_q
+    detalhes_esforcos['Msd_p']['valor'] = msd_p
+    detalhes_esforcos['Vsd_p']['valor'] = vsd_p
+    
     msd_total = msd_q + msd_p
     vsd_total = vsd_q + vsd_p
-    
-    detalhes_esforcos = {
-        'Msd_q': {'valor': msd_q, 'formula': msd_q_formula, 'unidade': 'kN.cm'},
-        'Vsd_q': {'valor': vsd_q, 'formula': vsd_q_formula, 'unidade': 'kN'},
-        'Msd_p': {'valor': msd_p, 'formula': msd_p_formula, 'unidade': 'kN.cm'},
-        'Vsd_p': {'valor': vsd_p, 'formula': vsd_p_formula, 'unidade': 'kN'}
-    }
     
     return msd_total, vsd_total, detalhes_esforcos
 
@@ -322,41 +343,42 @@ def main():
                 
                 Msd, Vsd, detalhes_esforcos = calcular_esforcos_viga(tipo_viga, L_cm, q_ult_kn_cm, p_load_ult)
 
+                # Gera o HTML detalhado para o memorial, usando os dicionários de detalhes
                 input_details_html = f"""
                 <h2>2. Cálculo dos Esforços Solicitantes</h2>
                 <h3>2.1 Carga Distribuída</h3>
                 <div class="formula-block">
                     <h4>a. Determinação da Área de Influência</h4>
                     <p class="formula">$$ \\text{{Área de Influência}} (B) = \\frac{{Laje_{{esq}}}}{2} + \\frac{{Laje_{{dir}}}}{2} $$</p>
-                    <p class="formula">$$ B = \\frac{{{larg_esq_cm:.2f}}}{2} + \\frac{{{larg_dir_cm:.2f}}}{2} = {larg_inf_total_m * 100:.2f} \\, cm = {larg_inf_total_m:.2f} \\, m $$</p>
+                    <p class="formula">$$ B = \\frac{{\\mathbf{{{larg_esq_cm:.2f}}} \\, cm}}{2} + \\frac{{\\mathbf{{{larg_dir_cm:.2f}}} \\, cm}}{2} = {larg_inf_total_m * 100:.2f} \\, cm = {larg_inf_total_m:.2f} \\, m $$</p>
                     <h4>b. Carga Distribuída por metro linear (q)</h4>
-                    <p class="formula">$$ q_{{serviço}} = \\text{{Carga}} \\times B = {carga_area:.2f} \\, kN/m^2 \\times {larg_inf_total_m:.2f} \\, m = {q_servico_kn_m:.2f} \\, kN/m $$</p>
-                    <p class="formula">$$ q_{{última}} = q_{{serviço}} \\times \\gamma_f = {q_servico_kn_m:.2f} \\, kN/m \\times {gamma_f:.2f} = {q_ult_kn_cm * 100:.2f} \\, kN/m $$</p>
+                    <p class="formula">$$ q_{{serviço}} = \\text{{Carga}} \\times B = \\mathbf{{{carga_area:.2f}}} \\, kN/m^2 \\times \\mathbf{{{larg_inf_total_m:.2f}}} \\, m = \\mathbf{{{q_servico_kn_m:.2f}}} \\, kN/m $$</p>
+                    <p class="formula">$$ q_{{última}} = q_{{serviço}} \\times \\gamma_f = \\mathbf{{{q_servico_kn_m:.2f}}} \\, kN/m \\times \\mathbf{{{gamma_f:.2f}}} = \\mathbf{{{q_ult_kn_cm * 100:.2f}}} \\, kN/m $$</p>
+                    <p class="ref-norma">Cálculo dos esforços de momento e cortante para carga distribuída na viga {tipo_viga}</p>
+                    <p class="formula">$$ {detalhes_esforcos['Msd_q']['formula_simbolica']} = {detalhes_esforcos['Msd_q']['formula_numerica']} = \\mathbf{{{detalhes_esforcos['Msd_q']['valor']/100:.2f}}} \\, kNm $$</p>
+                    <p class="formula">$$ {detalhes_esforcos['Vsd_q']['formula_simbolica']} = {detalhes_esforcos['Vsd_q']['formula_numerica']} = \\mathbf{{{detalhes_esforcos['Vsd_q']['valor']:.2f}}} \\, kN $$</p>
                 </div>
                 """
                 if add_p_load:
                     input_details_html += f"""
                     <h3>2.2 Carga Pontual</h3>
                     <div class="formula-block">
-                        <p class="formula">$$ P_{{serviço}} = {p_serv_kn:.2f} \\, kN $$</p>
-                        <p class="formula">$$ P_{{última}} = P_{{serviço}} \\times \\gamma_f = {p_serv_kn:.2f} \\times {gamma_f:.2f} = {p_load_ult[0]:.2f} \\, kN $$</p>
-                        <p class="formula">$$ x = {p_pos_cm:.2f} \\, cm $$</p>
+                        <p class="formula">$$ P_{{serviço}} = \\mathbf{{{p_serv_kn:.2f}}} \\, kN $$</p>
+                        <p class="formula">$$ P_{{última}} = P_{{serviço}} \\times \\gamma_f = \\mathbf{{{p_serv_kn:.2f}}} \\times \\mathbf{{{gamma_f:.2f}}} = \\mathbf{{{p_load_ult[0]:.2f}}} \\, kN $$</p>
+                        <p class="formula">$$ x = \\mathbf{{{p_pos_cm:.2f}}} \\, cm $$</p>
+                        <p class="ref-norma">Cálculo dos esforços de momento e cortante para carga pontual na viga {tipo_viga}</p>
+                        <p class="formula">$$ {detalhes_esforcos['Msd_p']['formula_simbolica']} = {detalhes_esforcos['Msd_p']['formula_numerica']} = \\mathbf{{{detalhes_esforcos['Msd_p']['valor']/100:.2f}}} \\, kNm $$</p>
+                        <p class="formula">$$ {detalhes_esforcos['Vsd_p']['formula_simbolica']} = {detalhes_esforcos['Vsd_p']['formula_numerica']} = \\mathbf{{{detalhes_esforcos['Vsd_p']['valor']:.2f}}} \\, kN $$</p>
                     </div>
                     """
                 
                 input_details_html += f"""
-                <h3>2.3 Cálculo dos Esforços Finais na Viga</h3>
+                <h3>2.3 Esforços Finais na Viga</h3>
                 <div class="formula-block">
                     <h4>Momento Fletor Solicitante de Cálculo (Msd) </h4>
-                    <p class="formula">$$ M_{{sd}} = M_{{sd, q}} + M_{{sd, P}} $$</p>
-                    <p class="formula">$$ \\text{{Para carga distribuída: }} {detalhes_esforcos['Msd_q']['formula']} = \\frac{{{q_ult_kn_cm * 100:.2f} \\, kN/m \\times ({L_cm/100:.2f} \\, m)^2}}{8} = {detalhes_esforcos['Msd_q']['valor']/100:.2f} \\, kNm $$</p>
-                    {"<p class='formula'>$$ \\text{{Para carga pontual: }} " + detalhes_esforcos['Msd_p']['formula'] + f" = {detalhes_esforcos['Msd_p']['valor']/100:.2f} \\, kNm $$</p>" if add_p_load and detalhes_esforcos['Msd_p']['formula'] else ""}
-                    <p class="formula">$$ M_{{sd}} = {Msd/100:.2f} \\, kNm $$</p>
+                    <p class="formula">$$ M_{{sd}} = M_{{sd, q}} + M_{{sd, P}} = \\mathbf{{{detalhes_esforcos['Msd_q']['valor']/100:.2f}}} + \\mathbf{{{detalhes_esforcos['Msd_p']['valor']/100:.2f}}} = \\mathbf{{{Msd/100:.2f}}} \\, kNm $$</p>
                     <h4>Força Cortante Solicitante de Cálculo (Vsd) </h4>
-                    <p class="formula">$$ V_{{sd}} = V_{{sd, q}} + V_{{sd, P}} $$</p>
-                    <p class="formula">$$ \\text{{Para carga distribuída: }} {detalhes_esforcos['Vsd_q']['formula']} = \\frac{{{q_ult_kn_cm * 100:.2f} \\, kN/m \\times {L_cm/100:.2f} \\, m}}{2} = {detalhes_esforcos['Vsd_q']['valor']:.2f} \\, kN $$</p>
-                    {"<p class='formula'>$$ \\text{{Para carga pontual: }} " + detalhes_esforcos['Vsd_p']['formula'] + f" = {detalhes_esforcos['Vsd_p']['valor']:.2f} \\, kN $$</p>" if add_p_load and detalhes_esforcos['Vsd_p']['formula'] else ""}
-                    <p class="formula">$$ V_{{sd}} = {Vsd:.2f} \\, kN $$</p>
+                    <p class="formula">$$ V_{{sd}} = V_{{sd, q}} + V_{{sd, P}} = \\mathbf{{{detalhes_esforcos['Vsd_q']['valor']:.2f}}} + \\mathbf{{{detalhes_esforcos['Vsd_p']['valor']:.2f}}} = \\mathbf{{{Vsd:.2f}}} \\, kN $$</p>
                 </div>
                 """
         else: # Inserir Esforços Manualmente
@@ -369,8 +391,8 @@ def main():
                 <h2>2. Cálculo dos Esforços Solicitantes</h2>
                 <p>Neste modo, os esforços solicitantes foram inseridos diretamente pelo usuário.</p>
                 <div class="formula-block">
-                    <p class="formula">$$ M_{{sd}} = {Msd/100:.2f} \\, kNm $$</p>
-                    <p class="formula">$$ V_{{sd}} = {Vsd:.2f} \\, kN $$</p>
+                    <p class="formula">$$ M_{{sd}} = \\mathbf{{{Msd/100:.2f}}} \\, kNm $$</p>
+                    <p class="formula">$$ V_{{sd}} = \\mathbf{{{Vsd:.2f}}} \\, kN $$</p>
                 </div>
                 """
                 q_servico_kn_cm = 0 # Reiniciar para a verificação de flecha não ser executada
@@ -718,10 +740,10 @@ def _calcular_mrdx_flt(props, Lb, Cb, fy):
     Mp = Zx * fy
     lambda_val = Lb / ry if ry > 0 else float('inf')
     lambda_p = Config.FATOR_LAMBDA_P_FLT * math.sqrt(Config.E_ACO / fy)
-    detalhes = {'Mp': {'desc': 'Momento de Plastificação', 'symbol': 'M_p', 'formula': 'M_p = Z_x \\cdot f_y', 'valores': {'Z_x': Zx, 'f_y': fy}, 'valor': Mp, 'unidade': 'kN.cm', 'ref': 'Item F.1.1(a)'},'lambda': {'desc': 'Índice de Esbeltez', 'symbol': '\\lambda', 'formula': '\\lambda = \\frac{L_b}{r_y}', 'valores': {'L_b': Lb, 'r_y': ry}, 'valor': lambda_val},'lambda_p': {'desc': 'Esbeltez Limite (Plástica)', 'symbol': '\\lambda_p', 'formula': '\\lambda_p = 1.76 \\sqrt{\\frac{E}{f_y}}', 'valores': {'E': Config.E_ACO, 'f_y': fy}, 'valor': lambda_p, 'ref': 'Eq. F-2'}}
+    detalhes = {'Mp': {'desc': 'Momento de Plastificação', 'symbol': 'M_p', 'formula': 'M_p = Z_x \\cdot f_y', 'valores': {'Z_x': Zx, 'f_y': fy}, 'valor': Mp, 'unidade': 'kN.cm', 'ref': 'Item F.1.1(a)'},'lambda': {'desc': 'Índice de Esbeltez', 'symbol': '\\lambda', 'formula': '\\lambda = \\frac{{L_b}}{{r_y}}', 'valores': {'L_b': Lb, 'r_y': ry}, 'valor': lambda_val},'lambda_p': {'desc': 'Esbeltez Limite (Plástica)', 'symbol': '\\lambda_p', 'formula': '\\lambda_p = 1.76 \\sqrt{\\frac{{E}}{{f_y}}}', 'valores': {'E': Config.E_ACO, 'f_y': fy}, 'valor': lambda_p, 'ref': 'Eq. F-2'}}
     if lambda_val <= lambda_p:
         Mrdx = Mp / Config.GAMMA_A1
-        detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Plastificação)', 'symbol': 'M_{rd}', 'formula': 'M_{rd} = \\frac{M_p}{\\gamma_{a1}}', 'valores': {'M_p': Mp, '\\gamma_{a1}': Config.GAMMA_A1}, 'valor': Mrdx, 'unidade': 'kN.cm', 'ref': 'Eq. F-1'}
+        detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Plastificação)', 'symbol': 'M_{rd}', 'formula': 'M_{rd} = \\frac{{M_p}}{{\\gamma_{{a1}}}}', 'valores': {'M_p': Mp, '\\gamma_{a1}': Config.GAMMA_A1}, 'valor': Mrdx, 'unidade': 'kN.cm', 'ref': 'Eq. F-1'}
     else:
         sigma_r = Config.FATOR_SIGMA_R * fy
         Mr = (fy - sigma_r) * Wx
@@ -731,12 +753,12 @@ def _calcular_mrdx_flt(props, Lb, Cb, fy):
             termo_sqrt1 = 1 + (27 * Cw * (beta1**2) / Iy)
             termo_sqrt2 = 1 + math.sqrt(termo_sqrt1) if termo_sqrt1 >= 0 else 1
             lambda_r = (1.38 * math.sqrt(Iy * J) / (ry * beta1 * J)) * math.sqrt(termo_sqrt2)
-        detalhes['lambda_r'] = {'desc': 'Esbeltez Limite (Inelástica)', 'symbol': '\\lambda_r', 'formula': '\\lambda_r = 1.38 \\sqrt{\\frac{I_y \\cdot J}{r_y^2 \\cdot (f_y-f_r)}} \\cdot \\sqrt{1 + \\sqrt{1 + \\frac{27 \\cdot C_w \\cdot (f_y-f_r)^2 \\cdot I_y}{E^2 \\cdot J^2}}}', 'valores': {'I_y': Iy, 'J': J, 'r_y': ry, '\\beta_1': beta1, 'C_w': Cw, 'f_y': fy, 'f_r': sigma_r, 'E': Config.E_ACO}, 'valor': lambda_r, 'ref': 'Eq. F-3 (Simplificada)'}
+        detalhes['lambda_r'] = {'desc': 'Esbeltez Limite (Inelástica)', 'symbol': '\\lambda_r', 'formula': '\\lambda_r = 1.38 \\sqrt{{\\frac{{I_y \\cdot J}}{{r_y^2 \\cdot (f_y-f_r)}}}} \\cdot \\sqrt{{1 + \\sqrt{{1 + \\frac{{27 \\cdot C_w \\cdot (f_y-f_r)^2 \\cdot I_y}}{{E^2 \\cdot J^2}}}}}}', 'valores': {'I_y': Iy, 'J': J, 'r_y': ry, '\\beta_1': beta1, 'C_w': Cw, 'f_y': fy, 'f_r': sigma_r, 'E': Config.E_ACO}, 'valor': lambda_r, 'ref': 'Eq. F-3 (Simplificada)'}
         if lambda_val <= lambda_r:
             termo_interp = (Mp - Mr) * ((lambda_val - lambda_p) / (lambda_r - lambda_p))
             Mrdx_calc = (Cb / Config.GAMMA_A1) * (Mp - termo_interp)
             Mrdx = min(Mrdx_calc, Mp / Config.GAMMA_A1)
-            detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Inelástico)', 'symbol': 'M_{rd}', 'formula': 'M_{rd} = \\frac{C_b}{\\gamma_{a1}} [M_p - (M_p - M_r) (\\frac{\\lambda - \\lambda_p}{\\lambda_r - \\lambda_p})] \\le \\frac{M_p}{\\gamma_{a1}}', 'valores': {'C_b': Cb, 'M_p': Mp, 'M_r': Mr, '\\lambda': lambda_val, '\\lambda_p': lambda_p, '\\lambda_r': lambda_r, '\\gamma_{a1}': Config.GAMMA_A1}, 'valor': Mrdx, 'unidade': 'kN.cm', 'ref': 'Eq. F-1'}
+            detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Inelástico)', 'symbol': 'M_{rd}', 'formula': 'M_{rd} = \\frac{{C_b}}{{\\gamma_{{a1}}}} [M_p - (M_p - M_r) (\\frac{{\\lambda - \\lambda_p}}{{\\lambda_r - \\lambda_p}})] \\le \\frac{{M_p}}{{\\gamma_{{a1}}}}', 'valores': {'C_b': Cb, 'M_p': Mp, 'M_r': Mr, '\\lambda': lambda_val, '\\lambda_p': lambda_p, '\\lambda_r': lambda_r, '\\gamma_{a1}': Config.GAMMA_A1}, 'valor': Mrdx, 'unidade': 'kN.cm', 'ref': 'Eq. F-1'}
         else:
             Mcr = 0
             if Lb**2 > 0 and Iy > 0 and Cw > 0 and J > 0:
@@ -744,8 +766,8 @@ def _calcular_mrdx_flt(props, Lb, Cb, fy):
                 Mcr_termo2 = math.sqrt((Cw/Iy) * (1 + (0.039 * J * (Lb**2) / Cw)))
                 Mcr = Mcr_termo1 * Mcr_termo2
             Mrdx = Mcr / Config.GAMMA_A1
-            detalhes['Mcr'] = {'desc': 'Momento Crítico Elástico', 'symbol': 'M_{cr}', 'formula': 'M_{cr} = \\frac{C_b \\pi^2 E I_y}{L_b^2} \\sqrt{\\frac{C_w}{I_y}(1 + 0.039 \\frac{J L_b^2}{C_w})}', 'valores': {'C_b': Cb, 'E': Config.E_ACO, 'I_y': Iy, 'L_b': Lb, 'C_w': Cw, 'J': J}, 'valor': Mcr, 'unidade': 'kN.cm', 'ref': 'Eq. F-4'}
-            detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Elástico)', 'symbol': 'M_{rd}', 'formula': 'M_{rd} = \\frac{M_{cr}}{\\gamma_{a1}}', 'valores': {'M_{cr}': Mcr, '\\gamma_{a1}': Config.GAMMA_A1}, 'valor': Mrdx, 'unidade': 'kN.cm', 'ref': 'Eq. F-1'}
+            detalhes['Mcr'] = {'desc': 'Momento Crítico Elástico', 'symbol': 'M_{cr}', 'formula': 'M_{cr} = \\frac{{C_b \\pi^2 E I_y}}{{L_b^2}} \\sqrt{{\\frac{{C_w}}{{I_y}}(1 + 0.039 \\frac{{J L_b^2}}{{C_w}})}}', 'valores': {'C_b': Cb, 'E': Config.E_ACO, 'I_y': Iy, 'L_b': Lb, 'C_w': Cw, 'J': J}, 'valor': Mcr, 'unidade': 'kN.cm', 'ref': 'Eq. F-4'}
+            detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Elástico)', 'symbol': 'M_{rd}', 'formula': 'M_{rd} = \\frac{{M_{{cr}}}}{{\\gamma_{{a1}}}}', 'valores': {'M_{cr}': Mcr, '\\gamma_{a1}': Config.GAMMA_A1}, 'valor': Mrdx, 'unidade': 'kN.cm', 'ref': 'Eq. F-1'}
     detalhes['Mrdx'] = Mrdx
     return detalhes
 
@@ -754,23 +776,23 @@ def _calcular_mrdx_flm(props, fy):
     Mp = Zx * fy
     lambda_val = (bf / 2) / tf if tf > 0 else float('inf')
     lambda_p = Config.FATOR_LAMBDA_P_FLM * math.sqrt(Config.E_ACO / fy)
-    detalhes = {'lambda': {'desc': 'Esbeltez da Mesa', 'symbol': '\\lambda', 'formula': '\\lambda = \\frac{b_f/2}{t_f}', 'valores': {'b_f': bf, 't_f': tf}, 'valor': lambda_val},'lambda_p': {'desc': 'Esbeltez Limite (Plástica)', 'symbol': '\\lambda_p', 'formula': '\\lambda_p = 0.38 \\sqrt{\\frac{E}{f_y}}', 'valores': {'E': Config.E_ACO, 'f_y': fy}, 'valor': lambda_p, 'ref': 'Tabela F.1'}}
+    detalhes = {'lambda': {'desc': 'Esbeltez da Mesa', 'symbol': '\\lambda', 'formula': '\\lambda = \\frac{{b_f/2}}{{t_f}}', 'valores': {'b_f': bf, 't_f': tf}, 'valor': lambda_val},'lambda_p': {'desc': 'Esbeltez Limite (Plástica)', 'symbol': '\\lambda_p', 'formula': '\\lambda_p = 0.38 \\sqrt{{\\frac{{E}}{{f_y}}}}', 'valores': {'E': Config.E_ACO, 'f_y': fy}, 'valor': lambda_p, 'ref': 'Tabela F.1'}}
     if lambda_val <= lambda_p:
         Mrdx = Mp / Config.GAMMA_A1
-        detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Mesa Compacta)', 'symbol': 'M_{rd}', 'formula': 'M_{rd} = \\frac{M_p}{\\gamma_{a1}}', 'valores': {'M_p': Mp, '\\gamma_{a1}': Config.GAMMA_A1}, 'valor': Mrdx, 'unidade': 'kN.cm'}
+        detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Mesa Compacta)', 'symbol': 'M_{rd}', 'formula': 'M_{rd} = \\frac{{M_p}}{{\\gamma_{{a1}}}}', 'valores': {'M_p': Mp, '\\gamma_{a1}': Config.GAMMA_A1}, 'valor': Mrdx, 'unidade': 'kN.cm'}
     else:
         sigma_r = Config.FATOR_SIGMA_R * fy
         lambda_r = Config.FATOR_LAMBDA_R_FLM_LAMINADO * math.sqrt(Config.E_ACO / (fy - sigma_r)) if (fy - sigma_r) > 0 else float('inf')
         Mr = (fy - sigma_r) * Wx
-        detalhes['lambda_r'] = {'desc': 'Esbeltez Limite (Inelástica)', 'symbol': '\\lambda_r', 'formula': '\\lambda_r = 0.83 \\sqrt{\\frac{E}{f_y - f_r}}', 'valores': {'E': Config.E_ACO, 'f_y': fy, 'f_r': sigma_r}, 'valor': lambda_r, 'ref': 'Tabela F.1'}
+        detalhes['lambda_r'] = {'desc': 'Esbeltez Limite (Inelástica)', 'symbol': '\\lambda_r', 'formula': '\\lambda_r = 0.83 \\sqrt{{\\frac{{E}}{{f_y - f_r}}}}', 'valores': {'E': Config.E_ACO, 'f_y': fy, 'f_r': sigma_r}, 'valor': lambda_r, 'ref': 'Tabela F.1'}
         if lambda_val <= lambda_r:
             termo_interp = (Mp - Mr) * ((lambda_val - lambda_p) / (lambda_r - lambda_p))
             Mrdx = (1 / Config.GAMMA_A1) * (Mp - termo_interp)
-            detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Mesa Semicompacta)', 'symbol': 'M_{rd}', 'formula': 'M_{rd} = \\frac{1}{\\gamma_{a1}} [M_p - (M_p - M_r) (\\frac{\\lambda - \\lambda_p}{\\lambda_r - \\lambda_p})]', 'valores': {'M_p': Mp, 'M_r': Mr, '\\lambda': lambda_val, '\\lambda_p': lambda_p, '\\lambda_r': lambda_r, '\\gamma_{a1}': Config.GAMMA_A1}, 'valor': Mrdx, 'unidade': 'kN.cm'}
+            detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Mesa Semicompacta)', 'symbol': 'M_{rd}', 'formula': 'M_{rd} = \\frac{{1}}{{\\gamma_{{a1}}}} [M_p - (M_p - M_r) (\\frac{{\\lambda - \\lambda_p}}{{\\lambda_r - \\lambda_p}})]', 'valores': {'M_p': Mp, 'M_r': Mr, '\\lambda': lambda_val, '\\lambda_p': lambda_p, '\\lambda_r': lambda_r, '\\gamma_{a1}': Config.GAMMA_A1}, 'valor': Mrdx, 'unidade': 'kN.cm'}
         else:
             Mcr = (0.69 * Config.E_ACO * Wx) / (lambda_val**2) if lambda_val > 0 else 0
             Mrdx = Mcr / Config.GAMMA_A1
-            detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Mesa Esbelta)', 'symbol': 'M_{rd}', 'formula': 'M_{rd} = \\frac{0.69 E W_x}{\\lambda^2 \\gamma_{a1}}', 'valores': {'E': Config.E_ACO, 'W_x': Wx, '\\lambda': lambda_val, '\\gamma_{a1}': Config.GAMMA_A1}, 'valor': Mrdx, 'unidade': 'kN.cm'}
+            detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Mesa Esbelta)', 'symbol': 'M_{rd}', 'formula': 'M_{rd} = \\frac{{0.69 E W_x}}{{\\lambda^2 \\gamma_{{a1}}}}', 'valores': {'E': Config.E_ACO, 'W_x': Wx, '\\lambda': lambda_val, '\\gamma_{a1}': Config.GAMMA_A1}, 'valor': Mrdx, 'unidade': 'kN.cm'}
     detalhes['Mrdx'] = Mrdx
     return detalhes
 
@@ -779,18 +801,18 @@ def _calcular_mrdx_fla(props, fy):
     Mp = Zx * fy
     lambda_val = h / tw if tw > 0 else float('inf')
     lambda_p = Config.FATOR_LAMBDA_P_FLA * math.sqrt(Config.E_ACO / fy)
-    detalhes = {'lambda': {'desc': 'Esbeltez da Alma', 'symbol': '\\lambda', 'formula': '\\lambda = \\frac{h}{t_w}', 'valores': {'h': h, 't_w': tw}, 'valor': lambda_val},'lambda_p': {'desc': 'Esbeltez Limite (Plástica)', 'symbol': '\\lambda_p', 'formula': '\\lambda_p = 3.76 \\sqrt{\\frac{E}{f_y}}', 'valores': {'E': Config.E_ACO, 'f_y': fy}, 'valor': lambda_p, 'ref': 'Tabela F.1'}}
+    detalhes = {'lambda': {'desc': 'Esbeltez da Alma', 'symbol': '\\lambda', 'formula': '\\lambda = \\frac{{h}}{{t_w}}', 'valores': {'h': h, 't_w': tw}, 'valor': lambda_val},'lambda_p': {'desc': 'Esbeltez Limite (Plástica)', 'symbol': '\\lambda_p', 'formula': '\\lambda_p = 3.76 \\sqrt{{\\frac{{E}}{{f_y}}}}', 'valores': {'E': Config.E_ACO, 'f_y': fy}, 'valor': lambda_p, 'ref': 'Tabela F.1'}}
     if lambda_val <= lambda_p:
         Mrdx = Mp / Config.GAMMA_A1
-        detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Alma Compacta)', 'symbol': 'M_{rd}', 'formula': 'M_{rd} = \\frac{M_p}{\\gamma_{a1}}', 'valores': {'M_p': Mp, '\\gamma_{a1}': Config.GAMMA_A1}, 'valor': Mrdx, 'unidade': 'kN.cm'}
+        detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Alma Compacta)', 'symbol': 'M_{rd}', 'formula': 'M_{rd} = \\frac{{M_p}}{{\\gamma_{{a1}}}}', 'valores': {'M_p': Mp, '\\gamma_{a1}': Config.GAMMA_A1}, 'valor': Mrdx, 'unidade': 'kN.cm'}
     else:
         lambda_r = Config.FATOR_LAMBDA_R_FLA * math.sqrt(Config.E_ACO / fy)
         Mr = fy * Wx
-        detalhes['lambda_r'] = {'desc': 'Esbeltez Limite (Inelástica)', 'symbol': '\\lambda_r', 'formula': '\\lambda_r = 5.70 \\sqrt{\\frac{E}{f_y}}', 'valores': {'E': Config.E_ACO, 'f_y': fy}, 'valor': lambda_r, 'ref': 'Tabela F.1'}
+        detalhes['lambda_r'] = {'desc': 'Esbeltez Limite (Inelástica)', 'symbol': '\\lambda_r', 'formula': '\\lambda_r = 5.70 \\sqrt{{\\frac{{E}}{{f_y}}}}', 'valores': {'E': Config.E_ACO, 'f_y': fy}, 'valor': lambda_r, 'ref': 'Tabela F.1'}
         if lambda_val <= lambda_r:
             termo_interp = (Mp - Mr) * ((lambda_val - lambda_p) / (lambda_r - lambda_p))
             Mrdx = (1 / Config.GAMMA_A1) * (Mp - termo_interp)
-            detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Alma Semicompacta)', 'symbol': 'M_{rd}', 'formula': 'M_{rd} = \\frac{1}{\\gamma_{a1}} [M_p - (M_p - M_r) (\\frac{\\lambda - \\lambda_p}{\\lambda_r - \\lambda_p})]', 'valores': {'M_p': Mp, 'M_r': Mr, '\\lambda': lambda_val, '\\lambda_p': lambda_p, '\\lambda_r': lambda_r, '\\gamma_{a1}': Config.GAMMA_A1}, 'valor': Mrdx, 'unidade': 'kN.cm'}
+            detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Alma Semicompacta)', 'symbol': 'M_{rd}', 'formula': 'M_{rd} = \\frac{{1}}{{\\gamma_{{a1}}}} [M_p - (M_p - M_r) (\\frac{{\\lambda - \\lambda_p}}{{\\lambda_r - \\lambda_p}})]', 'valores': {'M_p': Mp, 'M_r': Mr, '\\lambda': lambda_val, '\\lambda_p': lambda_p, '\\lambda_r': lambda_r, '\\gamma_{a1}': Config.GAMMA_A1}, 'valor': Mrdx, 'unidade': 'kN.cm'}
         else:
             Mrdx = 0
             detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Alma Esbelta)', 'symbol': 'M_{rd}', 'formula': 'N/A', 'valores': {}, 'valor': Mrdx, 'unidade': 'kN.cm', 'ref': 'Perfil com alma esbelta. Ver Anexo H.'}
@@ -803,19 +825,19 @@ def _calcular_vrd(props, fy):
     lambda_val = h / tw if tw > 0 else float('inf')
     kv = Config.KV_ALMA_SEM_ENRIJECEDORES
     lambda_p = Config.FATOR_LAMBDA_P_VRD * math.sqrt((kv * Config.E_ACO) / fy)
-    detalhes = {'Vpl': {'desc': 'Força Cortante de Plastificação', 'symbol': 'V_{pl}', 'formula': 'V_{pl} = 0.60 \\cdot d_{perfil} \\cdot t_{w,alma} \\cdot f_{y,aco}', 'valores': {'d_{perfil}': d, 't_{w,alma}': tw, 'f_{y,aco}': fy}, 'valor': Vpl, 'unidade': 'kN', 'ref': 'Eq. 5.23 / G.2.1(a)'}, 'lambda': {'desc': 'Esbeltez da Alma (Cisalhamento)', 'symbol': '\\lambda', 'formula': '\\lambda = \\frac{h}{t_w}', 'valores': {'h': h, 't_w': tw}, 'valor': lambda_val},'lambda_p': {'desc': 'Esbeltez Limite (Plástica)', 'symbol': '\\lambda_p', 'formula': '\\lambda_p = 1.10 \\sqrt{\\frac{k_v \\cdot E}{f_y}}', 'valores': {'k_v': kv, 'E': Config.E_ACO, 'f_y': fy}, 'valor': lambda_p, 'ref': 'Eq. 5.25 / G-4'}}
+    detalhes = {'Vpl': {'desc': 'Força Cortante de Plastificação', 'symbol': 'V_{pl}', 'formula': 'V_{pl} = 0.60 \\cdot d_{{perfil}} \\cdot t_{{w,alma}} \\cdot f_{{y,aco}}', 'valores': {'d_{perfil}': d, 't_{w,alma}': tw, 'f_{y,aco}': fy}, 'valor': Vpl, 'unidade': 'kN', 'ref': 'Eq. 5.23 / G.2.1(a)'}, 'lambda': {'desc': 'Esbeltez da Alma (Cisalhamento)', 'symbol': '\\lambda', 'formula': '\\lambda = \\frac{{h}}{{t_w}}', 'valores': {'h': h, 't_w': tw}, 'valor': lambda_val},'lambda_p': {'desc': 'Esbeltez Limite (Plástica)', 'symbol': '\\lambda_p', 'formula': '\\lambda_p = 1.10 \\sqrt{{\\frac{{k_v \\cdot E}}{{f_y}}}}', 'valores': {'k_v': kv, 'E': Config.E_ACO, 'f_y': fy}, 'valor': lambda_p, 'ref': 'Eq. 5.25 / G-4'}}
     if lambda_val <= lambda_p:
         Vrd = Vpl / Config.GAMMA_A1
-        detalhes['Vrd_calc'] = {'desc': 'Cortante Resistente (Escoamento)', 'symbol': 'V_{rd}', 'formula': 'V_{rd} = \\frac{V_{pl}}{\\gamma_{a1}}', 'valores': {'V_{pl}': Vpl, '\\gamma_{a1}': Config.GAMMA_A1}, 'valor': Vrd, 'unidade': 'kN', 'ref': 'Eq. 5.24 / G-3a'}
+        detalhes['Vrd_calc'] = {'desc': 'Cortante Resistente (Escoamento)', 'symbol': 'V_{rd}', 'formula': 'V_{rd} = \\frac{{V_{{pl}}}}{{\\gamma_{{a1}}}}', 'valores': {'V_{pl}': Vpl, '\\gamma_{a1}': Config.GAMMA_A1}, 'valor': Vrd, 'unidade': 'kN', 'ref': 'Eq. 5.24 / G-3a'}
     else:
         lambda_r = Config.FATOR_LAMBDA_R_VRD * math.sqrt((kv * Config.E_ACO) / fy)
-        detalhes['lambda_r'] = {'desc': 'Esbeltez Limite (Inelástica)', 'symbol': '\\lambda_r', 'formula': '\\lambda_r = 1.37 \\sqrt{\\frac{k_v \\cdot E}{f_y}}', 'valores': {'k_v': kv, 'E': Config.E_ACO, 'f_y': fy}, 'valor': lambda_r, 'ref': 'Eq. 5.27 / G-4'}
+        detalhes['lambda_r'] = {'desc': 'Esbeltez Limite (Inelástica)', 'symbol': '\\lambda_r', 'formula': '\\lambda_r = 1.37 \\sqrt{{\\frac{{k_v \\cdot E}}{{f_y}}}}', 'valores': {'k_v': kv, 'E': Config.E_ACO, 'f_y': fy}, 'valor': lambda_r, 'ref': 'Eq. 5.27 / G-4'}
         if lambda_val <= lambda_r:
             Vrd = (lambda_p / lambda_val) * (Vpl / Config.GAMMA_A1) if lambda_val > 0 else 0
-            detalhes['Vrd_calc'] = {'desc': 'Cortante Resistente (Inelástico)', 'symbol': 'V_{rd}', 'formula': 'V_{rd} = \\frac{\\lambda_p}{\\lambda} \\frac{V_{pl}}{\\gamma_{a1}}', 'valores': {'\\lambda_p': lambda_p, '\\lambda': lambda_val, 'V_{pl}': Vpl, '\\gamma_{a1}': Config.GAMMA_A1}, 'valor': Vrd, 'unidade': 'kN', 'ref': 'Eq. 5.26 / G-3b'}
+            detalhes['Vrd_calc'] = {'desc': 'Cortante Resistente (Inelástico)', 'symbol': 'V_{rd}', 'formula': 'V_{rd} = \\frac{{\\lambda_p}}{{\\lambda}} \\frac{{V_{{pl}}}}{{\\gamma_{{a1}}}}', 'valores': {'\\lambda_p': lambda_p, '\\lambda': lambda_val, 'V_{pl}': Vpl, '\\gamma_{a1}': Config.GAMMA_A1}, 'valor': Vrd, 'unidade': 'kN', 'ref': 'Eq. 5.26 / G-3b'}
         else:
             Vrd = (Config.FATOR_VRD_ELASTICO * (lambda_p / lambda_val)**2) * (Vpl / Config.GAMMA_A1) if lambda_val > 0 else 0
-            detalhes['Vrd_calc'] = {'desc': 'Cortante Resistente (Elástico)', 'symbol': 'V_{rd}', 'formula': 'V_{rd} = 1.24 (\\frac{\\lambda_p}{\\lambda})^2 \\frac{V_{pl}}{\\gamma_{a1}}', 'valores': {'\\lambda_p': lambda_p, '\\lambda': lambda_val, 'V_{pl}': Vpl, '\\gamma_{a1}': Config.GAMMA_A1}, 'valor': Vrd, 'unidade': 'kN', 'ref': 'Eq. 5.28 / G-3c'}
+            detalhes['Vrd_calc'] = {'desc': 'Cortante Resistente (Elástico)', 'symbol': 'V_{rd}', 'formula': 'V_{rd} = 1.24 (\\frac{{\\lambda_p}}{{\\lambda}})^2 \\frac{{V_{{pl}}}}{{\\gamma_{{a1}}}}', 'valores': {'\\lambda_p': lambda_p, '\\lambda': lambda_val, 'V_{pl}': Vpl, '\\gamma_{a1}': Config.GAMMA_A1}, 'valor': Vrd, 'unidade': 'kN', 'ref': 'Eq. 5.28 / G-3c'}
     detalhes['Vrd'] = Vrd
     return detalhes
 
