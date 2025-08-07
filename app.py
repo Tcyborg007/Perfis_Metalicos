@@ -260,7 +260,7 @@ def main():
     if 'detailed_analysis_html' not in st.session_state:
         st.session_state.detailed_analysis_html = None
     
-    st.title("🏛️ Calculadora Estrutural Versátil")
+    st.title("🏛️ Calculadora Estrutural - Perfis Metálicos")
     st.caption(f"Utilizando a norma: {Config.NOME_NORMA}")
 
     # CARREGAMENTO AUTOMÁTICO DOS DADOS
