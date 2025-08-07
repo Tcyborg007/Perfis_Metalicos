@@ -57,6 +57,8 @@ HTML_TEMPLATE_CSS = """
     .ref-norma { font-size: 0.8em; color: #7f8c8d; text-align: right; margin-top: 15px; font-style: italic; }
     p { text-align: justify; }
 </style>
+"""
+
 st.markdown(HTML_TEMPLATE_CSS, unsafe_allow_html=True)
 
 # ==============================================================================
