@@ -1,7 +1,6 @@
 import streamlit as st
 
-# Garanta que este seja o PRIMEIRO comando do Streamlit no arquivo
-st.set_page_config(layout="wide")
+
 
 st.title("Teste de Layout Largo")
 st.write("Se esta página estiver larga, o problema não é o ambiente, mas sim o arquivo principal do aplicativo.")
