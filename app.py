@@ -5,7 +5,11 @@ import math
 # ==============================================================================
 # 1. CONFIGURAÇÕES E CONSTANTES GLOBAIS
 # ==============================================================================
+
+# A LINHA MAIS IMPORTANTE PARA O LAYOUT:
+# Garanta que esta seja a PRIMEIRA chamada do Streamlit no seu código.
 st.set_page_config(page_title="Calculadora Estrutural - Perfis Metálicos", layout="wide")
+
 
 class Config:
     NOME_NORMA = 'ABNT NBR 8800:2008'
@@ -30,7 +34,6 @@ PROFILE_TYPE_MAP = {
     "CVS": "Perfil de Seção Variável",
     "VS": "Perfil Soldadas"
 }
-
 
 HTML_TEMPLATE_CSS = """
 <style>
@@ -58,10 +61,10 @@ HTML_TEMPLATE_CSS = """
 """
 st.markdown(HTML_TEMPLATE_CSS, unsafe_allow_html=True)
 
+# ==============================================================================
+# 2. FUNÇÕES DE CÁLCULO DE ENGENHARIA
+# ==============================================================================
 
-# ==============================================================================
-# 2. FUNÇÕES DE CÁLCULO DE ENGENHARIA (Sem alterações)
-# ==============================================================================
 def calcular_esforcos_viga(tipo_viga, L_cm, q_kn_cm=0, p_load=None):
     msd_q, vsd_q, msd_p, vsd_p = 0, 0, 0, 0
     L = L_cm
@@ -164,7 +167,6 @@ def get_profile_properties(profile_series):
     for key in ['d', 'bf', 'tw', 'tf', 'h']: props[key] /= 10.0
     return props
 
-# ... (Funções `main`, `run_batch_analysis`, etc., permanecem as mesmas)
 # ==============================================================================
 # 3. GERAÇÃO DO MEMORIAL DE CÁLCULO
 # ==============================================================================
@@ -179,7 +181,7 @@ def _build_verification_block_html(title, solicitante, s_symbol, resistente, r_s
     return f"""<h4>{title}</h4><div class="formula-block"><p class="formula">$${s_symbol} = {solicitante:.2f} \\, {unit}$$</p><p class="formula">$${r_symbol} = {resistente:.2f} \\, {unit}$$</p><p class="formula">$$\\text{{Verificação: }} {s_symbol} {comp_symbol} {r_symbol}$$</p><p class="formula">$$\\text{{Eficiência}} = \\frac{{{s_symbol}}}{{{r_symbol}}} = \\frac{{{solicitante:.2f}}}{{{resistente:.2f}}} = {eficiencia:.1f}\%$$</p><div class="final-status {status_class}">{status}</div></div>"""
 
 # ==============================================================================
-# 4. APLICAÇÃO PRINCIPAL STREAMLIT (COM AS ALTERAÇÕES)
+# 4. APLICAÇÃO PRINCIPAL STREAMLIT
 # ==============================================================================
 @st.cache_data
 def load_data_from_local_file():
@@ -198,23 +200,31 @@ def main():
         st.session_state.analysis_results = None
     if 'detailed_analysis_html' not in st.session_state:
         st.session_state.detailed_analysis_html = None
+    
     st.title("🏛️ Calculadora Estrutural - Perfis Metálicos")
     st.caption(f"Utilizando a norma: {Config.NOME_NORMA}")
+
     all_sheets = load_data_from_local_file()
     if not all_sheets:
         st.stop()
+
     display_names = [PROFILE_TYPE_MAP.get(name, name) for name in all_sheets.keys()]
     reverse_name_map = {v: k for k, v in PROFILE_TYPE_MAP.items()}
+    
     with st.sidebar:
         st.header("⚙️ Parâmetros de Entrada")
+        
         st.header("1. Modelo da Viga")
         tipo_viga = st.selectbox("Tipo de Viga:", ('Bi-apoiada', 'Engastada e Livre (Balanço)', 'Bi-engastada', 'Engastada e Apoiada'), key='tipo_viga')
         L_cm = st.number_input("Comprimento da Viga (L, cm)", 10.0, value=500.0, step=10.0, key='L_cm')
+
         st.header("2. Modo de Carregamento")
         input_mode = st.radio("Selecione o modo de entrada dos esforços:", ("Calcular a partir de Cargas na Viga", "Inserir Esforços Manualmente"), horizontal=True, label_visibility="collapsed", key='input_mode')
+
         Msd, Vsd, q_servico_kn_cm, p_load_serv = 0, 0, 0, None
         input_details_html = ""
         detalhes_esforcos = None
+        
         if input_mode == "Calcular a partir de Cargas na Viga":
             with st.container(border=True):
                 st.subheader("Carga Distribuída (q)")
@@ -243,33 +253,52 @@ def main():
                 if add_p_load:
                     input_details_html += f"""<h3>2.2 Carga Pontual</h3><div class="formula-block"><p class="formula">$$P_{{serviço}} = \\mathbf{{{p_serv_kn:.2f}}} \\, kN$$</p><p class="formula">$$P_{{última}} = P_{{serviço}} \\times \\gamma_f = \\mathbf{{{p_serv_kn:.2f}}} \\times \\mathbf{{{gamma_f:.2f}}} = \\mathbf{{{p_load_ult[0]:.2f}}} \\, kN$$</p><p class="formula">$$x = \\mathbf{{{p_pos_cm:.2f}}} \\, cm$$</p><p class="ref-norma">Cálculo dos esforços de momento e cortante para carga pontual na viga {tipo_viga}</p><p class="formula">$${detalhes_esforcos['Msd_p']['formula_simbolica']} = {detalhes_esforcos['Msd_p']['formula_numerica']} = \\mathbf{{{detalhes_esforcos['Msd_p']['valor']/100:.2f}}} \\, kNm$$</p><p class="formula">$${detalhes_esforcos['Vsd_p']['formula_simbolica']} = {detalhes_esforcos['Vsd_p']['formula_numerica']} = \\mathbf{{{detalhes_esforcos['Vsd_p']['valor']:.2f}}} \\, kN$$</p></div>"""
                 input_details_html += f"""<h3>2.3 Esforços Finais na Viga</h3><div class="formula-block"><h4>Momento Fletor Solicitante de Cálculo (Msd) </h4><p class="formula">$$M_{{sd}} = M_{{sd, q}} + M_{{sd, P}} = \\mathbf{{{detalhes_esforcos['Msd_q']['valor']/100:.2f}}} + \\mathbf{{{detalhes_esforcos['Msd_p']['valor']/100:.2f}}} = \\mathbf{{{Msd/100:.2f}}} \\, kNm$$</p><h4>Força Cortante Solicitante de Cálculo (Vsd) </h4><p class="formula">$$V_{{sd}} = V_{{sd, q}} + V_{{sd, P}} = \\mathbf{{{detalhes_esforcos['Vsd_q']['valor']:.2f}}} + \\mathbf{{{detalhes_esforcos['Vsd_p']['valor']:.2f}}} = \\mathbf{{{Vsd:.2f}}} \\, kN$$</p></div>"""
-        else:
+        else: # Inserir Esforços Manualmente
             with st.container(border=True):
                 st.warning("No modo manual, a verificação de flecha (ELS) não é realizada.")
                 msd_input = st.number_input("Momento Solicitante de Cálculo (Msd, kNm)", min_value=0.0, value=100.0, key='msd_input')
                 Msd = msd_input * 100
                 Vsd = st.number_input("Força Cortante Solicitante de Cálculo (Vsd, kN)", min_value=0.0, value=50.0, key='vsd_input')
-                input_details_html = f"""<h2>2. Cálculo dos Esforços Solicitantes</h2><p>Neste modo, os esforços solicitantes foram inseridos diretamente pelo usuário.</p><div class="formula-block"><p class="formula">$$M_{{sd}} = \\mathbf{{{Msd/100:.2f}}} \\, kNm$$</p><p class="formula">$$V_{{sd}} = \\mathbf{{{Vsd:.2f}}} \\, kN$$</p></div>"""
                 q_servico_kn_cm = 0
                 p_load_serv = None
+                input_details_html = f"""<h2>2. Cálculo dos Esforços Solicitantes</h2><p>Neste modo, os esforços solicitantes foram inseridos diretamente pelo usuário.</p><div class="formula-block"><p class="formula">$$M_{{sd}} = \\mathbf{{{Msd/100:.2f}}} \\, kNm$$</p><p class="formula">$$V_{{sd}} = \\mathbf{{{Vsd:.2f}}} \\, kN$$</p></div>"""
         st.header("3. Parâmetros Gerais do Aço")
         fy_aco = st.number_input("Tensão de Escoamento (fy, kN/cm²)", 20.0, 50.0, 34.5, 0.5, key='fy_aco')
         Lb_projeto = st.number_input("Comprimento Destravado (Lb, cm)", 10.0, value=L_cm, step=10.0, key='Lb_projeto')
         Cb_projeto = st.number_input("Fator de Modificação (Cb)", 1.0, 3.0, 1.10, key='Cb_projeto')
+
     st.header("4. Modo de Análise")
     analysis_mode = st.radio("Selecione o modo de análise:", ("Análise em Lote com Otimização", "Memorial Detalhado de um Perfil"), horizontal=True, label_visibility="collapsed", key='analysis_mode')
+
     st.session_state.input_parameters = {'tipo_viga': tipo_viga, 'L_cm': L_cm, 'input_mode': input_mode,'Msd': Msd, 'Vsd': Vsd, 'q_servico_kn_cm': q_servico_kn_cm, 'p_load_serv': p_load_serv, 'fy_aco': fy_aco, 'Lb_projeto': Lb_projeto, 'Cb_projeto': Cb_projeto,'input_details_html': input_details_html, 'detalhes_esforcos': detalhes_esforcos}
+
     if analysis_mode == "Memorial Detalhado de um Perfil":
-        st.header("🔍 Memorial de Cálculo Detalhado")
-        selected_display_name = st.selectbox("Selecione o Tipo de Perfil:", display_names)
-        sheet_name = reverse_name_map.get(selected_display_name, selected_display_name)
-        df_selecionado = all_sheets[sheet_name]
-        perfil_selecionado_nome = st.selectbox("Selecione o Perfil Específico:", df_selecionado['Bitola (mm x kg/m)'])
-        if st.button("Gerar Memorial Completo", type="primary", use_container_width=True):
-            run_detailed_analysis(df_selecionado, perfil_selecionado_nome, selected_display_name, st.session_state.input_parameters)
-        if st.session_state.detailed_analysis_html:
-            st.components.v1.html(st.session_state.detailed_analysis_html, height=1000, scrolling=True)
-            st.download_button(label="📥 Baixar Memorial HTML", data=st.session_state.detailed_analysis_html.encode('utf-8'), file_name=f"Memorial_{perfil_selecionado_nome.replace(' ', '_')}.html", mime="text/html")
+        left_col, right_col = st.columns([2, 3])
+
+        with left_col:
+            st.header("🔍 Seleção do Perfil")
+            selected_display_name = st.selectbox("Selecione o Tipo de Perfil:", display_names)
+            sheet_name = reverse_name_map.get(selected_display_name, selected_display_name)
+            df_selecionado = all_sheets[sheet_name]
+            perfil_selecionado_nome = st.selectbox("Selecione o Perfil Específico:", df_selecionado['Bitola (mm x kg/m)'])
+            if st.button("Gerar Memorial Completo", type="primary", use_container_width=True):
+                run_detailed_analysis(df_selecionado, perfil_selecionado_nome, selected_display_name, st.session_state.input_parameters)
+        
+        with right_col:
+            if st.session_state.detailed_analysis_html:
+                st.header("📄 Memorial de Cálculo")
+                with st.expander("Clique para expandir ou recolher o memorial", expanded=True):
+                    st.components.v1.html(st.session_state.detailed_analysis_html, height=1000, scrolling=True)
+                    st.download_button(
+                        label="📥 Baixar Memorial HTML",
+                        data=st.session_state.detailed_analysis_html.encode('utf-8'),
+                        file_name=f"Memorial_{perfil_selecionado_nome.replace(' ', '_')}.html",
+                        mime="text/html",
+                        use_container_width=True
+                    )
+            else:
+                st.info("⬅️ Preencha os parâmetros, selecione um perfil e clique em 'Gerar Memorial' para ver o resultado aqui.")
+    
     elif analysis_mode == "Análise em Lote com Otimização":
         st.header("📊 Pré-dimensionamento e Análise por Categoria")
         st.info("Analisa todos os perfis e organiza os resultados em abas por tipo, destacando os 5 perfis mais leves de cada categoria.")
@@ -318,9 +347,8 @@ def main():
                             st.dataframe(style_dataframe(reprovados), use_container_width=True)
 
 # ==============================================================================
-# 5. FUNÇÕES DE ORQUESTRAÇÃO E ANÁLISE
+# 5. FUNÇÕES DE ORQUESTRAÇÃO, ANÁLISE E CÁLCULO
 # ==============================================================================
-
 def run_detailed_analysis(df, perfil_nome, perfil_tipo_display, input_params):
     with st.spinner(f"Gerando análise completa para {perfil_nome}..."):
         try:
@@ -335,9 +363,12 @@ def run_detailed_analysis(df, perfil_nome, perfil_tipo_display, input_params):
             resultados = {'resumo_html': resumo_html, 'passo_a_passo_html': passo_a_passo}
             html_content = gerar_memorial_completo(perfil_nome, perfil_tipo_display, resultados, input_params['input_details_html'])
             st.session_state.detailed_analysis_html = html_content
-            st.success("Análise concluída!")
-        except (ValueError, KeyError) as e: st.error(f"❌ Erro nos Dados de Entrada: {e}")
-        except Exception as e: st.error(f"❌ Ocorreu um erro inesperado: {e}")
+        except (ValueError, KeyError) as e:
+            st.error(f"❌ Erro nos Dados de Entrada: {e}")
+            st.session_state.detailed_analysis_html = None
+        except Exception as e:
+            st.error(f"❌ Ocorreu um erro inesperado: {e}")
+            st.session_state.detailed_analysis_html = None
 
 def run_batch_analysis(all_sheets, input_params):
     all_results = []
@@ -457,7 +488,6 @@ def _add_verification_details(title, details_dict):
     return html
 
 def _add_verification_details_with_efficiency(title, Msd, details_dict):
-    # (Esta função permanece a mesma da versão anterior, já está correta)
     html = f"<h4>{title}</h4><div class='formula-block'>"
     prelim_keys = ['Mrdx', 'Mrdx_calc', 'eficiencia', 'verificacao_classificacao', 'verificacao_limite']
     for key, value in details_dict.items():
@@ -509,12 +539,6 @@ def _add_verification_details_with_efficiency(title, Msd, details_dict):
     html += "</div>"
     return html
 
-# =========================================================================================
-# >> FUNÇÃO DE CÁLCULO MODIFICADA <<
-# A função _calcular_vrd foi ajustada para garantir que Vpl seja
-# substituído corretamente na fórmula numérica.
-# =========================================================================================
-
 def _calcular_mrdx_flt(props, Lb, Cb, fy):
     Zx, ry, Iy, Cw, J, Wx = props['Zx'], props['ry'], props['Iy'], props['Cw'], props['J'], props['Wx']
     Mp = Zx * fy
@@ -535,10 +559,7 @@ def _calcular_mrdx_flt(props, Lb, Cb, fy):
             termo_sqrt1 = 1 + (27 * Cw * (beta1**2) / Iy)
             termo_sqrt2 = 1 + math.sqrt(termo_sqrt1) if termo_sqrt1 >= 0 else 1
             lambda_r = (1.38 * math.sqrt(Iy * J) / (ry * beta1 * J)) * math.sqrt(termo_sqrt2)
-        
-        # FORMULA CORRIGIDA com \times
         detalhes['lambda_r'] = {'desc': 'Esbeltez Limite (Inelástica)', 'formula': '\\lambda_r = 1.38 \\frac{\\sqrt{I_y \\times J}}{r_y \\times \\beta_1 \\times J} \\sqrt{1 + \\sqrt{1+\\frac{27 \\times C_w \\times \\beta_1^2}{I_y}}}', 'valores': {'I_y': Iy, 'J': J, 'r_y': ry, '\\beta_1': beta1, 'C_w': Cw}, 'valor': lambda_r}
-        
         if lambda_val <= lambda_r:
             verificacao_texto = f"""<p>O índice de esbeltez (λ = {lambda_val:.2f}) está <b>entre os limites</b> plástico (λp = {lambda_p:.2f}) e inelástico (λr = {lambda_r:.2f}).</p><p><b>Conclusão: Ocorre flambagem no regime inelástico.</b></p>"""
             Mrdx_calc = (Cb / Config.GAMMA_A1) * (Mp - (Mp - Mr) * ((lambda_val - lambda_p) / (lambda_r - lambda_p)))
@@ -546,9 +567,9 @@ def _calcular_mrdx_flt(props, Lb, Cb, fy):
             Mrdx = min(Mrdx_calc, Mp_gamma)
             detalhes['Mrdx_calc'] = {'desc': 'Cálculo do Momento Resistente (Regime Inelástico)', 'formula': 'M_{rd,calc} = \\frac{{C_b}}{{\\gamma_{{a1}}}} [M_p - (M_p - M_r) (\\frac{{\\lambda - \\lambda_p}}{{\\lambda_r - \\lambda_p}})]', 'valores': {'C_b': Cb, '\\gamma_{{a1}}': Config.GAMMA_A1, 'M_p': Mp, 'M_r': Mr, '\\lambda': lambda_val, '\\lambda_p': lambda_p, '\\lambda_r': lambda_r}, 'valor': Mrdx_calc, 'unidade': 'kN.cm', 'ref': 'Eq. F-1'}
             limite_texto = f"""<p>A norma exige que a resistência no regime inelástico seja limitada pela resistência plástica.</p>
-                               <p class='formula'>$$ M_{{rd,calc}} = {Mrdx_calc/100:.2f} \\, kNm $$</p>
-                               <p class='formula'>$$ M_{{p,rd}} = \\frac{{M_p}}{{\\gamma_{{a1}}}} = \\frac{{{Mp:.2f}}}{{{Config.GAMMA_A1:.2f}}} = {Mp_gamma/100:.2f} \\, kNm $$</p>
-                               <p>Adota-se o menor valor: $$ M_{{rd}} = \\min(M_{{rd,calc}}; M_{{p,rd}}) = \\min({Mrdx_calc/100:.2f}; {Mp_gamma/100:.2f}) = \\mathbf{{{Mrdx/100:.2f}}} \\, kNm $$</p>"""
+                               <p class='formula'>$$M_{{rd,calc}} = {Mrdx_calc/100:.2f} \\, kNm$$</p>
+                               <p class='formula'>$$M_{{p,rd}} = \\frac{{M_p}}{{\\gamma_{{a1}}}} = \\frac{{{Mp:.2f}}}{{{Config.GAMMA_A1:.2f}}} = {Mp_gamma/100:.2f} \\, kNm$$</p>
+                               <p>Adota-se o menor valor: $$M_{{rd}} = \\min(M_{{rd,calc}}; M_{{p,rd}}) = \\min({Mrdx_calc/100:.2f}; {Mp_gamma/100:.2f}) = \\mathbf{{{Mrdx/100:.2f}}} \\, kNm$$</p>"""
             detalhes['verificacao_limite'] = {'desc': 'Verificação do Limite de Plastificação', 'texto': limite_texto}
         else:
             verificacao_texto = f"""<p>O índice de esbeltez (λ = {lambda_val:.2f}) é <b>maior</b> que o limite inelástico (λr = {lambda_r:.2f}).</p><p><b>Conclusão: Ocorre flambagem no regime elástico.</b></p>"""
@@ -556,11 +577,8 @@ def _calcular_mrdx_flt(props, Lb, Cb, fy):
             if Lb**2 > 0 and Iy > 0 and Cw > 0 and J > 0:
                 Mcr = ((Cb * (math.pi**2) * Config.E_ACO * Iy) / (Lb**2)) * math.sqrt((Cw/Iy) * (1 + (0.039 * J * (Lb**2) / Cw)))
             Mrdx = Mcr / Config.GAMMA_A1
-
-            # FORMULA CORRIGIDA com \times
             detalhes['Mcr'] = {'desc': 'Momento Crítico Elástico', 'formula': 'M_{cr} = \\frac{{C_b \\times \\pi^2 \\times E \\times I_y}}{{L_b^2}} \\sqrt{{\\frac{{C_w}}{{I_y}}(1 + 0.039 \\times \\frac{{J \\times L_b^2}}{{C_w}})}}', 'valores': {'C_b': Cb, '\\pi^2': math.pi**2, 'E': Config.E_ACO, 'I_y': Iy, 'L_b': Lb, 'C_w': Cw, 'J': J}, 'valor': Mcr, 'unidade': 'kN.cm', 'ref': 'Eq. F-4'}
-            
-            detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Regime Elástico)', 'formula': 'M_{rd} = \\frac{{M_{{cr}}}}{{\\gamma_{{a1}}}}', 'valores': {'M_{cr}': Mcr, '\\gamma_{{a1}}': Config.GAMMA_A1}, 'valor': Mrdx, 'unidade': 'kN.cm', 'ref': 'Eq. F-1'}
+            detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Regime Elástico)', 'formula': 'M_{rd} = \\frac{{M_{{cr}}}}{{\\gamma_{{a1}}}}', 'valores': {'M_{{cr}}': Mcr, '\\gamma_{{a1}}': Config.GAMMA_A1}, 'valor': Mrdx, 'unidade': 'kN.cm', 'ref': 'Eq. F-1'}
     detalhes['verificacao_classificacao'] = {'desc': 'Classificação do Regime de Flambagem Lateral', 'texto': verificacao_texto}
     detalhes['Mrdx'] = Mrdx
     return detalhes
@@ -589,14 +607,12 @@ def _calcular_mrdx_flm(props, fy):
             verificacao_texto = f"""<p>A esbeltez da mesa (λ = {lambda_val:.2f}) é <b>maior</b> que a esbeltez limite semicompacta (λr = {lambda_r:.2f}).</p><p><b>Conclusão: A mesa é classificada como ESBELTA.</b></p>"""
             Mcr = (0.69 * Config.E_ACO * Wx) / (lambda_val**2) if lambda_val > 0 else 0
             Mrdx = Mcr / Config.GAMMA_A1
-            
-            # FORMULA CORRIGIDA com \times
             detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Mesa Esbelta)', 'formula': 'M_{rd} = \\frac{{0.69 \\times E \\times W_x}}{{\\lambda^2 \\times \\gamma_{{a1}}}}', 'valores': {'E': Config.E_ACO, 'W_x': Wx, '\\lambda': lambda_val, '\\gamma_{{a1}}': Config.GAMMA_A1}, 'valor': Mrdx, 'unidade': 'kN.cm'}
     detalhes['verificacao_classificacao'] = {'desc': 'Classificação da Mesa quanto à Flambagem Local', 'texto': verificacao_texto}
     detalhes['Mrdx'] = Mrdx
     return detalhes
+
 def _calcular_mrdx_fla(props, fy):
-    # (Esta função permanece a mesma da versão anterior, já está correta)
     h, tw, Zx, Wx = props['h'], props['tw'], props['Zx'], props['Wx']
     Mp = Zx * fy
     lambda_val = h / tw if tw > 0 else float('inf')
