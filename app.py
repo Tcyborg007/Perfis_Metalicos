@@ -6,8 +6,6 @@ import math
 # 1. CONFIGURAÇÕES E CONSTANTES GLOBAIS
 # ==============================================================================
 
-# A LINHA MAIS IMPORTANTE PARA O LAYOUT:
-# Garanta que esta seja a PRIMEIRA chamada do Streamlit no seu código.
 st.set_page_config(page_title="Calculadora Estrutural - Perfis Metálicos", layout="wide")
 
 
@@ -19,6 +17,7 @@ class Config:
     FATOR_LAMBDA_P_FLT = 1.76
     FATOR_LAMBDA_P_FLM = 0.38
     FATOR_LAMBDA_R_FLM_LAMINADO = 0.83
+    FATOR_LAMBDA_R_FLM_SOLDADO = 0.95
     FATOR_LAMBDA_P_FLA = 3.76
     FATOR_LAMBDA_R_FLA = 5.70
     KV_ALMA_SEM_ENRIJECEDORES = 5.0
@@ -32,7 +31,7 @@ PROFILE_TYPE_MAP = {
     "Laminados": "Perfis Laminados",
     "CS": "Perfis Compactos Soldados",
     "CVS": "Perfil de Seção Variável",
-    "VS": "Perfil Soldadas"
+    "VS": "Perfis Soldados"
 }
 
 HTML_TEMPLATE_CSS = """
@@ -201,9 +200,6 @@ def main():
     if 'detailed_analysis_html' not in st.session_state:
         st.session_state.detailed_analysis_html = None
     
-    # MARCADOR DE VERIFICAÇÃO VISUAL
-    st.info("VERSÃO DO CÓDIGO: FINAL - LAYOUT CORRIGIDO")
-
     st.title("🏛️ Calculadora Estrutural - Perfis Metálicos")
     st.caption(f"Utilizando a norma: {Config.NOME_NORMA}")
 
@@ -224,7 +220,7 @@ def main():
         st.header("2. Modo de Carregamento")
         input_mode = st.radio("Selecione o modo de entrada dos esforços:", ("Calcular a partir de Cargas na Viga", "Inserir Esforços Manualmente"), horizontal=True, label_visibility="collapsed", key='input_mode')
 
-        Msd, Vsd, q_servico_kn_cm, p_load_serv = 0, 0, 0, None
+        Msd, Vsd, q_serv_kn_cm, p_load_serv = 0, 0, 0, None
         input_details_html = ""
         detalhes_esforcos = None
         
@@ -248,8 +244,8 @@ def main():
                     p_pos_cm = 0
                 gamma_f = st.number_input("Coeficiente de Majoração de Cargas (γf)", 1.0, value=1.4, step=0.1, key='gamma_f')
                 q_servico_kn_m = (carga_area * larg_inf_total_m)
-                q_servico_kn_cm = q_servico_kn_m / 100.0
-                q_ult_kn_cm = q_servico_kn_cm * gamma_f
+                q_serv_kn_cm = q_servico_kn_m / 100.0
+                q_ult_kn_cm = q_serv_kn_cm * gamma_f
                 p_load_ult = (p_load_serv[0] * gamma_f, p_load_serv[1]) if p_load_serv else None
                 Msd, Vsd, detalhes_esforcos = calcular_esforcos_viga(tipo_viga, L_cm, q_ult_kn_cm, p_load_ult)
                 input_details_html = f"""<h2>2. Cálculo dos Esforços Solicitantes</h2><h3>2.1 Carga Distribuída</h3><div class="formula-block"><h4>a. Determinação da Área de Influência</h4><p class="formula">$$\\text{{Área de Influência}} (B) = \\frac{{Laje_{{esq}}}}{2} + \\frac{{Laje_{{dir}}}}{2}$$</p><p class="formula">$$B = \\frac{{\\mathbf{{{larg_esq_cm:.2f}}} \\, cm}}{2} + \\frac{{\\mathbf{{{larg_dir_cm:.2f}}} \\, cm}}{2} = {larg_inf_total_m * 100:.2f} \\, cm = {larg_inf_total_m:.2f} \\, m$$</p><h4>b. Carga Distribuída por metro linear (q)</h4><p class="formula">$$q_{{serviço}} = \\text{{Carga}} \\times B = \\mathbf{{{carga_area:.2f}}} \\, kN/m^2 \\times \\mathbf{{{larg_inf_total_m:.2f}}} \\, m = \\mathbf{{{q_servico_kn_m:.2f}}} \\, kN/m$$</p><p class="formula">$$q_{{última}} = q_{{serviço}} \\times \\gamma_f = \\mathbf{{{q_servico_kn_m:.2f}}} \\, kN/m \\times \\mathbf{{{gamma_f:.2f}}} = \\mathbf{{{q_ult_kn_cm * 100:.2f}}} \\, kN/m$$</p><p class="ref-norma">Cálculo dos esforços de momento e cortante para carga distribuída na viga {tipo_viga}</p><p class="formula">$${detalhes_esforcos['Msd_q']['formula_simbolica']} = {detalhes_esforcos['Msd_q']['formula_numerica']} = \\mathbf{{{detalhes_esforcos['Msd_q']['valor']/100:.2f}}} \\, kNm$$</p><p class="formula">$${detalhes_esforcos['Vsd_q']['formula_simbolica']} = {detalhes_esforcos['Vsd_q']['formula_numerica']} = \\mathbf{{{detalhes_esforcos['Vsd_q']['valor']:.2f}}} \\, kN$$</p></div>"""
@@ -262,45 +258,49 @@ def main():
                 msd_input = st.number_input("Momento Solicitante de Cálculo (Msd, kNm)", min_value=0.0, value=100.0, key='msd_input')
                 Msd = msd_input * 100
                 Vsd = st.number_input("Força Cortante Solicitante de Cálculo (Vsd, kN)", min_value=0.0, value=50.0, key='vsd_input')
-                q_servico_kn_cm = 0
+                q_serv_kn_cm = 0
                 p_load_serv = None
                 input_details_html = f"""<h2>2. Cálculo dos Esforços Solicitantes</h2><p>Neste modo, os esforços solicitantes foram inseridos diretamente pelo usuário.</p><div class="formula-block"><p class="formula">$$M_{{sd}} = \\mathbf{{{Msd/100:.2f}}} \\, kNm$$</p><p class="formula">$$V_{{sd}} = \\mathbf{{{Vsd:.2f}}} \\, kN$$</p></div>"""
         st.header("3. Parâmetros Gerais do Aço")
         fy_aco = st.number_input("Tensão de Escoamento (fy, kN/cm²)", 20.0, 50.0, 34.5, 0.5, key='fy_aco')
         Lb_projeto = st.number_input("Comprimento Destravado (Lb, cm)", 10.0, value=L_cm, step=10.0, key='Lb_projeto')
         Cb_projeto = st.number_input("Fator de Modificação (Cb)", 1.0, 3.0, 1.10, key='Cb_projeto')
+        
+        st.header("4. Parâmetros de Cisalhamento")
+        with st.container(border=True):
+            usa_enrijecedores = st.checkbox("Utilizar enrijecedores transversais?", key='usa_enrijecedores')
+            a_enr = 0
+            if usa_enrijecedores:
+                a_enr = st.number_input("Distância entre enrijecedores (a, cm)", min_value=1.0, value=100.0, step=1.0, key='a_enr')
 
     st.header("4. Modo de Análise")
     analysis_mode = st.radio("Selecione o modo de análise:", ("Análise em Lote com Otimização", "Memorial Detalhado de um Perfil"), horizontal=True, label_visibility="collapsed", key='analysis_mode')
 
-    st.session_state.input_parameters = {'tipo_viga': tipo_viga, 'L_cm': L_cm, 'input_mode': input_mode,'Msd': Msd, 'Vsd': Vsd, 'q_servico_kn_cm': q_servico_kn_cm, 'p_load_serv': p_load_serv, 'fy_aco': fy_aco, 'Lb_projeto': Lb_projeto, 'Cb_projeto': Cb_projeto,'input_details_html': input_details_html, 'detalhes_esforcos': detalhes_esforcos}
+    st.session_state.input_parameters = {'tipo_viga': tipo_viga, 'L_cm': L_cm, 'input_mode': input_mode,'Msd': Msd, 'Vsd': Vsd, 'q_serv_kn_cm': q_serv_kn_cm, 'p_load_serv': p_load_serv, 'fy_aco': fy_aco, 'Lb_projeto': Lb_projeto, 'Cb_projeto': Cb_projeto,'input_details_html': input_details_html, 'detalhes_esforcos': detalhes_esforcos, 'usa_enrijecedores': usa_enrijecedores, 'a_enr': a_enr}
 
     if analysis_mode == "Memorial Detalhado de um Perfil":
-        left_col, right_col = st.columns([2, 3])
-
-        with left_col:
-            st.header("🔍 Seleção do Perfil")
-            selected_display_name = st.selectbox("Selecione o Tipo de Perfil:", display_names)
-            sheet_name = reverse_name_map.get(selected_display_name, selected_display_name)
-            df_selecionado = all_sheets[sheet_name]
-            perfil_selecionado_nome = st.selectbox("Selecione o Perfil Específico:", df_selecionado['Bitola (mm x kg/m)'])
-            if st.button("Gerar Memorial Completo", type="primary", use_container_width=True):
-                run_detailed_analysis(df_selecionado, perfil_selecionado_nome, selected_display_name, st.session_state.input_parameters)
+        st.header("🔍 Seleção do Perfil")
+        selected_display_name = st.selectbox("Selecione o Tipo de Perfil:", display_names)
+        sheet_name = reverse_name_map.get(selected_display_name, selected_display_name)
+        df_selecionado = all_sheets[sheet_name]
+        perfil_selecionado_nome = st.selectbox("Selecione o Perfil Específico:", df_selecionado['Bitola (mm x kg/m)'])
         
-        with right_col:
-            if st.session_state.detailed_analysis_html:
-                st.header("📄 Memorial de Cálculo")
-                with st.expander("Clique para expandir ou recolher o memorial", expanded=True):
-                    st.components.v1.html(st.session_state.detailed_analysis_html, height=1000, scrolling=True)
-                    st.download_button(
-                        label="📥 Baixar Memorial HTML",
-                        data=st.session_state.detailed_analysis_html.encode('utf-8'),
-                        file_name=f"Memorial_{perfil_selecionado_nome.replace(' ', '_')}.html",
-                        mime="text/html",
-                        use_container_width=True
-                    )
-            else:
-                st.info("⬅️ Preencha os parâmetros, selecione um perfil e clique em 'Gerar Memorial' para ver o resultado aqui.")
+        if st.button("Gerar Memorial Completo", type="primary", use_container_width=True):
+            run_detailed_analysis(df_selecionado, perfil_selecionado_nome, selected_display_name, st.session_state.input_parameters)
+        
+        st.markdown("---")
+
+        if st.session_state.detailed_analysis_html:
+            st.header("📄 Memorial de Cálculo")
+            with st.expander("Clique para expandir ou recolher o memorial", expanded=True):
+                st.components.v1.html(st.session_state.detailed_analysis_html, height=1000, scrolling=True)
+                st.download_button(
+                    label="📥 Baixar Memorial HTML",
+                    data=st.session_state.detailed_analysis_html.encode('utf-8'),
+                    file_name=f"Memorial_{perfil_selecionado_nome.replace(' ', '_')}.html",
+                    mime="text/html",
+                    use_container_width=True
+                )
     
     elif analysis_mode == "Análise em Lote com Otimização":
         st.header("📊 Pré-dimensionamento e Análise por Categoria")
@@ -357,7 +357,29 @@ def run_detailed_analysis(df, perfil_nome, perfil_tipo_display, input_params):
         try:
             perfil_series = df[df['Bitola (mm x kg/m)'] == perfil_nome].iloc[0]
             props = get_profile_properties(perfil_series)
-            res_flt, res_flm, res_fla, res_cis, res_flecha, passo_a_passo = perform_all_checks(props, input_params['fy_aco'], input_params['Lb_projeto'], input_params['Cb_projeto'], input_params['L_cm'], input_params['Msd'], input_params['Vsd'], input_params['q_servico_kn_cm'], input_params['p_load_serv'], input_params['tipo_viga'], input_params['input_mode'], detalhado=True)
+
+            if "Soldado" in perfil_tipo_display or "Soldadas" in perfil_tipo_display:
+                tipo_fabricacao = "Soldado"
+            else:
+                tipo_fabricacao = "Laminado"
+
+            res_flt, res_flm, res_fla, res_cis, res_flecha, passo_a_passo = perform_all_checks(
+                props, 
+                fy=input_params['fy_aco'], 
+                Lb=input_params['Lb_projeto'], 
+                Cb=input_params['Cb_projeto'], 
+                L=input_params['L_cm'], 
+                Msd=input_params['Msd'], 
+                Vsd=input_params['Vsd'], 
+                q_serv_kn_cm=input_params['q_serv_kn_cm'], 
+                p_serv_load=input_params['p_load_serv'], 
+                tipo_viga=input_params['tipo_viga'], 
+                input_mode=input_params['input_mode'], 
+                tipo_fabricacao=tipo_fabricacao, 
+                usa_enrijecedores=input_params['usa_enrijecedores'], 
+                a_enr=input_params['a_enr'],
+                detalhado=True
+            )
             Mrd_final = min(res_flt['Mrdx'], res_flm['Mrdx'], res_fla['Mrdx'])
             ef_geral = (input_params['Msd'] / Mrd_final) * 100 if Mrd_final > 0 else float('inf')
             status_flexao = "APROVADO" if ef_geral <= 100.1 else "REPROVADO"
@@ -380,12 +402,33 @@ def run_batch_analysis(all_sheets, input_params):
     perfis_processados = 0
     with st.spinner("Processando todos os perfis..."):
         for sheet_name, df in all_sheets.items():
+            display_name = PROFILE_TYPE_MAP.get(sheet_name, sheet_name)
+            if "Soldado" in display_name or "Soldadas" in display_name:
+                tipo_fabricacao_auto = "Soldado"
+            else:
+                tipo_fabricacao_auto = "Laminado"
+
             for _, row in df.iterrows():
                 perfis_processados += 1
                 progress_bar.progress(perfis_processados / total_perfis)
                 try:
                     props = get_profile_properties(row)
-                    res_flt, res_flm, res_fla, res_cis, res_flecha, _ = perform_all_checks(props, input_params['fy_aco'], input_params['Lb_projeto'], input_params['Cb_projeto'], input_params['L_cm'], input_params['Msd'], input_params['Vsd'], input_params['q_servico_kn_cm'], input_params['p_load_serv'], input_params['tipo_viga'], input_params['input_mode'])
+                    res_flt, res_flm, res_fla, res_cis, res_flecha, _ = perform_all_checks(
+                        props, 
+                        fy=input_params['fy_aco'], 
+                        Lb=input_params['Lb_projeto'], 
+                        Cb=input_params['Cb_projeto'], 
+                        L=input_params['L_cm'], 
+                        Msd=input_params['Msd'], 
+                        Vsd=input_params['Vsd'], 
+                        q_serv_kn_cm=input_params['q_serv_kn_cm'], 
+                        p_serv_load=input_params['p_load_serv'], 
+                        tipo_viga=input_params['tipo_viga'], 
+                        input_mode=input_params['input_mode'],
+                        tipo_fabricacao=tipo_fabricacao_auto,
+                        usa_enrijecedores=input_params['usa_enrijecedores'], 
+                        a_enr=input_params['a_enr']
+                    )
                     status_geral = "APROVADO"
                     if res_flt['eficiencia'] > 100.1 or res_flm['eficiencia'] > 100.1 or res_fla['eficiencia'] > 100.1 or res_cis['eficiencia'] > 100.1 or res_flecha['eficiencia'] > 100.1:
                         status_geral = "REPROVADO"
@@ -401,11 +444,11 @@ def run_batch_analysis(all_sheets, input_params):
     st.session_state.analysis_results = df_all_results
     st.success(f"{len(df_all_results)} perfis analisados.")
 
-def perform_all_checks(props, fy, Lb, Cb, L, Msd, Vsd, q_serv_kn_cm, p_serv_load, tipo_viga, input_mode, detalhado=False):
+def perform_all_checks(props, fy, Lb, Cb, L, Msd, Vsd, q_serv_kn_cm, p_serv_load, tipo_viga, input_mode, tipo_fabricacao, usa_enrijecedores, a_enr, detalhado=False):
     res_flt = _calcular_mrdx_flt(props, Lb, Cb, fy)
-    res_flm = _calcular_mrdx_flm(props, fy)
+    res_flm = _calcular_mrdx_flm(props, fy, tipo_fabricacao)
     res_fla = _calcular_mrdx_fla(props, fy)
-    res_vrd = _calcular_vrd(props, fy)
+    res_vrd = _calcular_vrd(props, fy, usa_enrijecedores, a_enr)
     if res_flt['Mrdx'] > 0: res_flt['eficiencia'] = (Msd / res_flt['Mrdx']) * 100
     else: res_flt['eficiencia'] = float('inf')
     if res_flm['Mrdx'] > 0: res_flm['eficiencia'] = (Msd / res_flm['Mrdx']) * 100
@@ -555,8 +598,11 @@ def _calcular_mrdx_flt(props, Lb, Cb, fy):
         detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Plastificação)', 'formula': 'M_{rd} = \\frac{{M_p}}{{\\gamma_{{a1}}}}', 'valores': {'M_p': Mp, '\\gamma_{{a1}}': Config.GAMMA_A1}, 'valor': Mrdx, 'unidade': 'kN.cm', 'ref': 'Eq. F-1'}
     else:
         sigma_r = Config.FATOR_SIGMA_R * fy
+        detalhes['sigma_r'] = {'desc': 'Tensão Residual (σr)', 'formula': '\\sigma_r = 0,3 \\times f_y', 'valores': {'f_y': fy}, 'valor': sigma_r, 'unidade': 'kN/cm²'}
         Mr = (fy - sigma_r) * Wx
+        detalhes['Mr_calc'] = {'desc': 'Momento de Escoamento Residual (Mr)', 'formula': 'M_r = (f_y - \\sigma_r) \\times W_x', 'valores': {'f_y': fy, '\\sigma_r': sigma_r, 'W_x': Wx}, 'valor': Mr, 'unidade': 'kN.cm'}
         beta1 = ((fy - sigma_r) * Wx) / (Config.E_ACO * J) if Config.E_ACO * J != 0 else 0
+        detalhes['beta_1'] = {'desc': 'Parâmetro β1', 'formula': '\\beta_1 = \\frac{(f_y - \\sigma_r) \\times W_x}{E \\times J}', 'valores': {'f_y': fy, '\\sigma_r': sigma_r, 'W_x': Wx, 'E': Config.E_ACO, 'J': J}, 'valor': beta1, 'unidade': ''}
         lambda_r = float('inf')
         if ry > 0 and beta1 > 0 and J > 0 and Cw > 0 and Iy > 0:
             termo_sqrt1 = 1 + (27 * Cw * (beta1**2) / Iy)
@@ -586,12 +632,12 @@ def _calcular_mrdx_flt(props, Lb, Cb, fy):
     detalhes['Mrdx'] = Mrdx
     return detalhes
 
-def _calcular_mrdx_flm(props, fy):
-    bf, tf, Zx, Wx = props['bf'], props['tf'], props['Zx'], props['Wx']
+def _calcular_mrdx_flm(props, fy, tipo_fabricacao):
+    bf, tf, Zx, Wx, h, tw = props['bf'], props['tf'], props['Zx'], props['Wx'], props['h'], props['tw']
     Mp = Zx * fy
     lambda_val = (bf / 2) / tf if tf > 0 else float('inf')
     lambda_p = Config.FATOR_LAMBDA_P_FLM * math.sqrt(Config.E_ACO / fy)
-    detalhes = {'Mp': {'desc': 'Momento de Plastificação', 'formula': 'M_p = Z_x \\times f_y', 'valores': {'Z_x': Zx, 'f_y': fy}, 'valor': Mp, 'unidade': 'kN.cm'}, 'lambda': {'desc': 'Esbeltez da Mesa (bf/2tf)', 'formula': '\\lambda = \\frac{{b_f/2}}{{t_f}}', 'valores': {'b_f': bf, 't_f': tf}, 'valor': lambda_val},'lambda_p': {'desc': 'Esbeltez Limite (Plástica)', 'formula': '\\lambda_p = 0.38 \\sqrt{{\\frac{{E}}{{f_y}}}}', 'valores': {'E': Config.E_ACO, 'f_y': fy}, 'valor': lambda_p, 'ref': 'Tabela F.1'}}
+    detalhes = {'Mp': {'desc': 'Momento de Plastificação', 'formula': 'M_p = Z_x \\times f_y', 'valores': {'Z_x': Zx, 'f_y': fy}, 'valor': Mp, 'unidade': 'kN.cm'}, 'lambda': {'desc': 'Esbeltez da Mesa (bf/2tf)', 'formula': '\\lambda = \\frac{{b_f/2}}{{t_f}}', 'valores': {'b_f': bf, 't_f': tf}, 'valor': lambda_val},'lambda_p': {'desc': 'Esbeltez Limite (Plástica)', 'formula': '\\lambda_p = 0,38 \\sqrt{{\\frac{{E}}{{f_y}}}}', 'valores': {'E': Config.E_ACO, 'f_y': fy}, 'valor': lambda_p, 'ref': 'Tabela F.1'}}
     verificacao_texto = ""
     if lambda_val <= lambda_p:
         verificacao_texto = f"""<p>A esbeltez da mesa (λ = {lambda_val:.2f}) é <b>menor ou igual</b> à esbeltez limite plástica (λp = {lambda_p:.2f}).</p><p><b>Conclusão: A mesa é classificada como COMPACTA.</b></p>"""
@@ -599,18 +645,36 @@ def _calcular_mrdx_flm(props, fy):
         detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Mesa Compacta)', 'formula': 'M_{rd} = \\frac{{M_p}}{{\\gamma_{{a1}}}}', 'valores': {'M_p': Mp, '\\gamma_{{a1}}': Config.GAMMA_A1}, 'valor': Mrdx, 'unidade': 'kN.cm'}
     else:
         sigma_r = Config.FATOR_SIGMA_R * fy
-        lambda_r = Config.FATOR_LAMBDA_R_FLM_LAMINADO * math.sqrt(Config.E_ACO / (fy - sigma_r)) if (fy - sigma_r) > 0 else float('inf')
+        detalhes['sigma_r'] = {'desc': 'Tensão Residual (σr)', 'formula': '\\sigma_r = 0,3 \\times f_y', 'valores': {'f_y': fy}, 'valor': sigma_r, 'unidade': 'kN/cm²'}
         Mr = (fy - sigma_r) * Wx
-        detalhes['lambda_r'] = {'desc': 'Esbeltez Limite (Semicompacta)', 'formula': '\\lambda_r = 0.83 \\sqrt{{\\frac{{E}}{{f_y - f_r}}}}', 'valores': {'E': Config.E_ACO, 'f_y': fy, 'f_r': sigma_r}, 'valor': lambda_r, 'ref': 'Tabela F.1'}
+        detalhes['Mr_calc'] = {'desc': 'Momento de Escoamento Residual (Mr)', 'formula': 'M_r = (f_y - \\sigma_r) \\times W_x', 'valores': {'f_y': fy, '\\sigma_r': sigma_r, 'W_x': Wx}, 'valor': Mr, 'unidade': 'kN.cm'}
+        
+        if tipo_fabricacao == "Laminado":
+            lambda_r = Config.FATOR_LAMBDA_R_FLM_LAMINADO * math.sqrt(Config.E_ACO / (fy - sigma_r)) if (fy - sigma_r) > 0 else float('inf')
+            detalhes['lambda_r'] = {'desc': 'Esbeltez Limite (Semicompacta)', 'formula': '\\lambda_r = 0,83 \\sqrt{{\\frac{{E}}{{f_y - \\sigma_r}}}}', 'valores': {'E': Config.E_ACO, 'f_y': fy, '\\sigma_r': sigma_r}, 'valor': lambda_r, 'ref': 'Tabela F.1'}
+        else: # Soldado
+            kc = 4 / math.sqrt(h/tw) if (h/tw) > 0 else float('inf')
+            if kc < 0.35: kc = 0.35
+            if kc > 0.76: kc = 0.76
+            detalhes['kc'] = {'desc': 'Parâmetro kc', 'formula': 'k_c = \\frac{4}{\\sqrt{h/t_w}} \\, (0,35 \\le k_c \\le 0,76)', 'valores': {'h': h, 't_w': tw}, 'valor': kc, 'unidade': ''}
+            lambda_r = Config.FATOR_LAMBDA_R_FLM_SOLDADO * math.sqrt(Config.E_ACO / ((fy - sigma_r)/kc) ) if (fy - sigma_r) > 0 and kc > 0 else float('inf')
+            detalhes['lambda_r'] = {'desc': 'Esbeltez Limite (Semicompacta)', 'formula': '\\lambda_r = 0,95 \\sqrt{{\\frac{E \\times k_c}{{f_y - \\sigma_r}}}}', 'valores': {'E': Config.E_ACO, 'k_c': kc, 'f_y': fy, '\\sigma_r': sigma_r}, 'valor': lambda_r, 'ref': 'Tabela F.1'}
+
         if lambda_val <= lambda_r:
             verificacao_texto = f"""<p>A esbeltez da mesa (λ = {lambda_val:.2f}) está <b>entre os limites</b> plástico (λp = {lambda_p:.2f}) e semicompacto (λr = {lambda_r:.2f}).</p><p><b>Conclusão: A mesa é classificada como SEMICOMPACTA.</b></p>"""
             Mrdx = (1 / Config.GAMMA_A1) * (Mp - (Mp - Mr) * ((lambda_val - lambda_p) / (lambda_r - lambda_p)))
             detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Mesa Semicompacta)', 'formula': 'M_{rd} = \\frac{{1}}{{\\gamma_{{a1}}}} [M_p - (M_p - M_r) (\\frac{{\\lambda - \\lambda_p}}{{\\lambda_r - \\lambda_p}})]', 'valores': {'\\gamma_{{a1}}': Config.GAMMA_A1, 'M_p': Mp, 'M_r': Mr, '\\lambda': lambda_val, '\\lambda_p': lambda_p, '\\lambda_r': lambda_r}, 'valor': Mrdx, 'unidade': 'kN.cm'}
         else:
             verificacao_texto = f"""<p>A esbeltez da mesa (λ = {lambda_val:.2f}) é <b>maior</b> que a esbeltez limite semicompacta (λr = {lambda_r:.2f}).</p><p><b>Conclusão: A mesa é classificada como ESBELTA.</b></p>"""
-            Mcr = (0.69 * Config.E_ACO * Wx) / (lambda_val**2) if lambda_val > 0 else 0
+            if tipo_fabricacao == "Laminado":
+                Mcr = (0.69 * Config.E_ACO * Wx) / (lambda_val**2) if lambda_val > 0 else 0
+                detalhes['Mcr'] = {'desc': 'Momento Crítico (Mcr)', 'formula': 'M_{cr} = \\frac{0,69 \\times E \\times W_x}{\\lambda^2}', 'valores': {'E': Config.E_ACO, 'W_x': Wx, '\\lambda': lambda_val}, 'valor': Mcr, 'unidade': 'kN.cm'}
+            else: # Soldado
+                Mcr = (0.90 * Config.E_ACO * kc * Wx) / (lambda_val**2) if lambda_val > 0 else 0
+                detalhes['Mcr'] = {'desc': 'Momento Crítico (Mcr)', 'formula': 'M_{cr} = \\frac{0,90 \\times E \\times k_c \\times W_x}{\\lambda^2}', 'valores': {'E': Config.E_ACO, 'k_c': kc, 'W_x': Wx, '\\lambda': lambda_val}, 'valor': Mcr, 'unidade': 'kN.cm'}
             Mrdx = Mcr / Config.GAMMA_A1
-            detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Mesa Esbelta)', 'formula': 'M_{rd} = \\frac{{0.69 \\times E \\times W_x}}{{\\lambda^2 \\times \\gamma_{{a1}}}}', 'valores': {'E': Config.E_ACO, 'W_x': Wx, '\\lambda': lambda_val, '\\gamma_{{a1}}': Config.GAMMA_A1}, 'valor': Mrdx, 'unidade': 'kN.cm'}
+            detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Mesa Esbelta)', 'formula': 'M_{rd} = \\frac{M_{cr}}{\\gamma_{a1}}', 'valores': {'M_{cr}': Mcr, '\\gamma_{a1}': Config.GAMMA_A1}, 'valor': Mrdx, 'unidade': 'kN.cm'}
+            
     detalhes['verificacao_classificacao'] = {'desc': 'Classificação da Mesa quanto à Flambagem Local', 'texto': verificacao_texto}
     detalhes['Mrdx'] = Mrdx
     return detalhes
@@ -620,7 +684,7 @@ def _calcular_mrdx_fla(props, fy):
     Mp = Zx * fy
     lambda_val = h / tw if tw > 0 else float('inf')
     lambda_p = Config.FATOR_LAMBDA_P_FLA * math.sqrt(Config.E_ACO / fy)
-    detalhes = {'Mp': {'desc': 'Momento de Plastificação', 'formula': 'M_p = Z_x \\times f_y', 'valores': {'Z_x': Zx, 'f_y': fy}, 'valor': Mp, 'unidade': 'kN.cm'}, 'lambda': {'desc': 'Esbeltez da Alma (h/tw)', 'formula': '\\lambda = \\frac{{h}}{{t_w}}', 'valores': {'h': h, 't_w': tw}, 'valor': lambda_val},'lambda_p': {'desc': 'Esbeltez Limite (Plástica)', 'formula': '\\lambda_p = 3.76 \\sqrt{{\\frac{{E}}{{f_y}}}}', 'valores': {'E': Config.E_ACO, 'f_y': fy}, 'valor': lambda_p, 'ref': 'Tabela F.1'}}
+    detalhes = {'Mp': {'desc': 'Momento de Plastificação', 'formula': 'M_p = Z_x \\times f_y', 'valores': {'Z_x': Zx, 'f_y': fy}, 'valor': Mp, 'unidade': 'kN.cm'}, 'lambda': {'desc': 'Esbeltez da Alma (h/tw)', 'formula': '\\lambda = \\frac{{h}}{{t_w}}', 'valores': {'h': h, 't_w': tw}, 'valor': lambda_val},'lambda_p': {'desc': 'Esbeltez Limite (Plástica)', 'formula': '\\lambda_p = 3,76 \\sqrt{{\\frac{{E}}{{f_y}}}}', 'valores': {'E': Config.E_ACO, 'f_y': fy}, 'valor': lambda_p, 'ref': 'Tabela F.1'}}
     verificacao_texto = ""
     if lambda_val <= lambda_p:
         verificacao_texto = f"""<p>A esbeltez da alma (λ = {lambda_val:.2f}) é <b>menor ou igual</b> à esbeltez limite plástica (λp = {lambda_p:.2f}).</p><p><b>Conclusão: A alma é classificada como COMPACTA.</b></p>"""
@@ -628,8 +692,9 @@ def _calcular_mrdx_fla(props, fy):
         detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Alma Compacta)', 'formula': 'M_{rd} = \\frac{{M_p}}{{\\gamma_{{a1}}}}', 'valores': {'M_p': Mp, '\\gamma_{{a1}}': Config.GAMMA_A1}, 'valor': Mrdx, 'unidade': 'kN.cm'}
     else:
         lambda_r = Config.FATOR_LAMBDA_R_FLA * math.sqrt(Config.E_ACO / fy)
+        detalhes['lambda_r'] = {'desc': 'Esbeltez Limite (Semicompacta)', 'formula': '\\lambda_r = 5,70 \\sqrt{{\\frac{{E}}{{f_y}}}}', 'valores': {'E': Config.E_ACO, 'f_y': fy}, 'valor': lambda_r, 'ref': 'Tabela F.1'}
         Mr = fy * Wx
-        detalhes['lambda_r'] = {'desc': 'Esbeltez Limite (Semicompacta)', 'formula': '\\lambda_r = 5.70 \\sqrt{{\\frac{{E}}{{f_y}}}}', 'valores': {'E': Config.E_ACO, 'f_y': fy}, 'valor': lambda_r, 'ref': 'Tabela F.1'}
+        detalhes['Mr_calc'] = {'desc': 'Momento de Escoamento (Mr)', 'formula': 'M_r = f_y \\times W_x', 'valores': {'f_y': fy, 'W_x': Wx}, 'valor': Mr, 'unidade': 'kN.cm'}
         if lambda_val <= lambda_r:
             verificacao_texto = f"""<p>A esbeltez da alma (λ = {lambda_val:.2f}) está <b>entre os limites</b> plástico (λp = {lambda_p:.2f}) e semicompacto (λr = {lambda_r:.2f}).</p><p><b>Conclusão: A alma é classificada como SEMICOMPACTA.</b></p>"""
             Mrdx = (1 / Config.GAMMA_A1) * (Mp - (Mp - Mr) * ((lambda_val - lambda_p) / (lambda_r - lambda_p)))
@@ -642,13 +707,31 @@ def _calcular_mrdx_fla(props, fy):
     detalhes['Mrdx'] = Mrdx
     return detalhes
 
-def _calcular_vrd(props, fy):
+def _calcular_vrd(props, fy, usa_enrijecedores, a_enr):
     d, h, tw = props['d'], props['h'], props['tw']
     Vpl = Config.FATOR_VP * d * tw * fy
     lambda_val = h / tw if tw > 0 else float('inf')
+    
+    detalhes = {'Vpl': {'desc': 'Força Cortante de Plastificação', 'formula': 'V_{pl} = 0,60 \\times d \\times t_{w} \\times f_{y}', 'valores': {'d': d, 't_{w}': tw, 'f_{y}': fy}, 'valor': Vpl, 'unidade': 'kN'}, 'lambda': {'desc': 'Esbeltez da Alma (Cisalhamento)', 'formula': '\\lambda = \\frac{{h}}{{t_w}}', 'valores': {'h': h, 't_w': tw}, 'valor': lambda_val}}
+
     kv = Config.KV_ALMA_SEM_ENRIJECEDORES
+    kv_formula = "k_v = 5"
+    kv_desc = "Fator de Flambagem (kv) - para almas sem enrijecedores"
+    kv_valores = {}
+
+    if usa_enrijecedores and a_enr > 0 and h > 0:
+        a_h_ratio = a_enr / h
+        if a_h_ratio < 3:
+            kv = 5 + (5 / (a_h_ratio**2))
+            kv_formula = "k_v = 5 + \\frac{5}{(a/h)^2}"
+            kv_desc = "Fator de Flambagem (kv) - com enrijecedores"
+            kv_valores = {'a': a_enr, 'h': h}
+    
+    detalhes['kv_calc'] = {'desc': kv_desc, 'formula': kv_formula, 'valores': kv_valores, 'valor': kv, 'unidade': ''}
+    
     lambda_p = Config.FATOR_LAMBDA_P_VRD * math.sqrt((kv * Config.E_ACO) / fy)
-    detalhes = {'Vpl': {'desc': 'Força Cortante de Plastificação', 'formula': 'V_{pl} = 0.60 \\times d \\times t_{w} \\times f_{y}', 'valores': {'d': d, 't_{w}': tw, 'f_{y}': fy}, 'valor': Vpl, 'unidade': 'kN'}, 'lambda': {'desc': 'Esbeltez da Alma (Cisalhamento)', 'formula': '\\lambda = \\frac{{h}}{{t_w}}', 'valores': {'h': h, 't_w': tw}, 'valor': lambda_val},'lambda_p': {'desc': 'Esbeltez Limite (Plástica)', 'formula': '\\lambda_p = 1.10 \\sqrt{{\\frac{{k_v E}}{{f_y}}}}', 'valores': {'k_v': kv, 'E': Config.E_ACO, 'f_y': fy}, 'valor': lambda_p}}
+    detalhes['lambda_p'] = {'desc': 'Esbeltez Limite (Plástica)', 'formula': '\\lambda_p = 1,10 \\sqrt{{\\frac{{k_v \\times E}}{{f_y}}}}', 'valores': {'k_v': kv, 'E': Config.E_ACO, 'f_y': fy}, 'valor': lambda_p}
+
     verificacao_texto = ""
     if lambda_val <= lambda_p:
         verificacao_texto = f"""<p>A esbeltez da alma (λ = {lambda_val:.2f}) é <b>menor ou igual</b> ao limite de plastificação (λp = {lambda_p:.2f}).</p><p><b>Conclusão: A resistência é governada pelo escoamento da alma por cisalhamento.</b></p>"""
@@ -656,7 +739,7 @@ def _calcular_vrd(props, fy):
         detalhes['Vrd_calc'] = {'desc': 'Cortante Resistente (Escoamento)', 'formula': 'V_{rd} = \\frac{{V_{{pl}}}}{{\\gamma_{{a1}}}}', 'valores': {'V_{{pl}}': Vpl, '\\gamma_{{a1}}': Config.GAMMA_A1}, 'valor': Vrd, 'unidade': 'kN'}
     else:
         lambda_r = Config.FATOR_LAMBDA_R_VRD * math.sqrt((kv * Config.E_ACO) / fy)
-        detalhes['lambda_r'] = {'desc': 'Esbeltez Limite (Inelástica)', 'formula': '\\lambda_r = 1.37 \\sqrt{{\\frac{{k_v E}}{{f_y}}}}', 'valores': {'k_v': kv, 'E': Config.E_ACO, 'f_y': fy}, 'valor': lambda_r}
+        detalhes['lambda_r'] = {'desc': 'Esbeltez Limite (Inelástica)', 'formula': '\\lambda_r = 1,37 \\sqrt{{\\frac{{k_v \\times E}}{{f_y}}}}', 'valores': {'k_v': kv, 'E': Config.E_ACO, 'f_y': fy}, 'valor': lambda_r}
         if lambda_val <= lambda_r:
             verificacao_texto = f"""<p>A esbeltez da alma (λ = {lambda_val:.2f}) está <b>entre o regime</b> plástico (λp = {lambda_p:.2f}) e o elástico (λr = {lambda_r:.2f}).</p><p><b>Conclusão: Ocorre flambagem por cisalhamento no regime inelástico.</b></p>"""
             Vrd = (lambda_p / lambda_val) * (Vpl / Config.GAMMA_A1) if lambda_val > 0 else 0
@@ -664,7 +747,7 @@ def _calcular_vrd(props, fy):
         else:
             verificacao_texto = f"""<p>A esbeltez da alma (λ = {lambda_val:.2f}) é <b>maior</b> que o limite para flambagem inelástica (λr = {lambda_r:.2f}).</p><p><b>Conclusão: Ocorre flambagem por cisalhamento no regime elástico.</b></p>"""
             Vrd = (Config.FATOR_VRD_ELASTICO * (lambda_p / lambda_val)**2) * (Vpl / Config.GAMMA_A1) if lambda_val > 0 else 0
-            detalhes['Vrd_calc'] = {'desc': 'Cortante Resistente (Elástico)', 'formula': 'V_{rd} = 1.24 (\\frac{{\\lambda_p}}{{\\lambda}})^2 \\times \\frac{{V_{{pl}}}}{{\\gamma_{{a1}}}}', 'valores': {'\\lambda_p': lambda_p, '\\lambda': lambda_val, 'V_{{pl}}': Vpl, '\\gamma_{{a1}}': Config.GAMMA_A1}, 'valor': Vrd, 'unidade': 'kN'}
+            detalhes['Vrd_calc'] = {'desc': 'Cortante Resistente (Elástico)', 'formula': 'V_{rd} = 1,24 (\\frac{{\\lambda_p}}{{\\lambda}})^2 \\times \\frac{{V_{{pl}}}}{{\\gamma_{{a1}}}}', 'valores': {'\\lambda_p': lambda_p, '\\lambda': lambda_val, 'V_{{pl}}': Vpl, '\\gamma_{{a1}}': Config.GAMMA_A1}, 'valor': Vrd, 'unidade': 'kN'}
     detalhes['verificacao_classificacao'] = {'desc': 'Classificação da Alma quanto ao Cisalhamento', 'texto': verificacao_texto}
     detalhes['Vrd'] = Vrd
     return detalhes
