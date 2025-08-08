@@ -12,7 +12,7 @@ st.set_page_config(page_title="Calculadora Estrutural - Perfis Metálicos", layo
 class Config:
     NOME_NORMA = 'ABNT NBR 8800:2008'
     GAMMA_A1 = 1.10
-    E_ACO = 20000
+    E_ACO = 20000  # kN/cm²
     FATOR_SIGMA_R = 0.3
     FATOR_LAMBDA_P_FLT = 1.76
     FATOR_LAMBDA_P_FLM = 0.38
@@ -25,7 +25,7 @@ class Config:
     FATOR_LAMBDA_P_VRD = 1.10
     FATOR_LAMBDA_R_VRD = 1.37
     FATOR_VRD_ELASTICO = 1.24
-    LIMITE_FLECHA_TOTAL = 350
+    # O LIMITE_FLECHA_TOTAL foi removido daqui para se tornar um input do usuário
 
 PROFILE_TYPE_MAP = {
     "Laminados": "Perfis Laminados",
@@ -39,7 +39,6 @@ HTML_TEMPLATE_CSS = """
     @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Roboto+Slab:wght@400;700&display=swap');
     body { font-family: 'Roboto', sans-serif; line-height: 1.8; color: #333; background-color: #f0f4f8; }
     
-    /* AQUI ESTÁ A MUDANÇA */
     .container { 
         margin: 20px auto; 
         padding: 1rem; 
@@ -84,31 +83,31 @@ def calcular_esforcos_viga(tipo_viga, L_cm, q_kn_cm=0, p_load=None):
         if tipo_viga == 'Bi-apoiada':
             msd_q = (q_kn_cm * L**2) / 8
             vsd_q = (q_kn_cm * L) / 2
-            detalhes_esforcos['Msd_q']['formula_simbolica'] = f"M_{{sd, q}} = \\frac{{q_{{última}} \\cdot L^2}}{{8}}"
-            detalhes_esforcos['Msd_q']['formula_numerica'] = f"\\frac{{ \\mathbf{{{q_kn_cm*100:.2f}}} \\, kN/m \\cdot (\\mathbf{{{L_cm/100:.2f}}} \\, m)^2}}{{8}}"
-            detalhes_esforcos['Vsd_q']['formula_simbolica'] = f"V_{{sd, q}} = \\frac{{q_{{última}} \\cdot L}}{{2}}"
-            detalhes_esforcos['Vsd_q']['formula_numerica'] = f"\\frac{{ \\mathbf{{{q_kn_cm*100:.2f}}} \\, kN/m \\cdot \\mathbf{{{L_cm/100:.2f}}} \\, m}}{{2}}"
+            detalhes_esforcos['Msd_q']['formula_simbolica'] = f"M_{{sd, q}} = \\frac{{q_{{última}} \\times L^2}}{{8}}"
+            detalhes_esforcos['Msd_q']['formula_numerica'] = f"\\frac{{ \\mathbf{{{q_kn_cm*100:.2f}}} \\, kN/m \\times (\\mathbf{{{L_cm/100:.2f}}} \\, m)^2}}{{8}}"
+            detalhes_esforcos['Vsd_q']['formula_simbolica'] = f"V_{{sd, q}} = \\frac{{q_{{última}} \\times L}}{{2}}"
+            detalhes_esforcos['Vsd_q']['formula_numerica'] = f"\\frac{{ \\mathbf{{{q_kn_cm*100:.2f}}} \\, kN/m \\times \\mathbf{{{L_cm/100:.2f}}} \\, m}}{{2}}"
         elif tipo_viga == 'Engastada e Livre (Balanço)':
             msd_q = (q_kn_cm * L**2) / 2
             vsd_q = q_kn_cm * L
-            detalhes_esforcos['Msd_q']['formula_simbolica'] = f"M_{{sd, q}} = \\frac{{q_{{última}} \\cdot L^2}}{{2}}"
-            detalhes_esforcos['Msd_q']['formula_numerica'] = f"\\frac{{ \\mathbf{{{q_kn_cm*100:.2f}}} \\, kN/m \\cdot (\\mathbf{{{L_cm/100:.2f}}} \\, m)^2}}{{2}}"
-            detalhes_esforcos['Vsd_q']['formula_simbolica'] = f"V_{{sd, q}} = q_{{última}} \\cdot L"
-            detalhes_esforcos['Vsd_q']['formula_numerica'] = f"\\mathbf{{{q_kn_cm*100:.2f}}} \\, kN/m \\cdot \\mathbf{{{L_cm/100:.2f}}} \\, m"
+            detalhes_esforcos['Msd_q']['formula_simbolica'] = f"M_{{sd, q}} = \\frac{{q_{{última}} \\times L^2}}{{2}}"
+            detalhes_esforcos['Msd_q']['formula_numerica'] = f"\\frac{{ \\mathbf{{{q_kn_cm*100:.2f}}} \\, kN/m \\times (\\mathbf{{{L_cm/100:.2f}}} \\, m)^2}}{{2}}"
+            detalhes_esforcos['Vsd_q']['formula_simbolica'] = f"V_{{sd, q}} = q_{{última}} \\times L"
+            detalhes_esforcos['Vsd_q']['formula_numerica'] = f"\\mathbf{{{q_kn_cm*100:.2f}}} \\, kN/m \\times \\mathbf{{{L_cm/100:.2f}}} \\, m"
         elif tipo_viga == 'Bi-engastada':
             msd_q = (q_kn_cm * L**2) / 12
             vsd_q = (q_kn_cm * L) / 2
-            detalhes_esforcos['Msd_q']['formula_simbolica'] = f"M_{{sd, q}} = \\frac{{q_{{última}} \\cdot L^2}}{{12}}"
-            detalhes_esforcos['Msd_q']['formula_numerica'] = f"\\frac{{ \\mathbf{{{q_kn_cm*100:.2f}}} \\, kN/m \\cdot (\\mathbf{{{L_cm/100:.2f}}} \\, m)^2}}{{12}}"
-            detalhes_esforcos['Vsd_q']['formula_simbolica'] = f"V_{{sd, q}} = \\frac{{q_{{última}} \\cdot L}}{{2}}"
-            detalhes_esforcos['Vsd_q']['formula_numerica'] = f"\\frac{{ \\mathbf{{{q_kn_cm*100:.2f}}} \\, kN/m \\cdot \\mathbf{{{L_cm/100:.2f}}} \\, m}}{{2}}"
+            detalhes_esforcos['Msd_q']['formula_simbolica'] = f"M_{{sd, q}} = \\frac{{q_{{última}} \\times L^2}}{{12}}"
+            detalhes_esforcos['Msd_q']['formula_numerica'] = f"\\frac{{ \\mathbf{{{q_kn_cm*100:.2f}}} \\, kN/m \\times (\\mathbf{{{L_cm/100:.2f}}} \\, m)^2}}{{12}}"
+            detalhes_esforcos['Vsd_q']['formula_simbolica'] = f"V_{{sd, q}} = \\frac{{q_{{última}} \\times L}}{{2}}"
+            detalhes_esforcos['Vsd_q']['formula_numerica'] = f"\\frac{{ \\mathbf{{{q_kn_cm*100:.2f}}} \\, kN/m \\times \\mathbf{{{L_cm/100:.2f}}} \\, m}}{{2}}"
         elif tipo_viga == 'Engastada e Apoiada':
             msd_q = (q_kn_cm * L**2) / 8
             vsd_q = (5 * q_kn_cm * L) / 8
-            detalhes_esforcos['Msd_q']['formula_simbolica'] = f"M_{{sd, q}} = \\frac{{q_{{última}} \\cdot L^2}}{{8}}"
-            detalhes_esforcos['Msd_q']['formula_numerica'] = f"\\frac{{ \\mathbf{{{q_kn_cm*100:.2f}}} \\, kN/m \\cdot (\\mathbf{{{L_cm/100:.2f}}} \\, m)^2}}{{8}}"
-            detalhes_esforcos['Vsd_q']['formula_simbolica'] = f"V_{{sd, q}} = \\frac{{5 \\cdot q_{{última}} \\cdot L}}{{8}}"
-            detalhes_esforcos['Vsd_q']['formula_numerica'] = f"\\frac{{5 \\cdot \\mathbf{{{q_kn_cm*100:.2f}}} \\, kN/m \\cdot \\mathbf{{{L_cm/100:.2f}}} \\, m}}{{8}}"
+            detalhes_esforcos['Msd_q']['formula_simbolica'] = f"M_{{sd, q}} = \\frac{{q_{{última}} \\times L^2}}{{8}}"
+            detalhes_esforcos['Msd_q']['formula_numerica'] = f"\\frac{{ \\mathbf{{{q_kn_cm*100:.2f}}} \\, kN/m \\times (\\mathbf{{{L_cm/100:.2f}}} \\, m)^2}}{{8}}"
+            detalhes_esforcos['Vsd_q']['formula_simbolica'] = f"V_{{sd, q}} = \\frac{{5 \\times q_{{última}} \\times L}}{{8}}"
+            detalhes_esforcos['Vsd_q']['formula_numerica'] = f"\\frac{{5 \\times \\mathbf{{{q_kn_cm*100:.2f}}} \\, kN/m \\times \\mathbf{{{L_cm/100:.2f}}} \\, m}}{{8}}"
     if p_load:
         P, x = p_load
         P_kn = P
@@ -119,15 +118,15 @@ def calcular_esforcos_viga(tipo_viga, L_cm, q_kn_cm=0, p_load=None):
         if tipo_viga == 'Bi-apoiada':
             msd_p = (P_kn * a * b) / L_m
             vsd_p = max((P_kn * b) / L_m, (P_kn * a) / L_m)
-            detalhes_esforcos['Msd_p']['formula_simbolica'] = f"M_{{sd, P}} = \\frac{{P_{{última}} \\cdot a \\cdot b}}{{L}}"
-            detalhes_esforcos['Msd_p']['formula_numerica'] = f"\\frac{{ \\mathbf{{{P_kn:.2f}}} \\, kN \\cdot \\mathbf{{{a:.2f}}} \\, m \\cdot \\mathbf{{{b:.2f}}} \\, m}}{{\\mathbf{{{L_m:.2f}}} \\, m}}"
-            detalhes_esforcos['Vsd_p']['formula_simbolica'] = f"V_{{sd, P}} = \\max(\\frac{{P_{{última}} \\cdot b}}{{L}}, \\frac{{P_{{última}} \\cdot a}}{{L}})"
-            detalhes_esforcos['Vsd_p']['formula_numerica'] = f"\\max(\\frac{{ \\mathbf{{{P_kn:.2f}}} \\cdot \\mathbf{{{b:.2f}}} }}{{\\mathbf{{{L_m:.2f}}}}}, \\frac{{ \\mathbf{{{P_kn:.2f}}} \\cdot \\mathbf{{{a:.2f}}} }}{{\\mathbf{{{L_m:.2f}}}}} )"
+            detalhes_esforcos['Msd_p']['formula_simbolica'] = f"M_{{sd, P}} = \\frac{{P_{{última}} \\times a \\times b}}{{L}}"
+            detalhes_esforcos['Msd_p']['formula_numerica'] = f"\\frac{{ \\mathbf{{{P_kn:.2f}}} \\, kN \\times \\mathbf{{{a:.2f}}} \\, m \\times \\mathbf{{{b:.2f}}} \\, m}}{{\\mathbf{{{L_m:.2f}}} \\, m}}"
+            detalhes_esforcos['Vsd_p']['formula_simbolica'] = f"V_{{sd, P}} = \\max(\\frac{{P_{{última}} \\times b}}{{L}}, \\frac{{P_{{última}} \\times a}}{{L}})"
+            detalhes_esforcos['Vsd_p']['formula_numerica'] = f"\\max(\\frac{{ \\mathbf{{{P_kn:.2f}}} \\times \\mathbf{{{b:.2f}}} }}{{\\mathbf{{{L_m:.2f}}}}}, \\frac{{ \\mathbf{{{P_kn:.2f}}} \\times \\mathbf{{{a:.2f}}} }}{{\\mathbf{{{L_m:.2f}}}}} )"
         elif tipo_viga == 'Engastada e Livre (Balanço)':
             msd_p = P_kn * a 
             vsd_p = P_kn
-            detalhes_esforcos['Msd_p']['formula_simbolica'] = f"M_{{sd, P}} = P_{{última}} \\cdot a"
-            detalhes_esforcos['Msd_p']['formula_numerica'] = f"\\mathbf{{{P_kn:.2f}}} \\, kN \\cdot \\mathbf{{{a:.2f}}} \\, m"
+            detalhes_esforcos['Msd_p']['formula_simbolica'] = f"M_{{sd, P}} = P_{{última}} \\times a"
+            detalhes_esforcos['Msd_p']['formula_numerica'] = f"\\mathbf{{{P_kn:.2f}}} \\, kN \\times \\mathbf{{{a:.2f}}} \\, m"
             detalhes_esforcos['Vsd_p']['formula_simbolica'] = f"V_{{sd, P}} = P_{{última}}"
             detalhes_esforcos['Vsd_p']['formula_numerica'] = f"\\mathbf{{{P_kn:.2f}}} \\, kN"
         msd_p *= 100 
@@ -142,30 +141,66 @@ def calcular_esforcos_viga(tipo_viga, L_cm, q_kn_cm=0, p_load=None):
 def calcular_flecha_maxima(tipo_viga, L_cm, E, Ix, q_serv_kn_cm=0, p_serv_load=None):
     delta_q, delta_p = 0, 0
     L = L_cm
+    
+    detalhes = {
+        'delta_q': {'formula_simbolica': '', 'formula_numerica': '', 'valor': 0, 'unidade': 'cm'},
+        'delta_p': {'formula_simbolica': '', 'formula_numerica': '', 'valor': 0, 'unidade': 'cm'},
+        'delta_total': 0
+    }
+
+    # Flecha devido à carga distribuída (q)
     if q_serv_kn_cm > 0:
+        q_serv_val = q_serv_kn_cm
         if tipo_viga == 'Bi-apoiada':
-            delta_q = (5 * q_serv_kn_cm * L**4) / (384 * E * Ix)
+            delta_q = (5 * q_serv_val * L**4) / (384 * E * Ix)
+            detalhes['delta_q']['formula_simbolica'] = "\\delta_q = \\frac{5 \\times q_{serv} \\times L^4}{384 \\times E \\times I_x}"
+            detalhes['delta_q']['formula_numerica'] = f"\\frac{{5 \\times \\mathbf{{{q_serv_val:.4f}}} \\times \\mathbf{{{L:.2f}}}^4}}{{384 \\times \\mathbf{{{E:.0f}}} \\times \\mathbf{{{Ix:.2f}}}}}"
         elif tipo_viga == 'Engastada e Livre (Balanço)':
-            delta_q = (q_serv_kn_cm * L**4) / (8 * E * Ix)
+            delta_q = (q_serv_val * L**4) / (8 * E * Ix)
+            detalhes['delta_q']['formula_simbolica'] = "\\delta_q = \\frac{q_{serv} \\times L^4}{8 \\times E \\times I_x}"
+            detalhes['delta_q']['formula_numerica'] = f"\\frac{{\\mathbf{{{q_serv_val:.4f}}} \\times \\mathbf{{{L:.2f}}}^4}}{{8 \\times \\mathbf{{{E:.0f}}} \\times \\mathbf{{{Ix:.2f}}}}}"
         elif tipo_viga == 'Bi-engastada':
-            delta_q = (q_serv_kn_cm * L**4) / (384 * E * Ix)
+            delta_q = (q_serv_val * L**4) / (384 * E * Ix)
+            detalhes['delta_q']['formula_simbolica'] = "\\delta_q = \\frac{q_{serv} \\times L^4}{384 \\times E \\times I_x}"
+            detalhes['delta_q']['formula_numerica'] = f"\\frac{{\\mathbf{{{q_serv_val:.4f}}} \\times \\mathbf{{{L:.2f}}}^4}}{{384 \\times \\mathbf{{{E:.0f}}} \\times \\mathbf{{{Ix:.2f}}}}}"
         elif tipo_viga == 'Engastada e Apoiada':
-            delta_q = (q_serv_kn_cm * L**4) / (185 * E * Ix)
+            # A flecha máxima ocorre aproximadamente em 0.4215L
+            delta_q = (q_serv_val * L**4) / (185 * E * Ix)
+            detalhes['delta_q']['formula_simbolica'] = "\\delta_q = \\frac{q_{serv} \\times L^4}{185 \\times E \\times I_x}"
+            detalhes['delta_q']['formula_numerica'] = f"\\frac{{\\mathbf{{{q_serv_val:.4f}}} \\times \\mathbf{{{L:.2f}}}^4}}{{185 \\times \\mathbf{{{E:.0f}}} \\times \\mathbf{{{Ix:.2f}}}}}"
+        detalhes['delta_q']['valor'] = delta_q
+
+    # Flecha devido à carga pontual (P)
     if p_serv_load:
         P, x = p_serv_load
         a = x
-        b = L-a
+        b = L - a
         if tipo_viga == 'Bi-apoiada':
-            if a >= L/2: a,b = b,a
-            delta_p = (P * a * (L**2 - a**2)**1.5) / (9 * math.sqrt(3) * E * Ix * L) if a < L else 0
+            # Flecha sob a carga P
+            delta_p = (P * a**2 * b**2) / (3 * E * Ix * L)
+            detalhes['delta_p']['formula_simbolica'] = "\\delta_p = \\frac{P_{serv} \\times a^2 \\times b^2}{3 \\times E \\times I_x \\times L}"
+            detalhes['delta_p']['formula_numerica'] = f"\\frac{{\\mathbf{{{P:.2f}}} \\times \\mathbf{{{a:.2f}}}^2 \\times \\mathbf{{{b:.2f}}}^2}}{{3 \\times \\mathbf{{{E:.0f}}} \\times \\mathbf{{{Ix:.2f}}} \\times \\mathbf{{{L:.2f}}}}}"
         elif tipo_viga == 'Engastada e Livre (Balanço)':
-            delta_p = (P * a**2 * (3*L - a)) / (6 * E * Ix)
+            # Flecha na extremidade livre (ponto de aplicação da carga)
+            delta_p = (P * a**3) / (3 * E * Ix)
+            detalhes['delta_p']['formula_simbolica'] = "\\delta_p = \\frac{P_{serv} \\times a^3}{3 \\times E \\times I_x}"
+            detalhes['delta_p']['formula_numerica'] = f"\\frac{{\\mathbf{{{P:.2f}}} \\times \\mathbf{{{a:.2f}}}^3}}{{3 \\times \\mathbf{{{E:.0f}}} \\times \\mathbf{{{Ix:.2f}}}}}"
         elif tipo_viga == 'Bi-engastada':
+            # Flecha sob a carga P
             delta_p = (P * a**3 * b**3) / (3 * E * Ix * L**3)
+            detalhes['delta_p']['formula_simbolica'] = "\\delta_p = \\frac{P_{serv} \\times a^3 \\times b^3}{3 \\times E \\times I_x \\times L^3}"
+            detalhes['delta_p']['formula_numerica'] = f"\\frac{{\\mathbf{{{P:.2f}}} \\times \\mathbf{{{a:.2f}}}^3 \\times \\mathbf{{{b:.2f}}}^3}}{{3 \\times \\mathbf{{{E:.0f}}} \\times \\mathbf{{{Ix:.2f}}} \\times \\mathbf{{{L:.2f}}}^3}}"
         elif tipo_viga == 'Engastada e Apoiada':
-            if a < b: delta_p = (P * a**2 * b**2 * (3*L+a))/(12*E*Ix*L**3)
-            else: delta_p = (P * b * (L**2 - b**2)**1.5)/(9*math.sqrt(3)*E*Ix*L)
-    return delta_q + delta_p
+            # Flecha sob a carga P
+            delta_p = (P * a**3 * b**2) / (12 * E * Ix * L**3) * (a + 2*L)
+            detalhes['delta_p']['formula_simbolica'] = "\\delta_p = \\frac{P_{serv} \\times a^3 \\times b^2 \\times (a + 2L)}{12 \\times E \\times I_x \\times L^3}"
+            detalhes['delta_p']['formula_numerica'] = f"\\frac{{\\mathbf{{{P:.2f}}} \\times \\mathbf{{{a:.2f}}}^3 \\times \\mathbf{{{b:.2f}}}^2 \\times (\\mathbf{{{a:.2f}}} + 2 \\times \\mathbf{{{L:.2f}}})}}{{12 \\times \\mathbf{{{E:.0f}}} \\times \\mathbf{{{Ix:.2f}}} \\times \\mathbf{{{L:.2f}}}^3}}"
+        
+        detalhes['delta_p']['valor'] = delta_p
+    
+    detalhes['delta_total'] = delta_q + delta_p
+    return detalhes
+
 
 def get_profile_properties(profile_series):
     props = {"d": profile_series.get('d (mm)'),"bf": profile_series.get('bf (mm)'),"tw": profile_series.get('tw (mm)'),"tf": profile_series.get('tf (mm)'),"h": profile_series.get('h (mm)'),"Area": profile_series.get('Área (cm2)'),"Ix": profile_series.get('Ix (cm4)'),"Wx": profile_series.get('Wx (cm3)'),"rx": profile_series.get('rx (cm)'),"Zx": profile_series.get('Zx (cm3)'),"Iy": profile_series.get('Iy (cm4)'),"Wy": profile_series.get('Wy (cm3)'),"ry": profile_series.get('ry (cm)'),"Zy": profile_series.get('Zy (cm3)'),"J": profile_series.get('It (cm4)'),"Cw": profile_series.get('Cw (cm6)'),"Peso": profile_series.get('Massa Linear (kg/m)', profile_series.get('Peso (kg/m)'))}
@@ -273,22 +308,27 @@ def main():
                 q_serv_kn_cm = 0
                 p_load_serv = None
                 input_details_html = f"""<h2>2. Cálculo dos Esforços Solicitantes</h2><p>Neste modo, os esforços solicitantes foram inseridos diretamente pelo usuário.</p><div class="formula-block"><p class="formula">$$M_{{sd}} = \\mathbf{{{Msd/100:.2f}}} \\, kNm$$</p><p class="formula">$$V_{{sd}} = \\mathbf{{{Vsd:.2f}}} \\, kN$$</p></div>"""
-        st.header("3. Parâmetros Gerais do Aço")
+        
+        st.header("3. Parâmetros de Resistência (ELU)")
         fy_aco = st.number_input("Tensão de Escoamento (fy, kN/cm²)", 20.0, 50.0, 34.5, 0.5, key='fy_aco')
         Lb_projeto = st.number_input("Comprimento Destravado (Lb, cm)", 10.0, value=L_cm, step=10.0, key='Lb_projeto')
         Cb_projeto = st.number_input("Fator de Modificação (Cb)", 1.0, 3.0, 1.10, key='Cb_projeto')
         
-        st.header("4. Parâmetros de Cisalhamento")
         with st.container(border=True):
+            st.subheader("Parâmetros de Cisalhamento")
             usa_enrijecedores = st.checkbox("Utilizar enrijecedores transversais?", key='usa_enrijecedores')
             a_enr = 0
             if usa_enrijecedores:
                 a_enr = st.number_input("Distância entre enrijecedores (a, cm)", min_value=1.0, value=100.0, step=1.0, key='a_enr')
 
-    st.header("4. Modo de Análise")
+        st.header("4. Parâmetros de Serviço (ELS)")
+        limite_flecha_divisor = st.selectbox("Limite de Flecha (L/x)", (180, 250, 350, 500), index=2, key='limite_flecha_divisor', help="Selecione o divisor para o cálculo da flecha limite (ex: L/350).")
+
+
+    st.header("5. Modo de Análise")
     analysis_mode = st.radio("Selecione o modo de análise:", ("Análise em Lote com Otimização", "Memorial Detalhado de um Perfil"), horizontal=True, label_visibility="collapsed", key='analysis_mode')
 
-    st.session_state.input_parameters = {'tipo_viga': tipo_viga, 'L_cm': L_cm, 'input_mode': input_mode,'Msd': Msd, 'Vsd': Vsd, 'q_serv_kn_cm': q_serv_kn_cm, 'p_load_serv': p_load_serv, 'fy_aco': fy_aco, 'Lb_projeto': Lb_projeto, 'Cb_projeto': Cb_projeto,'input_details_html': input_details_html, 'detalhes_esforcos': detalhes_esforcos, 'usa_enrijecedores': usa_enrijecedores, 'a_enr': a_enr}
+    st.session_state.input_parameters = {'tipo_viga': tipo_viga, 'L_cm': L_cm, 'input_mode': input_mode,'Msd': Msd, 'Vsd': Vsd, 'q_serv_kn_cm': q_serv_kn_cm, 'p_load_serv': p_load_serv, 'fy_aco': fy_aco, 'Lb_projeto': Lb_projeto, 'Cb_projeto': Cb_projeto,'input_details_html': input_details_html, 'detalhes_esforcos': detalhes_esforcos, 'usa_enrijecedores': usa_enrijecedores, 'a_enr': a_enr, 'limite_flecha_divisor': limite_flecha_divisor}
 
     if analysis_mode == "Memorial Detalhado de um Perfil":
         st.header("🔍 Seleção do Perfil")
@@ -352,7 +392,7 @@ def main():
                     st.markdown(f"""<div style="background-color: #f0f2f5; padding: 10px; border-radius: 5px; margin-bottom: 20px;"><p><b>Parâmetros utilizados na análise:</b></p><ul><li>Momento Solicitante (Msd): <b>{st.session_state.input_parameters['Msd']/100:.2f} kNm</b></li><li>Força Cortante (Vsd): <b>{st.session_state.input_parameters['Vsd']:.2f} kN</b></li><li>Comprimento da Viga (L): <b>{st.session_state.input_parameters['L_cm']:.2f} cm</b></li><li>Tensão de Escoamento (fy): <b>{st.session_state.input_parameters['fy_aco']:.2f} kN/cm²</b></li></ul></div>""", unsafe_allow_html=True)
                     if not aprovados.empty:
                         aprovados.sort_values(by='Peso (kg/m)', inplace=True)
-                        st.subheader("🏆 5 Perfis Mais Leves Aprovados (Otimizados)")
+                        st.subheader("� 5 Perfis Mais Leves Aprovados (Otimizados)")
                         st.dataframe(style_dataframe(aprovados.head(5)), use_container_width=True)
                         with st.expander("Ver todos os perfis aprovados desta categoria"):
                             st.dataframe(style_dataframe(aprovados), use_container_width=True)
@@ -390,6 +430,7 @@ def run_detailed_analysis(df, perfil_nome, perfil_tipo_display, input_params):
                 tipo_fabricacao=tipo_fabricacao, 
                 usa_enrijecedores=input_params['usa_enrijecedores'], 
                 a_enr=input_params['a_enr'],
+                limite_flecha_divisor=input_params['limite_flecha_divisor'],
                 detalhado=True
             )
             Mrd_final = min(res_flt['Mrdx'], res_flm['Mrdx'], res_fla['Mrdx'])
@@ -439,7 +480,8 @@ def run_batch_analysis(all_sheets, input_params):
                         input_mode=input_params['input_mode'],
                         tipo_fabricacao=tipo_fabricacao_auto,
                         usa_enrijecedores=input_params['usa_enrijecedores'], 
-                        a_enr=input_params['a_enr']
+                        a_enr=input_params['a_enr'],
+                        limite_flecha_divisor=input_params['limite_flecha_divisor']
                     )
                     status_geral = "APROVADO"
                     if res_flt['eficiencia'] > 100.1 or res_flm['eficiencia'] > 100.1 or res_fla['eficiencia'] > 100.1 or res_cis['eficiencia'] > 100.1 or res_flecha['eficiencia'] > 100.1:
@@ -456,7 +498,7 @@ def run_batch_analysis(all_sheets, input_params):
     st.session_state.analysis_results = df_all_results
     st.success(f"{len(df_all_results)} perfis analisados.")
 
-def perform_all_checks(props, fy, Lb, Cb, L, Msd, Vsd, q_serv_kn_cm, p_serv_load, tipo_viga, input_mode, tipo_fabricacao, usa_enrijecedores, a_enr, detalhado=False):
+def perform_all_checks(props, fy, Lb, Cb, L, Msd, Vsd, q_serv_kn_cm, p_serv_load, tipo_viga, input_mode, tipo_fabricacao, usa_enrijecedores, a_enr, limite_flecha_divisor, detalhado=False):
     res_flt = _calcular_mrdx_flt(props, Lb, Cb, fy)
     res_flm = _calcular_mrdx_flm(props, fy, tipo_fabricacao)
     res_fla = _calcular_mrdx_fla(props, fy)
@@ -470,22 +512,29 @@ def perform_all_checks(props, fy, Lb, Cb, L, Msd, Vsd, q_serv_kn_cm, p_serv_load
     Vrd = res_vrd['Vrd']
     if Vrd > 0: res_cis = {'Vrd': Vrd, 'eficiencia': (Vsd / Vrd) * 100, 'status': "APROVADO" if (Vsd / Vrd) * 100 <= 100.1 else "REPROVADO"}
     else: res_cis = {'Vrd': Vrd, 'eficiencia': float('inf'), 'status': "REPROVADO"}
+    
     flecha_max, flecha_limite, eficiencia_flecha, status_flecha = 0, 0, 0, "N/A"
+    detalhes_flecha = {}
     if input_mode == "Calcular a partir de Cargas na Viga":
-        flecha_max = calcular_flecha_maxima(tipo_viga, L, Config.E_ACO, props['Ix'], q_serv_kn_cm, p_serv_load)
-        flecha_limite = L / Config.LIMITE_FLECHA_TOTAL if L > 0 else 0
+        detalhes_flecha = calcular_flecha_maxima(tipo_viga, L, Config.E_ACO, props['Ix'], q_serv_kn_cm, p_serv_load)
+        flecha_max = detalhes_flecha['delta_total']
+        flecha_limite = L / limite_flecha_divisor if L > 0 else 0
         eficiencia_flecha = (flecha_max / flecha_limite) * 100 if flecha_limite > 0 else float('inf')
         status_flecha = "APROVADO" if eficiencia_flecha <= 100.1 else "REPROVADO"
     else:
         status_flecha = "N/A"
-    res_flecha = {'flecha_max': flecha_max, 'flecha_limite': flecha_limite, 'eficiencia': eficiencia_flecha, 'status': status_flecha, 'Ix': props['Ix']}
+
+    res_flecha = {'flecha_max': flecha_max, 'flecha_limite': flecha_limite, 'eficiencia': eficiencia_flecha, 'status': status_flecha, 'Ix': props['Ix'], 'detalhes': detalhes_flecha, 'divisor': limite_flecha_divisor}
+    
     Mrd_final = min(res_flt['Mrdx'], res_flm['Mrdx'], res_fla['Mrdx'])
     ef_geral = (Msd / Mrd_final) * 100 if Mrd_final > 0 else float('inf')
     status_flexao = "APROVADO" if ef_geral <= 100.1 else "REPROVADO"
     res_flexao = {'Mrd': Mrd_final, 'eficiencia': ef_geral, 'status': status_flexao}
+    
     passo_a_passo_html = ""
     if detalhado:
         passo_a_passo_html = build_step_by_step_html(L, Msd, Vsd, res_flexao, res_cis, res_flecha, res_flt, res_flm, res_fla, res_vrd, input_mode)
+    
     return res_flt, res_flm, res_fla, res_cis, res_flecha, passo_a_passo_html
 
 def build_summary_html(Msd, Vsd, res_flt, res_flm, res_fla, res_cisalhamento, res_flecha):
@@ -509,9 +558,39 @@ def build_step_by_step_html(L, Msd, Vsd, res_flexao, res_cisalhamento, res_flech
     html += f"<h3>3.2 Cálculo da Resistência ao Cisalhamento (Vrd)</h3>"
     html += _add_verification_details("Resistência ao Cisalhamento (VRd)", res_vrd)
     html += _build_verification_block_html("Verificação ao Cisalhamento", Vsd, "V_{{sd}}", res_cisalhamento['Vrd'], "V_{{rd}}", res_cisalhamento['eficiencia'], res_cisalhamento['status'], "kN")
+    
     if input_mode == "Calcular a partir de Cargas na Viga":
-        html += f"""<h2>4. Verificação de Serviço (ELS)</h2><div class="formula-block"><h4>a. Flecha Máxima Atuante (δ_max)</h4><p class="formula">$$\\delta_{{max}} = {res_flecha['flecha_max']:.2f} \\, cm$$</p><h4>b. Flecha Limite (δ_lim)</h4><p class="formula">$$\\delta_{{lim}} = \\frac{{L}}{{{Config.LIMITE_FLECHA_TOTAL}}} = \\frac{{{L:.2f}}}{{{Config.LIMITE_FLECHA_TOTAL}}} = {res_flecha['flecha_limite']:.2f} \\, cm$$</p></div>"""
+        html += """<h2>4. Verificação de Serviço (ELS)</h2>"""
+        html += """<h3>4.1. Cálculo da Flecha Máxima Atuante (δ_max)</h3>"""
+        html += "<div class='formula-block'>"
+        
+        detalhes_flecha = res_flecha.get('detalhes', {})
+        delta_q_details = detalhes_flecha.get('delta_q', {})
+        if delta_q_details.get('valor', 0) > 0:
+            html += f"<h5>Flecha devido à Carga Distribuída (δ_q)</h5>"
+            html += f"<p class='formula'>$${delta_q_details['formula_simbolica']}$$</p>"
+            html += f"<p class='formula'>$${delta_q_details['formula_numerica']} = \\mathbf{{{delta_q_details['valor']:.4f}}} \\, cm$$</p>"
+
+        delta_p_details = detalhes_flecha.get('delta_p', {})
+        if delta_p_details.get('valor', 0) > 0:
+            html += f"<h5>Flecha devido à Carga Pontual (δ_p)</h5>"
+            html += f"<p class='formula'>$${delta_p_details['formula_simbolica']}$$</p>"
+            html += f"<p class='formula'>$${delta_p_details['formula_numerica']} = \\mathbf{{{delta_p_details['valor']:.4f}}} \\, cm$$</p>"
+
+        html += f"<h5>Flecha Total</h5>"
+        q_val = delta_q_details.get('valor', 0)
+        p_val = delta_p_details.get('valor', 0)
+        html += f"<p class='formula'>$$\\delta_{{max}} = \\delta_q + \\delta_p = {q_val:.4f} + {p_val:.4f} = \\mathbf{{{res_flecha['flecha_max']:.4f}}} \\, cm$$</p>"
+        html += "</div>"
+
+        html += "<h3>4.2. Cálculo da Flecha Limite (δ_lim)</h3>"
+        html += f"""<div class="formula-block">
+            <p class="formula">$$\\delta_{{lim}} = \\frac{{L}}{{{res_flecha['divisor']}}} = \\frac{{{L:.2f}}}{{{res_flecha['divisor']}}} = \\mathbf{{{res_flecha['flecha_limite']:.2f}}} \\, cm$$</p>
+        </div>"""
+        
+        html += "<h3>4.3. Verificação Final da Flecha</h3>"
         html += _build_verification_block_html("Verificação da Flecha", res_flecha['flecha_max'], "\\delta_{{max}}", res_flecha['flecha_limite'], "\\delta_{{lim}}", res_flecha['eficiencia'], res_flecha['status'], "cm")
+
     return html
 
 def _add_verification_details(title, details_dict):
@@ -541,7 +620,7 @@ def _add_verification_details(title, details_dict):
         final_resistance = vrd_info.get('valor', 0)
         unit = vrd_info.get('unidade', 'kN')
         html += f"""<p class="formula">$${formula_numerica} = \\mathbf{{{final_resistance:.2f} \\, {unit}}}$$</p>
-                    <p class="ref-norma">{vrd_info.get('ref', '')}</p>"""
+                        <p class="ref-norma">{vrd_info.get('ref', '')}</p>"""
     html += "</div>"
     return html
 
@@ -572,7 +651,7 @@ def _add_verification_details_with_efficiency(title, Msd, details_dict):
         final_resistance_kncm = mrdx_info.get('valor', 0)
         final_resistance_knm = final_resistance_kncm / 100.0
         html += f"""<p class="formula">$${formula_numerica} = \\mathbf{{{final_resistance_knm:.2f} \\, kNm}}$$</p>
-                    <p class="ref-norma">{mrdx_info.get('ref', '')}</p>"""
+                        <p class="ref-norma">{mrdx_info.get('ref', '')}</p>"""
     if 'verificacao_limite' in details_dict:
         limite_info = details_dict['verificacao_limite']
         html += f"<h5>{limite_info['desc']}</h5>"
@@ -628,9 +707,9 @@ def _calcular_mrdx_flt(props, Lb, Cb, fy):
             Mrdx = min(Mrdx_calc, Mp_gamma)
             detalhes['Mrdx_calc'] = {'desc': 'Cálculo do Momento Resistente (Regime Inelástico)', 'formula': 'M_{rd,calc} = \\frac{{C_b}}{{\\gamma_{{a1}}}} [M_p - (M_p - M_r) (\\frac{{\\lambda - \\lambda_p}}{{\\lambda_r - \\lambda_p}})]', 'valores': {'C_b': Cb, '\\gamma_{{a1}}': Config.GAMMA_A1, 'M_p': Mp, 'M_r': Mr, '\\lambda': lambda_val, '\\lambda_p': lambda_p, '\\lambda_r': lambda_r}, 'valor': Mrdx_calc, 'unidade': 'kN.cm', 'ref': 'Eq. F-1'}
             limite_texto = f"""<p>A norma exige que a resistência no regime inelástico seja limitada pela resistência plástica.</p>
-                               <p class='formula'>$$M_{{rd,calc}} = {Mrdx_calc/100:.2f} \\, kNm$$</p>
-                               <p class='formula'>$$M_{{p,rd}} = \\frac{{M_p}}{{\\gamma_{{a1}}}} = \\frac{{{Mp:.2f}}}{{{Config.GAMMA_A1:.2f}}} = {Mp_gamma/100:.2f} \\, kNm$$</p>
-                               <p>Adota-se o menor valor: $$M_{{rd}} = \\min(M_{{rd,calc}}; M_{{p,rd}}) = \\min({Mrdx_calc/100:.2f}; {Mp_gamma/100:.2f}) = \\mathbf{{{Mrdx/100:.2f}}} \\, kNm$$</p>"""
+                                <p class='formula'>$$M_{{rd,calc}} = {Mrdx_calc/100:.2f} \\, kNm$$</p>
+                                <p class='formula'>$$M_{{p,rd}} = \\frac{{M_p}}{{\\gamma_{{a1}}}} = \\frac{{{Mp:.2f}}}{{{Config.GAMMA_A1:.2f}}} = {Mp_gamma/100:.2f} \\, kNm$$</p>
+                                <p>Adota-se o menor valor: $$M_{{rd}} = \\min(M_{{rd,calc}}; M_{{p,rd}}) = \\min({Mrdx_calc/100:.2f}; {Mp_gamma/100:.2f}) = \\mathbf{{{Mrdx/100:.2f}}} \\, kNm$$</p>"""
             detalhes['verificacao_limite'] = {'desc': 'Verificação do Limite de Plastificação', 'texto': limite_texto}
         else:
             verificacao_texto = f"""<p>O índice de esbeltez (λ = {lambda_val:.2f}) é <b>maior</b> que o limite inelástico (λr = {lambda_r:.2f}).</p><p><b>Conclusão: Ocorre flambagem no regime elástico.</b></p>"""
@@ -765,4 +844,4 @@ def _calcular_vrd(props, fy, usa_enrijecedores, a_enr):
     return detalhes
 
 if __name__ == '__main__':
-    main()
+    main() 
