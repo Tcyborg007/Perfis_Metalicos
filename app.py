@@ -224,7 +224,7 @@ def gerar_memorial_completo(perfil_nome, perfil_tipo, resultados, input_details)
 def _build_verification_block_html(title, solicitante, s_symbol, resistente, r_symbol, eficiencia, status, unit):
     status_class = "pass" if status == "APROVADO" else "fail"
     comp_symbol = "\\le" if status == "APROVADO" else ">"
-    return f"""<h4>{title}</h4><div class="formula-block"><p class="formula">$${s_symbol} = {solicitante:.2f} \\, {unit}$$</p><p class="formula">$${r_symbol} = {resistente:.2f} \\, {unit}$$</p><p class="formula">$$\\text{{Verificação: }} {s_symbol} {comp_symbol} {r_symbol}$$</p><p class="formula">$$\\text{{Eficiência}} = \\frac{{{s_symbol}}}{{{r_symbol}}} = \\frac{{{solicitante:.2f}}}{{{resistente:.2f}}} = {eficiencia:.1f}\%$$</p><div class="final-status {status_class}">{status}</div></div>"""
+    return f"""<h4>{title}</h4><div class="formula-block"><p class="formula">$${s_symbol} = {solicitante:.2f} \\, {unit}$$</p><p class="formula">$${r_symbol} = {resistente:.2f} \\, {unit}$$</p><p class="formula">$$\\text{{Verificação: }} {s_symbol} {comp_symbol} {r_symbol}$$</p><p class="formula">$$\\text{{Eficiência}} = \\frac{{{s_symbol}}}{{{r_symbol}}} = \\frac{{{solicitante:.2f}}}{{{resistente:.2f}}} = {eficiencia:.1f}%%$$</p><div class="final-status {status_class}">{status}</div></div>"""
 
 # ==============================================================================
 # 4. APLICAÇÃO PRINCIPAL STREAMLIT
@@ -667,7 +667,7 @@ def _add_verification_details_with_efficiency(title, Msd, details_dict):
         <p class="formula">$$M_{{sd}} = {Msd/100:.2f} \\, kNm$$</p>
         <p class="formula">$$M_{{rd}} = {final_resistance_total/100:.2f} \\, kNm$$</p>
         <p class="formula">$$\\text{{Verificação: }} M_{{sd}} {comp_symbol} M_{{rd}}$$</p>
-        <p class="formula">$$\\text{{Eficiência}} = \\frac{{M_{{sd}}}}{{M_{{rd}}}} = \\frac{{{Msd/100:.2f}}}{{{final_resistance_total/100:.2f}}} = {eficiencia:.1f}\%$$</p>
+        <p class="formula">$$\\text{{Eficiência}} = \\frac{{M_{{sd}}}}{{M_{{rd}}}} = \\frac{{{Msd/100:.2f}}}{{{final_resistance_total/100:.2f}}} = {eficiencia:.1f}%%$$</p>
         <div class="final-status {status_class}">{status}</div>"""
     else:
         html += """<hr style="border: 1px solid #ddd; margin: 15px 0;">
@@ -844,4 +844,4 @@ def _calcular_vrd(props, fy, usa_enrijecedores, a_enr):
     return detalhes
 
 if __name__ == '__main__':
-    main() 
+    main()
