@@ -5,11 +5,11 @@ import plotly.graph_objects as go
 from datetime import datetime
 
 # ==============================================================================
-# 1. CONFIGURAÇÕES E CONSTANTES GLOBAIS APRIMORADAS
+# 1. CONFIGURAÇÕES E CONSTANTES GLOBAIS
 # ==============================================================================
 
 st.set_page_config(
-    page_title="🏗️ Calculadora Estrutural Pro - Perfis Metálicos", 
+    page_title="🏗️ Calculadora Estrutural Pro - Perfis Metálicos",
     layout="wide",
     initial_sidebar_state="expanded",
     menu_items={
@@ -43,7 +43,6 @@ PROFILE_TYPE_MAP = {
     "VS": "Perfis Soldados"
 }
 
-# CSS APRIMORADO COM TEMA PROFISSIONAL
 HTML_TEMPLATE_CSS_PRO = """
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
@@ -69,17 +68,6 @@ HTML_TEMPLATE_CSS_PRO = """
         background: var(--background);
     }
     
-    .container { 
-        margin: 0 auto; 
-        padding: 2rem; 
-        background: var(--surface); 
-        border-radius: 16px; 
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        width: 100%;
-        max-width: 100%;
-    }
-
-    /* Header Profissional */
     .pro-header {
         background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
         color: white;
@@ -105,120 +93,6 @@ HTML_TEMPLATE_CSS_PRO = """
         opacity: 0.9;
         position: relative;
         z-index: 1;
-    }
-
-    /* Títulos Hierárquicos */
-    h1, h2, h3, h4, h5, h6 { 
-        font-family: 'Inter', sans-serif; 
-        color: var(--text-primary);
-        font-weight: 600;
-        line-height: 1.3;
-    }
-    
-    h1 { font-size: 2.5rem; margin: 2rem 0 1rem; }
-    h2 { 
-        font-size: 2rem; 
-        margin: 2.5rem 0 1.5rem;
-        padding-bottom: 0.75rem;
-        border-bottom: 3px solid var(--primary-color);
-        position: relative;
-    }
-    
-    h2::after {
-        content: '';
-        position: absolute;
-        bottom: -3px;
-        left: 0;
-        width: 60px;
-        height: 3px;
-        background: var(--accent-color);
-    }
-    
-    h3 { 
-        font-size: 1.5rem; 
-        margin: 2rem 0 1rem;
-        color: var(--secondary-color);
-    }
-
-    /* Tabela de Resultados Premium */
-    .summary-table { 
-        width: 100%; 
-        border-collapse: separate;
-        border-spacing: 0;
-        margin: 2rem 0;
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    }
-    
-    .summary-table thead tr th { 
-        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-        color: white;
-        padding: 1.25rem;
-        text-align: center;
-        font-weight: 600;
-        font-size: 0.95rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    
-    .summary-table tbody tr td { 
-        padding: 1rem;
-        text-align: center;
-        vertical-align: middle;
-        border-bottom: 1px solid var(--border);
-        background: white;
-    }
-    
-    .summary-table tbody tr:last-child td { border-bottom: none; }
-
-    /* Cards de Fórmulas Avançados */
-    .formula-block { 
-        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-        border: 1px solid var(--border);
-        border-left: 5px solid var(--accent-color);
-        padding: 2rem;
-        margin: 2rem 0;
-        border-radius: 12px;
-    }
-    
-    /* Status Indicators */
-    .pass { color: var(--success-color); font-weight: 600; }
-    .fail { color: var(--error-color); font-weight: 600; }
-
-    .final-status.pass { 
-        background: linear-gradient(135deg, var(--success-color), #059669);
-        color: white; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
-        font-size: 1.4em; font-weight: 700; text-align: center;
-        padding: 1rem; border-radius: 8px; margin: 1rem 0;
-        text-transform: uppercase; letter-spacing: 1px;
-    }
-    
-    .final-status.fail { 
-        background: linear-gradient(135deg, var(--error-color), #dc2626);
-        color: white; box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
-        font-size: 1.4em; font-weight: 700; text-align: center;
-        padding: 1rem; border-radius: 8px; margin: 1rem 0;
-        text-transform: uppercase; letter-spacing: 1px;
-    }
-
-    .formula { 
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 1.1rem;
-        text-align: center;
-        margin: 1.5rem 0;
-        padding: 1.5rem;
-        background: white;
-        border-radius: 8px;
-        border: 1px solid var(--border);
-    }
-
-    .info-card {
-        background: white;
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin: 1rem 0;
     }
 </style>
 """
@@ -288,13 +162,13 @@ def calcular_esforcos_viga(tipo_viga, L_cm, q_kn_cm=0, p_load=None):
             detalhes_esforcos['Vsd_p']['formula_simbolica'] = f"V_{{sd, P}} = \\max(\\frac{{P_{{última}} \\times b}}{{L}}, \\frac{{P_{{última}} \\times a}}{{L}})"
             detalhes_esforcos['Vsd_p']['formula_numerica'] = f"\\max(\\frac{{ \\mathbf{{{P_kn:.2f}}} \\times \\mathbf{{{b:.2f}}} }}{{\\mathbf{{{L_m:.2f}}}}}, \\frac{{ \\mathbf{{{P_kn:.2f}}} \\times \\mathbf{{{a:.2f}}} }}{{\\mathbf{{{L_m:.2f}}}}} )"
         elif tipo_viga == 'Engastada e Livre (Balanço)':
-            msd_p = P_kn * a 
+            msd_p = P_kn * a
             vsd_p = P_kn
             detalhes_esforcos['Msd_p']['formula_simbolica'] = f"M_{{sd, P}} = P_{{última}} \\times a"
             detalhes_esforcos['Msd_p']['formula_numerica'] = f"\\mathbf{{{P_kn:.2f}}} \\, kN \\times \\mathbf{{{a:.2f}}} \\, m"
             detalhes_esforcos['Vsd_p']['formula_simbolica'] = f"V_{{sd, P}} = P_{{última}}"
             detalhes_esforcos['Vsd_p']['formula_numerica'] = f"\\mathbf{{{P_kn:.2f}}} \\, kN"
-        msd_p *= 100 
+        msd_p *= 100
     detalhes_esforcos['Msd_q']['valor'] = msd_q
     detalhes_esforcos['Vsd_q']['valor'] = vsd_q
     detalhes_esforcos['Msd_p']['valor'] = msd_p
@@ -313,7 +187,6 @@ def calcular_flecha_maxima(tipo_viga, L_cm, E, Ix, q_serv_kn_cm=0, p_serv_load=N
         'delta_total': 0
     }
 
-    # Flecha devido à carga distribuída (q)
     if q_serv_kn_cm > 0:
         q_serv_val = q_serv_kn_cm
         if tipo_viga == 'Bi-apoiada':
@@ -334,7 +207,6 @@ def calcular_flecha_maxima(tipo_viga, L_cm, E, Ix, q_serv_kn_cm=0, p_serv_load=N
             detalhes['delta_q']['formula_numerica'] = f"\\frac{{\\mathbf{{{q_serv_val:.4f}}} \\times \\mathbf{{{L:.2f}}}^4}}{{185 \\times \\mathbf{{{E:.0f}}} \\times \\mathbf{{{Ix:.2f}}}}}"
         detalhes['delta_q']['valor'] = delta_q
 
-    # Flecha devido à carga pontual (P)
     if p_serv_load:
         P, x = p_serv_load
         a = x
@@ -355,7 +227,7 @@ def calcular_flecha_maxima(tipo_viga, L_cm, E, Ix, q_serv_kn_cm=0, p_serv_load=N
             delta_p = (P * a**3 * b**2) / (12 * E * Ix * L**3) * (a + 2*L)
             detalhes['delta_p']['formula_simbolica'] = "\\delta_p = \\frac{P_{serv} \\times a^3 \\times b^2 \\times (a + 2L)}{12 \\times E \\times I_x \\times L^3}"
             detalhes['delta_p']['formula_numerica'] = f"\\frac{{\\mathbf{{{P:.2f}}} \\times \\mathbf{{{a:.2f}}}^3 \\times \\mathbf{{{b:.2f}}}^2 \\times (\\mathbf{{{a:.2f}}} + 2 \\times \\mathbf{{{L:.2f}}})}}{{12 \\times \\mathbf{{{E:.0f}}} \\times \\mathbf{{{Ix:.2f}}} \\times \\mathbf{{{L:.2f}}}^3}}"
-        
+    
         detalhes['delta_p']['valor'] = delta_p
     
     detalhes['delta_total'] = delta_q + delta_p
@@ -380,7 +252,8 @@ def _calcular_mrdx_flt(props, Lb, Cb, fy):
     detalhes = {'Mp': {'desc': 'Momento de Plastificação', 'formula': 'M_p = Z_x \\times f_y', 'valores': {'Z_x': Zx, 'f_y': fy}, 'valor': Mp, 'unidade': 'kN.cm'},'lambda': {'desc': 'Índice de Esbeltez (Lb/ry)', 'formula': '\\lambda = \\frac{{L_b}}{{r_y}}', 'valores': {'L_b': Lb, 'r_y': ry}, 'valor': lambda_val},'lambda_p': {'desc': 'Esbeltez Limite (Plástica)', 'formula': '\\lambda_p = 1.76 \\sqrt{\\frac{{E}}{{f_y}}}', 'valores': {'E': Config.E_ACO, 'f_y': fy}, 'valor': lambda_p}}
     verificacao_texto = ""
     if lambda_val <= lambda_p:
-        verificacao_texto = f"""<p>O índice de esbeltez (λ = {lambda_val:.2f}) é <b>menor ou igual</b> ao limite para plastificação (λp = {lambda_p:.2f}).</p><p><b>Conclusão: Ocorre plastificação total da seção.</b></p>"""
+        verificacao_texto = f"""O índice de esbeltez (λ = {lambda_val:.2f}) é **menor ou igual** ao limite para plastificação (λp = {lambda_p:.2f}).
+        **Conclusão:** Ocorre plastificação total da seção."""
         Mrdx = Mp / Config.GAMMA_A1
         detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Plastificação)', 'formula': 'M_{rd} = \\frac{{M_p}}{{\\gamma_{{a1}}}}', 'valores': {'M_p': Mp, '\\gamma_{{a1}}': Config.GAMMA_A1}, 'valor': Mrdx, 'unidade': 'kN.cm', 'ref': 'Eq. F-1'}
     else:
@@ -397,18 +270,22 @@ def _calcular_mrdx_flt(props, Lb, Cb, fy):
             lambda_r = (1.38 * math.sqrt(Iy * J) / (ry * beta1 * J)) * math.sqrt(termo_sqrt2)
         detalhes['lambda_r'] = {'desc': 'Esbeltez Limite (Inelástica)', 'formula': '\\lambda_r = 1.38 \\frac{\\sqrt{I_y \\times J}}{r_y \\times \\beta_1 \\times J} \\sqrt{1 + \\sqrt{1+\\frac{27 \\times C_w \\times \\beta_1^2}{I_y}}}', 'valores': {'I_y': Iy, 'J': J, 'r_y': ry, '\\beta_1': beta1, 'C_w': Cw}, 'valor': lambda_r}
         if lambda_val <= lambda_r:
-            verificacao_texto = f"""<p>O índice de esbeltez (λ = {lambda_val:.2f}) está <b>entre os limites</b> plástico (λp = {lambda_p:.2f}) e inelástico (λr = {lambda_r:.2f}).</p><p><b>Conclusão: Ocorre flambagem no regime inelástico.</b></p>"""
+            verificacao_texto = f"""O índice de esbeltez (λ = {lambda_val:.2f}) está **entre os limites** plástico (λp = {lambda_p:.2f}) e inelástico (λr = {lambda_r:.2f}).
+            **Conclusão:** Ocorre flambagem no regime inelástico."""
             Mrdx_calc = (Cb / Config.GAMMA_A1) * (Mp - (Mp - Mr) * ((lambda_val - lambda_p) / (lambda_r - lambda_p)))
             Mp_gamma = Mp / Config.GAMMA_A1
             Mrdx = min(Mrdx_calc, Mp_gamma)
             detalhes['Mrdx_calc'] = {'desc': 'Cálculo do Momento Resistente (Regime Inelástico)', 'formula': 'M_{rd,calc} = \\frac{{C_b}}{{\\gamma_{{a1}}}} [M_p - (M_p - M_r) (\\frac{{\\lambda - \\lambda_p}}{{\\lambda_r - \\lambda_p}})]', 'valores': {'C_b': Cb, '\\gamma_{{a1}}': Config.GAMMA_A1, 'M_p': Mp, 'M_r': Mr, '\\lambda': lambda_val, '\\lambda_p': lambda_p, '\\lambda_r': lambda_r}, 'valor': Mrdx_calc, 'unidade': 'kN.cm', 'ref': 'Eq. F-1'}
-            limite_texto = f"""<p>A norma exige que a resistência no regime inelástico seja limitada pela resistência plástica.</p>
-                                <p class='formula'>$$M_{{rd,calc}} = {Mrdx_calc/100:.2f} \\, kNm$$</p>
-                                <p class='formula'>$$M_{{p,rd}} = \\frac{{M_p}}{{\\gamma_{{a1}}}} = \\frac{{{Mp:.2f}}}{{{Config.GAMMA_A1:.2f}}} = {Mp_gamma/100:.2f} \\, kNm$$</p>
-                                <p>Adota-se o menor valor: $$M_{{rd}} = \\min(M_{{rd,calc}}; M_{{p,rd}}) = \\min({Mrdx_calc/100:.2f}; {Mp_gamma/100:.2f}) = \\mathbf{{{Mrdx/100:.2f}}} \\, kNm$$</p>"""
-            detalhes['verificacao_limite'] = {'desc': 'Verificação do Limite de Plastificação', 'texto': limite_texto}
+            detalhes['verificacao_limite'] = {
+                'desc': 'Verificação do Limite de Plastificação',
+                'texto': f"""A norma exige que a resistência no regime inelástico seja limitada pela resistência plástica.
+                $$M_{{rd,calc}} = {Mrdx_calc/100:.2f} \\, kNm$$
+                $$M_{{p,rd}} = \\frac{{M_p}}{{\\gamma_{{a1}}}} = \\frac{{{Mp:.2f}}}{{{Config.GAMMA_A1:.2f}}} = {Mp_gamma/100:.2f} \\, kNm$$
+                Adota-se o menor valor: $$M_{{rd}} = \\min(M_{{rd,calc}}; M_{{p,rd}}) = \\min({Mrdx_calc/100:.2f}; {Mp_gamma/100:.2f}) = \\mathbf{{{Mrdx/100:.2f}}} \\, kNm$$"""
+            }
         else:
-            verificacao_texto = f"""<p>O índice de esbeltez (λ = {lambda_val:.2f}) é <b>maior</b> que o limite inelástico (λr = {lambda_r:.2f}).</p><p><b>Conclusão: Ocorre flambagem no regime elástico.</b></p>"""
+            verificacao_texto = f"""O índice de esbeltez (λ = {lambda_val:.2f}) é **maior** que o limite inelástico (λr = {lambda_r:.2f}).
+            **Conclusão:** Ocorre flambagem no regime elástico."""
             Mcr = 0
             if Lb**2 > 0 and Iy > 0 and Cw > 0 and J > 0:
                 Mcr = ((Cb * (math.pi**2) * Config.E_ACO * Iy) / (Lb**2)) * math.sqrt((Cw/Iy) * (1 + (0.039 * J * (Lb**2) / Cw)))
@@ -427,7 +304,8 @@ def _calcular_mrdx_flm(props, fy, tipo_fabricacao):
     detalhes = {'Mp': {'desc': 'Momento de Plastificação', 'formula': 'M_p = Z_x \\times f_y', 'valores': {'Z_x': Zx, 'f_y': fy}, 'valor': Mp, 'unidade': 'kN.cm'}, 'lambda': {'desc': 'Esbeltez da Mesa (bf/2tf)', 'formula': '\\lambda = \\frac{{b_f/2}}{{t_f}}', 'valores': {'b_f': bf, 't_f': tf}, 'valor': lambda_val},'lambda_p': {'desc': 'Esbeltez Limite (Plástica)', 'formula': '\\lambda_p = 0,38 \\sqrt{{\\frac{{E}}{{f_y}}}}', 'valores': {'E': Config.E_ACO, 'f_y': fy}, 'valor': lambda_p, 'ref': 'Tabela F.1'}}
     verificacao_texto = ""
     if lambda_val <= lambda_p:
-        verificacao_texto = f"""<p>A esbeltez da mesa (λ = {lambda_val:.2f}) é <b>menor ou igual</b> à esbeltez limite plástica (λp = {lambda_p:.2f}).</p><p><b>Conclusão: A mesa é classificada como COMPACTA.</b></p>"""
+        verificacao_texto = f"""A esbeltez da mesa (λ = {lambda_val:.2f}) é **menor ou igual** à esbeltez limite plástica (λp = {lambda_p:.2f}).
+        **Conclusão:** A mesa é classificada como **COMPACTA**."""
         Mrdx = Mp / Config.GAMMA_A1
         detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Mesa Compacta)', 'formula': 'M_{rd} = \\frac{{M_p}}{{\\gamma_{{a1}}}}', 'valores': {'M_p': Mp, '\\gamma_{{a1}}': Config.GAMMA_A1}, 'valor': Mrdx, 'unidade': 'kN.cm'}
     else:
@@ -435,7 +313,7 @@ def _calcular_mrdx_flm(props, fy, tipo_fabricacao):
         detalhes['sigma_r'] = {'desc': 'Tensão Residual (σr)', 'formula': '\\sigma_r = 0,3 \\times f_y', 'valores': {'f_y': fy}, 'valor': sigma_r, 'unidade': 'kN/cm²'}
         Mr = (fy - sigma_r) * Wx
         detalhes['Mr_calc'] = {'desc': 'Momento de Escoamento Residual (Mr)', 'formula': 'M_r = (f_y - \\sigma_r) \\times W_x', 'valores': {'f_y': fy, '\\sigma_r': sigma_r, 'W_x': Wx}, 'valor': Mr, 'unidade': 'kN.cm'}
-        
+    
         if tipo_fabricacao == "Laminado":
             lambda_r = Config.FATOR_LAMBDA_R_FLM_LAMINADO * math.sqrt(Config.E_ACO / (fy - sigma_r)) if (fy - sigma_r) > 0 else float('inf')
             detalhes['lambda_r'] = {'desc': 'Esbeltez Limite (Semicompacta)', 'formula': '\\lambda_r = 0,83 \\sqrt{{\\frac{{E}}{{f_y - \\sigma_r}}}}', 'valores': {'E': Config.E_ACO, 'f_y': fy, '\\sigma_r': sigma_r}, 'valor': lambda_r, 'ref': 'Tabela F.1'}
@@ -448,11 +326,13 @@ def _calcular_mrdx_flm(props, fy, tipo_fabricacao):
             detalhes['lambda_r'] = {'desc': 'Esbeltez Limite (Semicompacta)', 'formula': '\\lambda_r = 0,95 \\sqrt{{\\frac{E \\times k_c}{{f_y - \\sigma_r}}}}', 'valores': {'E': Config.E_ACO, 'k_c': kc, 'f_y': fy, '\\sigma_r': sigma_r}, 'valor': lambda_r, 'ref': 'Tabela F.1'}
 
         if lambda_val <= lambda_r:
-            verificacao_texto = f"""<p>A esbeltez da mesa (λ = {lambda_val:.2f}) está <b>entre os limites</b> plástico (λp = {lambda_p:.2f}) e semicompacto (λr = {lambda_r:.2f}).</p><p><b>Conclusão: A mesa é classificada como SEMICOMPACTA.</b></p>"""
+            verificacao_texto = f"""A esbeltez da mesa (λ = {lambda_val:.2f}) está **entre os limites** plástico (λp = {lambda_p:.2f}) e semicompacto (λr = {lambda_r:.2f}).
+            **Conclusão:** A mesa é classificada como **SEMICOMPACTA**."""
             Mrdx = (1 / Config.GAMMA_A1) * (Mp - (Mp - Mr) * ((lambda_val - lambda_p) / (lambda_r - lambda_p)))
             detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Mesa Semicompacta)', 'formula': 'M_{rd} = \\frac{{1}}{{\\gamma_{{a1}}}} [M_p - (M_p - M_r) (\\frac{{\\lambda - \\lambda_p}}{{\\lambda_r - \\lambda_p}})]', 'valores': {'\\gamma_{{a1}}': Config.GAMMA_A1, 'M_p': Mp, 'M_r': Mr, '\\lambda': lambda_val, '\\lambda_p': lambda_p, '\\lambda_r': lambda_r}, 'valor': Mrdx, 'unidade': 'kN.cm'}
         else:
-            verificacao_texto = f"""<p>A esbeltez da mesa (λ = {lambda_val:.2f}) é <b>maior</b> que a esbeltez limite semicompacta (λr = {lambda_r:.2f}).</p><p><b>Conclusão: A mesa é classificada como ESBELTA.</b></p>"""
+            verificacao_texto = f"""A esbeltez da mesa (λ = {lambda_val:.2f}) é **maior** que a esbeltez limite semicompacta (λr = {lambda_r:.2f}).
+            **Conclusão:** A mesa é classificada como **ESBELTA**. O cálculo para almas esbeltas à flexão não é coberto por este aplicativo (ver Anexo H da NBR 8800)."""
             if tipo_fabricacao == "Laminado":
                 Mcr = (0.69 * Config.E_ACO * Wx) / (lambda_val**2) if lambda_val > 0 else 0
                 detalhes['Mcr'] = {'desc': 'Momento Crítico (Mcr)', 'formula': 'M_{cr} = \\frac{0,69 \\times E \\times W_x}{\\lambda^2}', 'valores': {'E': Config.E_ACO, 'W_x': Wx, '\\lambda': lambda_val}, 'valor': Mcr, 'unidade': 'kN.cm'}
@@ -461,7 +341,7 @@ def _calcular_mrdx_flm(props, fy, tipo_fabricacao):
                 detalhes['Mcr'] = {'desc': 'Momento Crítico (Mcr)', 'formula': 'M_{cr} = \\frac{0,90 \\times E \\times k_c \\times W_x}{\\lambda^2}', 'valores': {'E': Config.E_ACO, 'k_c': kc, 'W_x': Wx, '\\lambda': lambda_val}, 'valor': Mcr, 'unidade': 'kN.cm'}
             Mrdx = Mcr / Config.GAMMA_A1
             detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Mesa Esbelta)', 'formula': 'M_{rd} = \\frac{M_{cr}}{\\gamma_{a1}}', 'valores': {'M_{cr}': Mcr, '\\gamma_{a1}': Config.GAMMA_A1}, 'valor': Mrdx, 'unidade': 'kN.cm'}
-            
+    
     detalhes['verificacao_classificacao'] = {'desc': 'Classificação da Mesa quanto à Flambagem Local', 'texto': verificacao_texto}
     detalhes['Mrdx'] = Mrdx
     return detalhes
@@ -474,7 +354,8 @@ def _calcular_mrdx_fla(props, fy):
     detalhes = {'Mp': {'desc': 'Momento de Plastificação', 'formula': 'M_p = Z_x \\times f_y', 'valores': {'Z_x': Zx, 'f_y': fy}, 'valor': Mp, 'unidade': 'kN.cm'}, 'lambda': {'desc': 'Esbeltez da Alma (h/tw)', 'formula': '\\lambda = \\frac{{h}}{{t_w}}', 'valores': {'h': h, 't_w': tw}, 'valor': lambda_val},'lambda_p': {'desc': 'Esbeltez Limite (Plástica)', 'formula': '\\lambda_p = 3,76 \\sqrt{{\\frac{{E}}{{f_y}}}}', 'valores': {'E': Config.E_ACO, 'f_y': fy}, 'valor': lambda_p, 'ref': 'Tabela F.1'}}
     verificacao_texto = ""
     if lambda_val <= lambda_p:
-        verificacao_texto = f"""<p>A esbeltez da alma (λ = {lambda_val:.2f}) é <b>menor ou igual</b> à esbeltez limite plástica (λp = {lambda_p:.2f}).</p><p><b>Conclusão: A alma é classificada como COMPACTA.</b></p>"""
+        verificacao_texto = f"""A esbeltez da alma (λ = {lambda_val:.2f}) é **menor ou igual** à esbeltez limite plástica (λp = {lambda_p:.2f}).
+        **Conclusão:** A alma é classificada como **COMPACTA**."""
         Mrdx = Mp / Config.GAMMA_A1
         detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Alma Compacta)', 'formula': 'M_{rd} = \\frac{{M_p}}{{\\gamma_{{a1}}}}', 'valores': {'M_p': Mp, '\\gamma_{{a1}}': Config.GAMMA_A1}, 'valor': Mrdx, 'unidade': 'kN.cm'}
     else:
@@ -483,11 +364,13 @@ def _calcular_mrdx_fla(props, fy):
         Mr = fy * Wx
         detalhes['Mr_calc'] = {'desc': 'Momento de Escoamento (Mr)', 'formula': 'M_r = f_y \\times W_x', 'valores': {'f_y': fy, 'W_x': Wx}, 'valor': Mr, 'unidade': 'kN.cm'}
         if lambda_val <= lambda_r:
-            verificacao_texto = f"""<p>A esbeltez da alma (λ = {lambda_val:.2f}) está <b>entre os limites</b> plástico (λp = {lambda_p:.2f}) e semicompacto (λr = {lambda_r:.2f}).</p><p><b>Conclusão: A alma é classificada como SEMICOMPACTA.</b></p>"""
+            verificacao_texto = f"""A esbeltez da alma (λ = {lambda_val:.2f}) está **entre os limites** plástico (λp = {lambda_p:.2f}) e semicompacto (λr = {lambda_r:.2f}).
+            **Conclusão:** A alma é classificada como **SEMICOMPACTA**."""
             Mrdx = (1 / Config.GAMMA_A1) * (Mp - (Mp - Mr) * ((lambda_val - lambda_p) / (lambda_r - lambda_p)))
             detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Alma Semicompacta)', 'formula': 'M_{rd} = \\frac{{1}}{{\\gamma_{{a1}}}} [M_p - (M_p - M_r) (\\frac{{\\lambda - \\lambda_p}}{{\\lambda_r - \\lambda_p}})]', 'valores': {'\\gamma_{{a1}}': Config.GAMMA_A1, 'M_p': Mp, 'M_r': Mr, '\\lambda': lambda_val, '\\lambda_p': lambda_p, '\\lambda_r': lambda_r}, 'valor': Mrdx, 'unidade': 'kN.cm'}
         else:
-            verificacao_texto = f"""<p>A esbeltez da alma (λ = {lambda_val:.2f}) é <b>maior</b> que a esbeltez limite semicompacta (λr = {lambda_r:.2f}).</p><p><b>Conclusão: A alma é classificada como ESBELTA.</b> O cálculo para almas esbeltas à flexão não é coberto por este aplicativo (ver Anexo H da NBR 8800).</p>"""
+            verificacao_texto = f"""A esbeltez da alma (λ = {lambda_val:.2f}) é **maior** que a esbeltez limite semicompacta (λr = {lambda_r:.2f}).
+            **Conclusão:** A alma é classificada como **ESBELTA**. O cálculo para almas esbeltas à flexão não é coberto por este aplicativo (ver Anexo H da NBR 8800)."""
             Mrdx = 0
             detalhes['Mrdx_calc'] = {'desc': 'Momento Resistente (Alma Esbelta)', 'formula': 'N/A', 'valores': {}, 'valor': Mrdx, 'unidade': 'kN.cm', 'ref': 'Perfil com alma esbelta. Ver Anexo H.'}
     detalhes['verificacao_classificacao'] = {'desc': 'Classificação da Alma quanto à Flambagem Local', 'texto': verificacao_texto}
@@ -521,18 +404,21 @@ def _calcular_vrd(props, fy, usa_enrijecedores, a_enr):
 
     verificacao_texto = ""
     if lambda_val <= lambda_p:
-        verificacao_texto = f"""<p>A esbeltez da alma (λ = {lambda_val:.2f}) é <b>menor ou igual</b> ao limite de plastificação (λp = {lambda_p:.2f}).</p><p><b>Conclusão: A resistência é governada pelo escoamento da alma por cisalhamento.</b></p>"""
+        verificacao_texto = f"""A esbeltez da alma (λ = {lambda_val:.2f}) é **menor ou igual** ao limite de plastificação (λp = {lambda_p:.2f}).
+        **Conclusão:** A resistência é governada pelo escoamento da alma por cisalhamento."""
         Vrd = Vpl / Config.GAMMA_A1
         detalhes['Vrd_calc'] = {'desc': 'Cortante Resistente (Escoamento)', 'formula': 'V_{rd} = \\frac{{V_{{pl}}}}{{\\gamma_{{a1}}}}', 'valores': {'V_{{pl}}': Vpl, '\\gamma_{{a1}}': Config.GAMMA_A1}, 'valor': Vrd, 'unidade': 'kN'}
     else:
         lambda_r = Config.FATOR_LAMBDA_R_VRD * math.sqrt((kv * Config.E_ACO) / fy)
         detalhes['lambda_r'] = {'desc': 'Esbeltez Limite (Inelástica)', 'formula': '\\lambda_r = 1,37 \\sqrt{{\\frac{{k_v \\times E}}{{f_y}}}}', 'valores': {'k_v': kv, 'E': Config.E_ACO, 'f_y': fy}, 'valor': lambda_r}
         if lambda_val <= lambda_r:
-            verificacao_texto = f"""<p>A esbeltez da alma (λ = {lambda_val:.2f}) está <b>entre o regime</b> plástico (λp = {lambda_p:.2f}) e o elástico (λr = {lambda_r:.2f}).</p><p><b>Conclusão: Ocorre flambagem por cisalhamento no regime inelástico.</b></p>"""
+            verificacao_texto = f"""A esbeltez da alma (λ = {lambda_val:.2f}) está **entre o regime** plástico (λp = {lambda_p:.2f}) e o elástico (λr = {lambda_r:.2f}).
+            **Conclusão:** Ocorre flambagem por cisalhamento no regime inelástico."""
             Vrd = (lambda_p / lambda_val) * (Vpl / Config.GAMMA_A1) if lambda_val > 0 else 0
             detalhes['Vrd_calc'] = {'desc': 'Cortante Resistente (Inelástico)', 'formula': 'V_{rd} = \\frac{{\\lambda_p}}{{\\lambda}} \\times \\frac{{V_{{pl}}}}{{\\gamma_{{a1}}}}', 'valores': {'\\lambda_p': lambda_p, '\\lambda': lambda_val, 'V_{{pl}}': Vpl, '\\gamma_{{a1}}': Config.GAMMA_A1}, 'valor': Vrd, 'unidade': 'kN'}
         else:
-            verificacao_texto = f"""<p>A esbeltez da alma (λ = {lambda_val:.2f}) é <b>maior</b> que o limite para flambagem inelástica (λr = {lambda_r:.2f}).</p><p><b>Conclusão: Ocorre flambagem por cisalhamento no regime elástico.</b></p>"""
+            verificacao_texto = f"""A esbeltez da alma (λ = {lambda_val:.2f}) é **maior** que o limite para flambagem inelástica (λr = {lambda_r:.2f}).
+            **Conclusão:** Ocorre flambagem por cisalhamento no regime elástico."""
             Vrd = (Config.FATOR_VRD_ELASTICO * (lambda_p / lambda_val)**2) * (Vpl / Config.GAMMA_A1) if lambda_val > 0 else 0
             detalhes['Vrd_calc'] = {'desc': 'Cortante Resistente (Elástico)', 'formula': 'V_{rd} = 1,24 (\\frac{{\\lambda_p}}{{\\lambda}})^2 \\times \\frac{{V_{{pl}}}}{{\\gamma_{{a1}}}}', 'valores': {'\\lambda_p': lambda_p, '\\lambda': lambda_val, 'V_{{pl}}': Vpl, '\\gamma_{{a1}}': Config.GAMMA_A1}, 'valor': Vrd, 'unidade': 'kN'}
     detalhes['verificacao_classificacao'] = {'desc': 'Classificação da Alma quanto ao Cisalhamento', 'texto': verificacao_texto}
@@ -552,13 +438,11 @@ def create_professional_header():
     """, unsafe_allow_html=True)
 
 def create_metrics_dashboard(input_params):
-    """Cria um dashboard com métricas principais do projeto e esforços."""
     st.markdown("### 📊 Parâmetros do Projeto")
     
     msd_value = input_params.get('Msd', 0)
     vsd_value = input_params.get('Vsd', 0)
 
-    # Define 7 columns for all parameters
     col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
     
     with col1:
@@ -572,7 +456,6 @@ def create_metrics_dashboard(input_params):
     with col5:
         st.metric(label="🔥 fy", value=f"{input_params['fy_aco']:.1f} kN/cm²")
     
-    # Display efforts with icons
     with col6:
         st.metric(
             label=" Msd (Momento)",
@@ -587,7 +470,6 @@ def create_metrics_dashboard(input_params):
         )
 
 def style_classic_dataframe(df):
-    """Aplica estilização clássica com cores sólidas ao DataFrame."""
     def color_efficiency(val):
         if pd.isna(val) or not isinstance(val, (int, float)): return ''
         if val > 100:   color = '#f8d7da' # Red
@@ -628,47 +510,232 @@ def create_top_profiles_chart(df_approved, top_n=10):
     )
     return fig
 
-def create_professional_memorial_html(perfil_nome, perfil_tipo, resultados, input_details, projeto_info):
-    conteudo_memorial = f"""
-        <h2>1. Resumo Executivo</h2>
-        <div class="result-highlight">{resultados['resumo_html']}</div>
-        {input_details}
-        {resultados['passo_a_passo_html']}
-    """
-    html_template = f"""
-    <!DOCTYPE html><html lang="pt-BR"><head>
-        <meta charset="UTF-8"><title>Memorial de Cálculo - {perfil_nome}</title>
-        {HTML_TEMPLATE_CSS_PRO}
-        <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML"></script>
-    </head><body><div class="container">
-        <div class="pro-header">
-            <h1>Memorial de Cálculo Estrutural</h1>
-            <p><strong>{perfil_nome}</strong> ({perfil_tipo})</p>
-        </div>
-        <div class="info-card">
-            <h3>📋 Identificação do Projeto</h3>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                <div><strong>Projeto:</strong> {projeto_info['nome']}</div>
-                <div><strong>Engenheiro:</strong> {projeto_info['engenheiro']}</div>
-                <div><strong>Data:</strong> {projeto_info['data']}</div>
-                <div><strong>Revisão:</strong> {projeto_info['revisao']}</div>
-            </div>
-        </div>
-        {conteudo_memorial}
-        <div style="text-align: center; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border); color: var(--text-secondary);">
-            <p>Memorial gerado em {datetime.now().strftime('%d/%m/%Y às %H:%M')}</p>
-        </div>
-    </div></body></html>
-    """
-    return html_template
+# Funções para renderizar o memorial de cálculo usando componentes nativos
+def render_verification_step(title, details_dict, solicitante):
+    """Renderiza um passo de verificação com fórmulas e detalhes."""
+    st.markdown(f"#### {title}")
+    
+    with st.expander("Ver cálculo detalhado", expanded=True):
+        # Classificação do regime de flambagem
+        if 'verificacao_classificacao' in details_dict:
+            st.markdown(f"##### {details_dict['verificacao_classificacao']['desc']}")
+            st.info(details_dict['verificacao_classificacao']['texto'])
 
-def _build_verification_block_html(title, solicitante, s_symbol, resistente, r_symbol, eficiencia, status, unit):
-    status_class = "pass" if status == "APROVADO" else "fail"
+        # Detalhes das fórmulas intermediárias
+        for key, value in details_dict.items():
+            if isinstance(value, dict) and 'formula' in value:
+                if key not in ['Mrdx_calc', 'Vrd_calc', 'verificacao_classificacao', 'verificacao_limite']:
+                    st.markdown(f"##### {value['desc']}")
+                    st.latex(value['formula'])
+                    formula_numerica = value['formula']
+                    for var, val_num in value['valores'].items():
+                        formula_numerica = formula_numerica.replace(var, f"\\mathbf{{{val_num:.2f}}}")
+                    st.latex(f"{formula_numerica} = {value['valor']:.4f} \\, {value.get('unidade', '')}")
+
+        # Cálculo da resistência final
+        st.markdown(f"##### Cálculo da Resistência Final")
+        resistente_key = 'Mrdx_calc' if 'Mrdx_calc' in details_dict else 'Vrd_calc'
+        
+        if resistente_key in details_dict:
+            res_details = details_dict[resistente_key]
+            st.latex(res_details['formula'])
+            valor_final = res_details['valor']
+            
+            unit = res_details.get('unidade', '')
+            if 'Mrd' in resistente_key:
+                valor_final /= 100.0
+                unit = 'kNm'
+
+            st.latex(f"= {valor_final:.2f} \\, {unit}")
+            st.caption(f"Referência: {res_details.get('ref', '')}")
+
+        # Verificação de limite (exclusivo para FLT inelástica)
+        if 'verificacao_limite' in details_dict:
+            st.markdown(f"##### {details_dict['verificacao_limite']['desc']}")
+            st.markdown(details_dict['verificacao_limite']['texto'])
+    
+    # Eficiência e status
+    st.markdown(f"##### Verificação Final")
+    resistente = details_dict.get('Mrdx', details_dict.get('Vrd', 0))
+    eficiencia = (solicitante / resistente) * 100 if resistente > 0 else float('inf')
+    status = "APROVADO" if eficiencia <= 100.1 else "REPROVADO"
+    
     comp_symbol = "\\le" if status == "APROVADO" else ">"
-    return f"""<h4>{title}</h4><div class="formula-block"><p class="formula">$${s_symbol} = {solicitante:.2f} \\, {unit}$$</p><p class="formula">$${r_symbol} = {resistente:.2f} \\, {unit}$$</p><p class="formula">$$\\text{{Verificação: }} {s_symbol} {comp_symbol} {r_symbol}$$</p><p class="formula">$$\\text{{Eficiência}} = \\frac{{{s_symbol}}}{{{r_symbol}}} = \\frac{{{solicitante:.2f}}}{{{resistente:.2f}}} = {eficiencia:.1f}\\%$$</p><div class="final-status {status_class}">{status}</div></div>"""
+    sol_symbol = 'M_{sd}' if 'Mrd' in resistente_key else 'V_{sd}'
+    res_symbol = 'M_{rd}' if 'Mrd' in resistente_key else 'V_{rd}'
+    unit = 'kN.cm' if 'Mrd' in resistente_key else 'kN'
+    
+    st.latex(f"\\text{{Solicitante: }} {solicitante:.2f} \\, {unit}")
+    st.latex(f"\\text{{Resistente: }} {resistente:.2f} \\, {unit}")
+    st.markdown(f"**Verificação:** ${sol_symbol} {comp_symbol} {res_symbol}$")
+    st.latex(f"\\text{{Eficiência}} = \\frac{{{solicitante:.2f}}}{{{resistente:.2f}}} = {eficiencia:.1f}\\%")
+    
+    if status == "APROVADO":
+        st.success(f"Status: **{status}** 🎉")
+    else:
+        st.error(f"Status: **{status}** ⛔")
+    st.markdown("---")
+
+
+def render_final_check(check_name, solicitante, s_symbol, resistente, r_symbol, unit, eficiencia, status):
+    """Renderiza o bloco de verificação final de maneira clara."""
+    st.markdown(f"#### Verificação Final de {check_name}")
+    st.latex(f"\\text{{Solicitante: }} {s_symbol} = {solicitante:.2f} \\, {unit}")
+    st.latex(f"\\text{{Resistente: }} {r_symbol} = {resistente:.2f} \\, {unit}")
+
+    comp_symbol = "\\le" if status == "APROVADO" else ">"
+    st.markdown(f"**Verificação:** ${s_symbol} {comp_symbol} {r_symbol}$")
+    st.latex(f"\\text{{Eficiência}} = \\frac{{{solicitante:.2f}}}{{{resistente:.2f}}} = {eficiencia:.1f}\\%")
+
+    if status == "APROVADO":
+        st.success(f"**Status:** {status} 🎉")
+    else:
+        st.error(f"**Status:** {status} ⛔")
+
+def render_detailed_memorial_streamlit(perfil_nome, perfil_tipo, resultados, input_params, props):
+    """
+    Renderiza o memorial de cálculo detalhado usando apenas componentes nativos do Streamlit.
+    """
+    st.header(f"📋 Memorial de Cálculo Estrutural")
+    st.subheader(f"Perfil: {perfil_nome} ({perfil_tipo})")
+
+    # Informações do Projeto
+    st.markdown("### 📋 Identificação do Projeto")
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.write(f"**Projeto:** {input_params['projeto_info']['nome']}")
+    with col2:
+        st.write(f"**Engenheiro:** {input_params['projeto_info']['engenheiro']}")
+    with col3:
+        st.write(f"**Data:** {input_params['projeto_info']['data']}")
+    with col4:
+        st.write(f"**Revisão:** {input_params['projeto_info']['revisao']}")
+
+    # Resumo Executivo
+    st.markdown("---")
+    st.header("1. Resumo Executivo")
+    st.dataframe(resultados['resumo_df'].style.applymap(lambda x: 'background-color: #d4edda' if 'APROVADO' in str(x) else 'background-color: #f8d7da', subset=['Status']), use_container_width=True)
+
+    # Detalhes do Perfil e Entradas
+    st.markdown("---")
+    st.header("2. Parâmetros de Entrada e Propriedades do Perfil")
+    
+    st.subheader("2.1 Propriedades Geométricas do Perfil")
+    profile_props_df = pd.DataFrame({
+        'Propriedade': ['d (cm)', 'bf (cm)', 'tw (cm)', 'tf (cm)', 'h (cm)', 'Ix (cm⁴)', 'Wx (cm³)', 'Zx (cm³)', 'Peso (kg/m)'],
+        'Valor': [props['d'], props['bf'], props['tw'], props['tf'], props['h'], props['Ix'], props['Wx'], props['Zx'], props['Peso']]
+    })
+    st.table(profile_props_df.set_index('Propriedade').style.format("{:.2f}"))
+
+    st.subheader("2.2 Esforços Solicitantes")
+    Msd_total, Vsd_total, detalhes_esforcos = calcular_esforcos_viga(
+        input_params['tipo_viga'], 
+        input_params['L_cm'], 
+        input_params['q_serv_kn_cm'] * input_params['gamma_f'], 
+        (input_params['p_load_serv'][0] * input_params['gamma_f'], input_params['p_load_serv'][1]) if input_params['p_load_serv'] else None
+    )
+
+    st.markdown(f"**Tipo de Viga:** {input_params['tipo_viga']} | **Comprimento:** {input_params['L_cm']/100:.2f} m")
+    
+    col_esf1, col_esf2 = st.columns(2)
+    with col_esf1:
+        st.markdown("#### Momento Fletor (Msd)")
+        if detalhes_esforcos['Msd_q']['valor'] > 0:
+            st.latex(f"M_{{sd,q}} = {detalhes_esforcos['Msd_q']['formula_numerica']} = {detalhes_esforcos['Msd_q']['valor']:.2f} \\, kN.cm")
+        if detalhes_esforcos['Msd_p']['valor'] > 0:
+            st.latex(f"M_{{sd,P}} = {detalhes_esforcos['Msd_p']['formula_numerica']} = {detalhes_esforcos['Msd_p']['valor']:.2f} \\, kN.cm")
+        st.latex(f"M_{{sd,total}} = {Msd_total:.2f} \\, kN.cm")
+    
+    with col_esf2:
+        st.markdown("#### Força Cortante (Vsd)")
+        if detalhes_esforcos['Vsd_q']['valor'] > 0:
+            st.latex(f"V_{{sd,q}} = {detalhes_esforcos['Vsd_q']['formula_numerica']} = {detalhes_esforcos['Vsd_q']['valor']:.2f} \\, kN")
+        if detalhes_esforcos['Vsd_p']['valor'] > 0:
+            st.latex(f"V_{{sd,P}} = {detalhes_esforcos['Vsd_p']['formula_numerica']} = {detalhes_esforcos['Vsd_p']['valor']:.2f} \\, kN")
+        st.latex(f"V_{{sd,total}} = {Vsd_total:.2f} \\, kN")
+
+    # Verificações de Resistência (ELU)
+    st.markdown("---")
+    st.header("3. Verificações de Resistência (ELU)")
+    
+    st.subheader("3.1. Resistência à Flexão (Mrd)")
+    render_verification_step("Flambagem Lateral com Torção (FLT)", resultados['flt'], input_params['Msd'])
+    render_verification_step("Flambagem Local da Mesa (FLM)", resultados['flm'], input_params['Msd'])
+    render_verification_step("Flambagem Local da Alma (FLA)", resultados['fla'], input_params['Msd'])
+
+    st.markdown("---")
+    st.subheader("Verificação Final à Flexão")
+    Mrd_final = min(resultados['flt']['Mrdx'], resultados['flm']['Mrdx'], resultados['fla']['Mrdx'])
+    ef_geral = (input_params['Msd'] / Mrd_final) * 100 if Mrd_final > 0 else float('inf')
+    status_flexao = "APROVADO" if ef_geral <= 100.1 else "REPROVADO"
+    render_final_check(
+        'Flexão', 
+        input_params['Msd'], 
+        'M_{sd}', 
+        Mrd_final, 
+        'M_{rd}', 
+        'kN.cm', 
+        ef_geral, 
+        status_flexao
+    )
+
+    # Cisalhamento
+    st.subheader("3.2. Resistência ao Cisalhamento (Vrd)")
+    render_verification_step("Resistência ao Cisalhamento (Vrd)", resultados['cis'], input_params['Vsd'])
+    render_final_check(
+        'Cisalhamento', 
+        input_params['Vsd'], 
+        'V_{sd}', 
+        resultados['cis']['Vrd'], 
+        'V_{rd}', 
+        'kN', 
+        resultados['cis']['eficiencia'], 
+        resultados['cis']['status']
+    )
+
+    # Verificação de Serviço (ELS)
+    if input_params['input_mode'] == "Calcular a partir de Cargas na Viga":
+        st.markdown("---")
+        st.header("4. Verificação de Serviço (ELS)")
+        
+        st.subheader("4.1. Flecha Máxima Atuante (δ_max)")
+        detalhes_flecha = resultados['flecha']['detalhes']
+        delta_q_details = detalhes_flecha.get('delta_q', {})
+        delta_p_details = detalhes_flecha.get('delta_p', {})
+        
+        if delta_q_details.get('valor', 0) > 0:
+            st.markdown("##### Flecha devido à Carga Distribuída (δ_q)")
+            st.latex(delta_q_details['formula_simbolica'])
+            st.latex(f"= {delta_q_details['valor']:.4f} \\, cm")
+        
+        if delta_p_details.get('valor', 0) > 0:
+            st.markdown("##### Flecha devido à Carga Pontual (δ_p)")
+            st.latex(delta_p_details['formula_simbolica'])
+            st.latex(f"= {delta_p_details['valor']:.4f} \\, cm")
+
+        st.markdown("##### Flecha Total")
+        st.latex(f"\\delta_{{max}} = \\delta_q + \\delta_p = {detalhes_flecha['delta_total']:.4f} \\, cm")
+
+        st.subheader("4.2. Flecha Limite (δ_lim)")
+        st.latex(f"\\delta_{{lim}} = \\frac{{L}}{{{resultados['flecha']['divisor']}}} = \\frac{{{input_params['L_cm']:.2f}}}{{{resultados['flecha']['divisor']}}} = {resultados['flecha']['flecha_limite']:.2f} \\, cm")
+
+        st.subheader("4.3. Verificação Final da Flecha")
+        render_final_check(
+            'Flecha', 
+            resultados['flecha']['flecha_max'], 
+            '\\delta_{max}', 
+            resultados['flecha']['flecha_limite'], 
+            '\\delta_{lim}', 
+            'cm', 
+            resultados['flecha']['eficiencia'], 
+            resultados['flecha']['status']
+        )
+    
+    st.markdown("---")
+    st.info(f"Memorial gerado em {datetime.now().strftime('%d/%m/%Y às %H:%M')}")
 
 # ==============================================================================
-# 4. FUNÇÕES DE ORQUESTRAÇÃO E ANÁLISE (MODIFICADAS)
+# 4. FUNÇÕES DE ORQUESTRAÇÃO E ANÁLISE
 # ==============================================================================
 
 def perform_all_checks(props, fy_aco, Lb_projeto, Cb_projeto, L_cm, Msd, Vsd, q_serv_kn_cm, p_load_serv, tipo_viga, input_mode, tipo_fabricacao, usa_enrijecedores, a_enr, limite_flecha_divisor, projeto_info, detalhado=False, **kwargs):
@@ -676,12 +743,14 @@ def perform_all_checks(props, fy_aco, Lb_projeto, Cb_projeto, L_cm, Msd, Vsd, q_
     res_flm = _calcular_mrdx_flm(props, fy_aco, tipo_fabricacao)
     res_fla = _calcular_mrdx_fla(props, fy_aco)
     res_vrd = _calcular_vrd(props, fy_aco, usa_enrijecedores, a_enr)
+    
     if res_flt['Mrdx'] > 0: res_flt['eficiencia'] = (Msd / res_flt['Mrdx']) * 100
     else: res_flt['eficiencia'] = float('inf')
     if res_flm['Mrdx'] > 0: res_flm['eficiencia'] = (Msd / res_flm['Mrdx']) * 100
     else: res_flm['eficiencia'] = float('inf')
     if res_fla['Mrdx'] > 0: res_fla['eficiencia'] = (Msd / res_fla['Mrdx']) * 100
     else: res_fla['eficiencia'] = float('inf')
+    
     Vrd = res_vrd['Vrd']
     if Vrd > 0: res_cis = {'Vrd': Vrd, 'eficiencia': (Vsd / Vrd) * 100, 'status': "APROVADO" if (Vsd / Vrd) * 100 <= 100.1 else "REPROVADO"}
     else: res_cis = {'Vrd': Vrd, 'eficiencia': float('inf'), 'status': "REPROVADO"}
@@ -699,183 +768,29 @@ def perform_all_checks(props, fy_aco, Lb_projeto, Cb_projeto, L_cm, Msd, Vsd, q_
 
     res_flecha = {'flecha_max': flecha_max, 'flecha_limite': flecha_limite, 'eficiencia': eficiencia_flecha, 'status': status_flecha, 'Ix': props['Ix'], 'detalhes': detalhes_flecha, 'divisor': limite_flecha_divisor}
     
-    Mrd_final = min(res_flt['Mrdx'], res_flm['Mrdx'], res_fla['Mrdx'])
-    ef_geral = (Msd / Mrd_final) * 100 if Mrd_final > 0 else float('inf')
-    status_flexao = "APROVADO" if ef_geral <= 100.1 else "REPROVADO"
-    res_flexao = {'Mrd': Mrd_final, 'eficiencia': ef_geral, 'status': status_flexao}
-    
-    passo_a_passo_html = ""
-    if detalhado:
-        passo_a_passo_html = build_step_by_step_html(L_cm, Msd, Vsd, res_flexao, res_cis, res_flecha, res_flt, res_flm, res_fla, res_vrd, input_mode)
-    
-    return res_flt, res_flm, res_fla, res_cis, res_flecha, passo_a_passo_html
-
-def build_summary_html(Msd, Vsd, res_flt, res_flm, res_fla, res_cisalhamento, res_flecha):
-    verificacoes = [
-        ('Flexão (FLT)', f"{Msd/100:.2f} kNm", f"{res_flt['Mrdx']/100:.2f} kNm", res_flt['eficiencia'], "APROVADO" if res_flt['eficiencia'] <= 100.1 else "REPROVADO"),
-        ('Flexão (FLM)', f"{Msd/100:.2f} kNm", f"{res_flm['Mrdx']/100:.2f} kNm", res_flm['eficiencia'], "APROVADO" if res_flm['eficiencia'] <= 100.1 else "REPROVADO"),
-        ('Flexão (FLA)', f"{Msd/100:.2f} kNm", f"{res_fla['Mrdx']/100:.2f} kNm", res_fla['eficiencia'], "APROVADO" if res_fla['eficiencia'] <= 100.1 else "REPROVADO"),
-        ('Cisalhamento', f"{Vsd:.2f} kN", f"{res_cisalhamento['Vrd']:.2f} kN", res_cisalhamento['eficiencia'], res_cisalhamento['status']),
-        ('Flecha (ELS)', f"{res_flecha['flecha_max']:.2f} cm" if res_flecha['status'] != "N/A" else "N/A", f"≤ {res_flecha['flecha_limite']:.2f} cm" if res_flecha['status'] != "N/A" else "N/A", res_flecha['eficiencia'], res_flecha['status'])
-    ]
-    rows_html = ""
-    for nome, sol, res, efic, status in verificacoes:
-        status_class = "pass" if status == "APROVADO" else "fail"
-        rows_html += f"""<tr><td>{nome}</td><td>{sol}</td><td>{res}</td><td>{efic:.1f}%</td><td class="{status_class}">{status}</td></tr>"""
-    
-    return f"""<table class="summary-table">
-        <thead><tr><th>Verificação</th><th>Solicitante</th><th>Resistente</th><th>Eficiência</th><th>Status</th></tr></thead>
-        <tbody>{rows_html}</tbody>
-    </table>"""
-
-def build_step_by_step_html(L, Msd, Vsd, res_flexao, res_cisalhamento, res_flecha, res_flt, res_flm, res_fla, res_vrd, input_mode):
-    # As funções _add_verification_details e _add_verification_details_with_efficiency serão usadas aqui
-    # para manter a estrutura de cálculo detalhado.
-    html = """"""
-    html += """<h2>3. Verificações de Resistência (ELU)</h2><h3>3.1 Cálculo da Resistência à Flexão (Mrd)</h3>"""
-    html += _add_verification_details_with_efficiency("Flambagem Lateral com Torção (FLT)", Msd, res_flt)
-    html += _add_verification_details_with_efficiency("Flambagem Local da Mesa (FLM)", Msd, res_flm)
-    html += _add_verification_details_with_efficiency("Flambagem Local da Alma (FLA)", Msd, res_fla)
-    html += _build_verification_block_html("Verificação Final à Flexão", Msd/100, "M_{{sd}}", res_flexao['Mrd']/100, "M_{{rd}}", res_flexao['eficiencia'], res_flexao['status'], "kNm")
-    html += f"<h3>3.2 Cálculo da Resistência ao Cisalhamento (Vrd)</h3>"
-    html += _add_verification_details("Resistência ao Cisalhamento (VRd)", res_vrd)
-    html += _build_verification_block_html("Verificação ao Cisalhamento", Vsd, "V_{{sd}}", res_cisalhamento['Vrd'], "V_{{rd}}", res_cisalhamento['eficiencia'], res_cisalhamento['status'], "kN")
-    
-    if input_mode == "Calcular a partir de Cargas na Viga":
-        html += """<h2>4. Verificação de Serviço (ELS)</h2>"""
-        html += """<h3>4.1. Cálculo da Flecha Máxima Atuante (δ_max)</h3>"""
-        html += "<div class='formula-block'>"
-        
-        detalhes_flecha = res_flecha.get('detalhes', {})
-        delta_q_details = detalhes_flecha.get('delta_q', {})
-        if delta_q_details.get('valor', 0) > 0:
-            html += f"<h5>Flecha devido à Carga Distribuída (δ_q)</h5>"
-            html += f"<p class='formula'>$${delta_q_details['formula_simbolica']}$$</p>"
-            html += f"<p class='formula'>$${delta_q_details['formula_numerica']} = \\mathbf{{{delta_q_details['valor']:.4f}}} \\, cm$$</p>"
-
-        delta_p_details = detalhes_flecha.get('delta_p', {})
-        if delta_p_details.get('valor', 0) > 0:
-            html += f"<h5>Flecha devido à Carga Pontual (δ_p)</h5>"
-            html += f"<p class='formula'>$${delta_p_details['formula_simbolica']}$$</p>"
-            html += f"<p class='formula'>$${delta_p_details['formula_numerica']} = \\mathbf{{{delta_p_details['valor']:.4f}}} \\, cm$$</p>"
-
-        html += f"<h5>Flecha Total</h5>"
-        q_val = delta_q_details.get('valor', 0)
-        p_val = delta_p_details.get('valor', 0)
-        html += f"<p class='formula'>$$\\delta_{{max}} = \\delta_q + \\delta_p = {q_val:.4f} + {p_val:.4f} = \\mathbf{{{res_flecha['flecha_max']:.4f}}} \\, cm$$</p>"
-        html += "</div>"
-
-        html += "<h3>4.2. Cálculo da Flecha Limite (δ_lim)</h3>"
-        html += f"""<div class="formula-block">
-            <p class="formula">$$\\delta_{{lim}} = \\frac{{L}}{{{res_flecha['divisor']}}} = \\frac{{{L:.2f}}}{{{res_flecha['divisor']}}} = \\mathbf{{{res_flecha['flecha_limite']:.2f}}} \\, cm$$</p>
-        </div>"""
-        
-        html += "<h3>4.3. Verificação Final da Flecha</h3>"
-        html += _build_verification_block_html("Verificação da Flecha", res_flecha['flecha_max'], "\\delta_{{max}}", res_flecha['flecha_limite'], "\\delta_{{lim}}", res_flecha['eficiencia'], res_flecha['status'], "cm")
-
-    return html
-
-def _add_verification_details(title, details_dict):
-    html = f"<h4>{title}</h4><div class='formula-block'>"
-    prelim_keys = ['Vrd', 'Vrd_calc', 'verificacao_classificacao']
-    for key, value in details_dict.items():
-        if key not in prelim_keys and isinstance(value, dict) and 'formula' in value:
-            formula_calculada = value['formula']
-            for var, val_num in value['valores'].items():
-                formula_calculada = formula_calculada.replace(var, f"\\mathbf{{{val_num:.2f}}}")
-            html += f"""<h5>{value['desc']}</h5>
-                        <p class="formula">$${value['formula']}$$</p>
-                        <p class="formula">$${formula_calculada} = \\mathbf{{{value['valor']:.2f} {value.get('unidade', '')}}}$$</p>
-                        <p class="ref-norma">{value.get('ref', '')}</p>"""
-    if 'verificacao_classificacao' in details_dict:
-        verificacao_info = details_dict['verificacao_classificacao']
-        html += f"<h5>{verificacao_info['desc']}</h5>"
-        html += f"<div class='verification-block'>{verificacao_info['texto']}</div>"
-    if 'Vrd_calc' in details_dict:
-        vrd_info = details_dict['Vrd_calc']
-        html += f"<h5>{vrd_info['desc']}</h5>"
-        formula_simbolica = vrd_info['formula']
-        html += f'<p class="formula">$${formula_simbolica}$$</p>'
-        formula_numerica = formula_simbolica
-        for var, val_num in vrd_info['valores'].items():
-            formula_numerica = formula_numerica.replace(var, f"\\mathbf{{{val_num:.2f}}}")
-        final_resistance = vrd_info.get('valor', 0)
-        unit = vrd_info.get('unidade', 'kN')
-        html += f"""<p class="formula">$${formula_numerica} = \\mathbf{{{final_resistance:.2f} \\, {unit}}}$$</p>
-                        <p class="ref-norma">{vrd_info.get('ref', '')}</p>"""
-    html += "</div>"
-    return html
-
-def _add_verification_details_with_efficiency(title, Msd, details_dict):
-    html = f"<h4>{title}</h4><div class='formula-block'>"
-    prelim_keys = ['Mrdx', 'Mrdx_calc', 'eficiencia', 'verificacao_classificacao', 'verificacao_limite']
-    for key, value in details_dict.items():
-        if key not in prelim_keys and isinstance(value, dict) and 'formula' in value:
-            formula_calculada = value['formula']
-            for var, val_num in value['valores'].items():
-                formula_calculada = formula_calculada.replace(var, f"\\mathbf{{{val_num:.2f}}}")
-            html += f"""<h5>{value['desc']}</h5>
-                        <p class="formula">$${value['formula']}$$</p>
-                        <p class="formula">$${formula_calculada} = \\mathbf{{{value['valor']:.2f} {value.get('unidade', '')}}}$$</p>
-                        <p class="ref-norma">{value.get('ref', '')}</p>"""
-    if 'verificacao_classificacao' in details_dict:
-        verificacao_info = details_dict['verificacao_classificacao']
-        html += f"<h5>{verificacao_info['desc']}</h5>"
-        html += f"<div class='verification-block'>{verificacao_info['texto']}</div>"
-    if 'Mrdx_calc' in details_dict:
-        mrdx_info = details_dict['Mrdx_calc']
-        html += f"<h5>{mrdx_info['desc']}</h5>"
-        formula_simbolica = mrdx_info['formula']
-        html += f'<p class="formula">$${formula_simbolica}$$</p>'
-        formula_numerica = formula_simbolica
-        for var, val_num in mrdx_info['valores'].items():
-            formula_numerica = formula_numerica.replace(var, f"\\mathbf{{{val_num:.2f}}}")
-        final_resistance_kncm = mrdx_info.get('valor', 0)
-        final_resistance_knm = final_resistance_kncm / 100.0
-        html += f"""<p class="formula">$${formula_numerica} = \\mathbf{{{final_resistance_knm:.2f} \\, kNm}}$$</p>
-                        <p class="ref-norma">{mrdx_info.get('ref', '')}</p>"""
-    if 'verificacao_limite' in details_dict:
-        limite_info = details_dict['verificacao_limite']
-        html += f"<h5>{limite_info['desc']}</h5>"
-        html += f"<div class='verification-block'>{limite_info['texto']}</div>"
-    final_resistance_total = details_dict.get('Mrdx', 0)
-    if final_resistance_total > 0:
-        eficiencia = (Msd / final_resistance_total) * 100
-        status = "APROVADO" if eficiencia <= 100.1 else "REPROVADO"
-        status_class = "pass" if status == "APROVADO" else "fail"
-        comp_symbol = "\\le" if status == "APROVADO" else ">"
-        html += f"""<hr style="border-top: 1px solid var(--border); margin: 1.5rem 0;">
-        <h5>Verificação Final ({title.split('(')[0].strip()})</h5>
-        <p class="formula">$$\\text{{Eficiência}} = \\frac{{M_{{sd}}}}{{M_{{rd}}}} = \\frac{{{Msd/100:.2f}}}{{{final_resistance_total/100:.2f}}} = {eficiencia:.1f}\\%$$</p>
-        <div class="final-status {status_class}">{status}</div>"""
-    else:
-        html += """<hr><div class="final-status fail">REPROVADO</div>"""
-    html += "</div>"
-    return html
+    return res_flt, res_flm, res_fla, res_cis, res_flecha, res_vrd
 
 # ==============================================================================
-# 5. APLICAÇÃO PRINCIPAL STREAMLIT (REESTRUTURADA)
+# 5. APLICAÇÃO PRINCIPAL STREAMLIT
 # ==============================================================================
 
 def main():
-    # Inicialização do estado da sessão
     if 'analysis_results' not in st.session_state:
         st.session_state.analysis_results = None
-    if 'detailed_analysis_html' not in st.session_state:
-        st.session_state.detailed_analysis_html = None
     if 'analysis_mode' not in st.session_state:
         st.session_state.analysis_mode = "batch"
+    if 'detailed_analysis_results' not in st.session_state:
+        st.session_state.detailed_analysis_results = None
+    if 'generated_memorial' not in st.session_state:
+        st.session_state.generated_memorial = False
 
-    # Carregar dados
     all_sheets = load_data_from_local_file()
     if not all_sheets:
         st.stop()
     
-    # Renderizar interface
     st.markdown(HTML_TEMPLATE_CSS_PRO, unsafe_allow_html=True)
     create_professional_header()
 
-    # --- SIDEBAR ---
     with st.sidebar:
         st.markdown("## ⚙️ Configuração do Projeto")
         with st.expander("📋 Identificação do Projeto", expanded=False):
@@ -893,8 +808,8 @@ def main():
         st.markdown("### ⚖️ Carregamento")
         input_mode = st.radio("Método de entrada:", ("Calcular a partir de Cargas na Viga", "Inserir Esforços Manualmente"), key='input_mode')
 
-        # Lógica de carregamento... (mesma de antes)
-        Msd, Vsd, q_serv_kn_cm, p_load_serv, input_details_html = 0, 0, 0, None, ""
+        Msd, Vsd, q_serv_kn_cm, p_load_serv = 0, 0, 0, None
+        gamma_f = 1.4
         if input_mode == "Calcular a partir de Cargas na Viga":
             with st.container(border=True):
                 st.subheader("Carga Distribuída (q)")
@@ -914,7 +829,7 @@ def main():
                 q_serv_kn_cm = q_servico_kn_m / 100.0
                 q_ult_kn_cm = q_serv_kn_cm * gamma_f
                 p_load_ult = (p_load_serv[0] * gamma_f, p_load_serv[1]) if p_load_serv else None
-                Msd, Vsd, detalhes_esforcos = calcular_esforcos_viga(tipo_viga, L_cm, q_ult_kn_cm, p_load_ult)
+                Msd, Vsd, _ = calcular_esforcos_viga(tipo_viga, L_cm, q_ult_kn_cm, p_load_ult)
         else:
             with st.container(border=True):
                 st.warning("No modo manual, a verificação de flecha (ELS) não é realizada.")
@@ -939,30 +854,27 @@ def main():
         st.markdown("### 📐 Verificação de Serviço (ELS)")
         limite_flecha_divisor = st.selectbox("Limite de Flecha (L/x)", (180, 250, 350, 500), index=2, key='limite_flecha_divisor')
 
-    # Armazenar parâmetros
     projeto_info = {'nome': projeto_nome, 'engenheiro': engenheiro, 'data': data_projeto.strftime('%d/%m/%Y'), 'revisao': revisao}
-    input_params = {'tipo_viga': tipo_viga, 'L_cm': L_cm, 'input_mode': input_mode,'Msd': Msd, 'Vsd': Vsd, 'q_serv_kn_cm': q_serv_kn_cm, 'p_load_serv': p_load_serv, 'fy_aco': fy_aco, 'Lb_projeto': Lb_projeto, 'Cb_projeto': Cb_projeto,'input_details_html': input_details_html, 'usa_enrijecedores': usa_enrijecedores, 'a_enr': a_enr, 'limite_flecha_divisor': limite_flecha_divisor, 'projeto_info': projeto_info}
+    input_params = {'tipo_viga': tipo_viga, 'L_cm': L_cm, 'input_mode': input_mode,'Msd': Msd, 'Vsd': Vsd, 'q_serv_kn_cm': q_serv_kn_cm, 'p_load_serv': p_load_serv, 'fy_aco': fy_aco, 'Lb_projeto': Lb_projeto, 'Cb_projeto': Cb_projeto,'usa_enrijecedores': usa_enrijecedores, 'a_enr': a_enr, 'limite_flecha_divisor': limite_flecha_divisor, 'projeto_info': projeto_info, 'gamma_f': gamma_f}
 
-    # Dashboard de métricas
     create_metrics_dashboard(input_params)
 
-    # --- SELEÇÃO DE MODO DE ANÁLISE ---
     st.markdown("### 🎯 Modo de Análise")
     col1, col2 = st.columns(2)
     if col1.button("📊 Análise em Lote e Otimização", use_container_width=True):
         st.session_state.analysis_mode = "batch"
+        st.session_state.generated_memorial = False
     if col2.button("📋 Memorial Detalhado de Perfil", use_container_width=True):
         st.session_state.analysis_mode = "detailed"
+        st.session_state.generated_memorial = False
 
-    # --- EXECUÇÃO E EXIBIÇÃO ---
     if st.session_state.analysis_mode == "batch":
         st.header("📊 Análise em Lote")
         if st.button("🚀 Iniciar Análise Otimizada", type="primary", use_container_width=True):
             run_batch_analysis(all_sheets, input_params)
-        
+            
         if st.session_state.analysis_results is not None:
             df_all_results = st.session_state.analysis_results
-            
             tabs = st.tabs([PROFILE_TYPE_MAP.get(name, name) for name in all_sheets.keys()])
             for i, sheet_name in enumerate(all_sheets.keys()):
                 with tabs[i]:
@@ -994,39 +906,52 @@ def main():
         
         if st.button("📄 Gerar Memorial Completo", type="primary", use_container_width=True):
             run_detailed_analysis(df_selecionado, perfil_selecionado_nome, selected_display_name, input_params)
+            st.session_state.generated_memorial = True
         
-        if st.session_state.detailed_analysis_html:
-            st.subheader("📄 Visualização do Memorial")
-            with st.expander("Clique para expandir ou recolher o memorial", expanded=True):
-                st.components.v1.html(st.session_state.detailed_analysis_html, height=1000, scrolling=True)
-                st.download_button(
-                    label="📥 Baixar Memorial em HTML",
-                    data=st.session_state.detailed_analysis_html.encode('utf-8'),
-                    file_name=f"Memorial_{perfil_selecionado_nome.replace(' ', '_')}.html",
-                    mime="text/html",
-                    use_container_width=True
-                )
+        if st.session_state.generated_memorial and st.session_state.get('detailed_analysis_results'):
+            st.markdown("---")
+            render_detailed_memorial_streamlit(
+                st.session_state.detailed_analysis_results['perfil_nome'],
+                st.session_state.detailed_analysis_results['perfil_tipo'],
+                st.session_state.detailed_analysis_results['resultados'],
+                st.session_state.detailed_analysis_results['input_params'],
+                st.session_state.detailed_analysis_results['props']
+            )
 
 def run_detailed_analysis(df, perfil_nome, perfil_tipo_display, input_params):
     with st.spinner(f"Gerando análise completa para {perfil_nome}..."):
         try:
             perfil_series = df[df['Bitola (mm x kg/m)'] == perfil_nome].iloc[0]
             props = get_profile_properties(perfil_series)
-
             tipo_fabricacao = "Soldado" if "Soldado" in perfil_tipo_display else "Laminado"
+            
+            res_flt, res_flm, res_fla, res_cis, res_flecha, res_vrd = perform_all_checks(
+                props=props, detalhado=False, tipo_fabricacao=tipo_fabricacao, **input_params
+            )
+            
+            resumo_df = pd.DataFrame({
+                'Verificação': ['Flexão (FLT)', 'Flexão (FLM)', 'Flexão (FLA)', 'Cisalhamento', 'Flecha (ELS)'],
+                'Solicitante': [f"{input_params['Msd']:.2f} kN.cm"]*3 + [f"{input_params['Vsd']:.2f} kN", f"{res_flecha['flecha_max']:.2f} cm"],
+                'Resistente': [f"{res_flt['Mrdx']:.2f} kN.cm", f"{res_flm['Mrdx']:.2f} kN.cm", f"{res_fla['Mrdx']:.2f} kN.cm", f"{res_cis['Vrd']:.2f} kN", f"≤ {res_flecha['flecha_limite']:.2f} cm"],
+                'Eficiência (%)': [res_flt['eficiencia'], res_flm['eficiencia'], res_fla['eficiencia'], res_cis['eficiencia'], res_flecha['eficiencia']],
+                'Status': ["APROVADO" if res_flt['eficiencia'] <= 100.1 else "REPROVADO",
+                           "APROVADO" if res_flm['eficiencia'] <= 100.1 else "REPROVADO",
+                           "APROVADO" if res_fla['eficiencia'] <= 100.1 else "REPROVADO",
+                           res_cis['status'], res_flecha['status']]
+            })
 
-            res_flt, res_flm, res_fla, res_cis, res_flecha, passo_a_passo = perform_all_checks(
-                props=props, detalhado=True, tipo_fabricacao=tipo_fabricacao, **input_params
-            )
+            resultados = {
+                'resumo_df': resumo_df,
+                'flt': res_flt,
+                'flm': res_flm,
+                'fla': res_fla,
+                'cis': res_cis,
+                'flecha': res_flecha,
+                'vrd': res_vrd
+            }
             
-            resumo_html = build_summary_html(input_params['Msd'], input_params['Vsd'], res_flt, res_flm, res_fla, res_cis, res_flecha)
-            resultados = {'resumo_html': resumo_html, 'passo_a_passo_html': passo_a_passo}
-            
-            html_content = create_professional_memorial_html(
-                perfil_nome, perfil_tipo_display, resultados, 
-                input_params['input_details_html'], input_params['projeto_info']
-            )
-            st.session_state.detailed_analysis_html = html_content
+            st.session_state.detailed_analysis_results = {'perfil_nome': perfil_nome, 'perfil_tipo': perfil_tipo_display, 'resultados': resultados, 'input_params': input_params, 'props': props}
+        
         except Exception as e:
             st.error(f"❌ Ocorreu um erro: {e}")
 
@@ -1054,10 +979,10 @@ def run_batch_analysis(all_sheets, input_params):
                     status_geral = "REPROVADO"
                 
                 all_results.append({
-                    'Tipo': sheet_name, 'Perfil': row['Bitola (mm x kg/m)'], 
-                    'Peso (kg/m)': props.get('Peso', 0), 'Status': status_geral, 
+                    'Tipo': sheet_name, 'Perfil': row['Bitola (mm x kg/m)'],
+                    'Peso (kg/m)': props.get('Peso', 0), 'Status': status_geral,
                     'Ef. FLT (%)': res_flt['eficiencia'], 'Ef. FLM (%)': res_flm['eficiencia'],
-                    'Ef. FLA (%)': res_fla['eficiencia'], 'Ef. Cisalhamento (%)': res_cis['eficiencia'], 
+                    'Ef. FLA (%)': res_fla['eficiencia'], 'Ef. Cisalhamento (%)': res_cis['eficiencia'],
                     'Ef. Flecha (%)': res_flecha['eficiencia']
                 })
             except (ValueError, KeyError):
