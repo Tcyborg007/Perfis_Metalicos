@@ -38,7 +38,19 @@ HTML_TEMPLATE_CSS = """
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Roboto+Slab:wght@400;700&display=swap');
     body { font-family: 'Roboto', sans-serif; line-height: 1.8; color: #333; background-color: #f0f4f8; }
-    .container { margin: 20px auto; padding: 1rem; background-color: white; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; box-sizing: border-box; }
+    
+    /* AQUI ESTÁ A MUDANÇA */
+    .container { 
+        margin: 20px auto; 
+        padding: 1rem; 
+        background-color: white; 
+        border-radius: 10px; 
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1); 
+        width: 100%;
+        max-width: 100%; /* GARANTE QUE O MEMORIAL OCUPE TODA A LARGURA */
+        box-sizing: border-box; 
+    }
+
     h1, h2, h3, h4, h5 { font-family: 'Roboto Slab', serif; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 5px; margin-top: 30px; }
     h1 { text-align: center; border: none; font-size: 2.2em; }
     h5 { border-bottom: none; font-size: 1.1em; margin-top: 20px; color: #34495e;}
