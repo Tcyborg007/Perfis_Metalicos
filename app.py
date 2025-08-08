@@ -6,6 +6,11 @@ import math
 # 1. CONFIGURAÇÕES E CONSTANTES GLOBAIS
 # ==============================================================================
 
+# A LINHA MAIS IMPORTANTE PARA O LAYOUT:
+# Garanta que esta seja a PRIMEIRA chamada do Streamlit no seu código.
+st.set_page_config(page_title="Calculadora Estrutural - Perfis Metálicos", layout="wide")
+
+
 class Config:
     NOME_NORMA = 'ABNT NBR 8800:2008'
     GAMMA_A1 = 1.10
@@ -29,8 +34,6 @@ PROFILE_TYPE_MAP = {
     "CVS": "Perfil de Seção Variável",
     "VS": "Perfil Soldadas"
 }
-
-st.set_page_config(page_title="Calculadora Estrutural - Perfis Metálicos", layout="wide")
 
 HTML_TEMPLATE_CSS = """
 <style>
