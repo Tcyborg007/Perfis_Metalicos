@@ -9,7 +9,7 @@ from datetime import datetime
 # ==============================================================================
 
 st.set_page_config(
-    page_title="🏗️ Calculadora Estrutural Pro - Perfis Metálicos", 
+    page_title="🏗️ Calculadora Estrutural Pro - Perfis Metálicos",
     layout="wide",
     initial_sidebar_state="expanded",
     menu_items={
@@ -22,7 +22,6 @@ st.set_page_config(
 class Config:
     NOME_NORMA = 'ABNT NBR 8800:2008'
     GAMMA_A1 = 1.10
-    E_ACO = 20000  # kN/cm²
     FATOR_SIGMA_R = 0.3
     FATOR_LAMBDA_P_FLT = 1.76
     FATOR_LAMBDA_P_FLM = 0.38
@@ -43,7 +42,6 @@ PROFILE_TYPE_MAP = {
     "VS": "Perfis Soldados"
 }
 
-# CSS APRIMORADO COM TEMA PROFISSIONAL
 HTML_TEMPLATE_CSS_PRO = """
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
@@ -275,65 +273,151 @@ def load_data_from_local_file():
 def calcular_esforcos_viga(tipo_viga, L_cm, q_kn_cm=0, p_load=None):
     msd_q, vsd_q, msd_p, vsd_p = 0, 0, 0, 0
     L = L_cm
-    detalhes_esforcos = {'Msd_q': {'valor': 0, 'formula_simbolica': "", 'formula_numerica': "", 'unidade': 'kN.cm'},'Vsd_q': {'valor': 0, 'formula_simbolica': "", 'formula_numerica': "", 'unidade': 'kN'},'Msd_p': {'valor': 0, 'formula_simbolica': "", 'formula_numerica': "", 'unidade': 'kN.cm'},'Vsd_p': {'valor': 0, 'formula_simbolica': "", 'formula_numerica': "", 'unidade': 'kN'}}
+    detalhes_esforcos = {
+        'Msd_q': {'valor': 0, 'formula_simbolica': "", 'unidade': 'kN.cm'},
+        'Vsd_q': {'valor': 0, 'formula_simbolica': "", 'unidade': 'kN'},
+        'Msd_p': {'valor': 0, 'formula_simbolica': "", 'unidade': 'kN.cm'},
+        'Vsd_p': {'valor': 0, 'formula_simbolica': "", 'unidade': 'kN'}
+    }
+    
+    detalhes_carga_memorial = {'q_ult': {'valor': 0, 'unidade': 'kN/cm'}, 'p_ult': {'valor': 0, 'unidade': 'kN'}}
+
     if q_kn_cm > 0:
+        detalhes_carga_memorial['q_ult']['valor'] = q_kn_cm
         if tipo_viga == 'Bi-apoiada':
             msd_q = (q_kn_cm * L**2) / 8
             vsd_q = (q_kn_cm * L) / 2
-            detalhes_esforcos['Msd_q']['formula_simbolica'] = f"M_{{sd, q}} = \\frac{{q_{{última}} \\times L^2}}{{8}}"
-            detalhes_esforcos['Msd_q']['formula_numerica'] = f"\\frac{{ \\mathbf{{{q_kn_cm*100:.2f}}} \\, kN/m \\times (\\mathbf{{{L_cm/100:.2f}}} \\, m)^2}}{{8}}"
-            detalhes_esforcos['Vsd_q']['formula_simbolica'] = f"V_{{sd, q}} = \\frac{{q_{{última}} \\times L}}{{2}}"
-            detalhes_esforcos['Vsd_q']['formula_numerica'] = f"\\frac{{ \\mathbf{{{q_kn_cm*100:.2f}}} \\, kN/m \\times \\mathbf{{{L_cm/100:.2f}}} \\, m}}{{2}}"
+            detalhes_esforcos['Msd_q']['formula_simbolica'] = "M_{sd, q} = \\frac{q_{ultima} \\times L^2}{8}"
+            detalhes_esforcos['Vsd_q']['formula_simbolica'] = "V_{sd, q} = \\frac{q_{ultima} \\times L}{2}"
         elif tipo_viga == 'Engastada e Livre (Balanço)':
             msd_q = (q_kn_cm * L**2) / 2
             vsd_q = q_kn_cm * L
-            detalhes_esforcos['Msd_q']['formula_simbolica'] = f"M_{{sd, q}} = \\frac{{q_{{última}} \\times L^2}}{{2}}"
-            detalhes_esforcos['Msd_q']['formula_numerica'] = f"\\frac{{ \\mathbf{{{q_kn_cm*100:.2f}}} \\, kN/m \\times (\\mathbf{{{L_cm/100:.2f}}} \\, m)^2}}{{2}}"
-            detalhes_esforcos['Vsd_q']['formula_simbolica'] = f"V_{{sd, q}} = q_{{última}} \\times L"
-            detalhes_esforcos['Vsd_q']['formula_numerica'] = f"\\mathbf{{{q_kn_cm*100:.2f}}} \\, kN/m \\times \\mathbf{{{L_cm/100:.2f}}} \\, m"
+            detalhes_esforcos['Msd_q']['formula_simbolica'] = "M_{sd, q} = \\frac{q_{ultima} \\times L^2}{2}"
+            detalhes_esforcos['Vsd_q']['formula_simbolica'] = "V_{sd, q} = q_{ultima} \\times L"
         elif tipo_viga == 'Bi-engastada':
             msd_q = (q_kn_cm * L**2) / 12
             vsd_q = (q_kn_cm * L) / 2
-            detalhes_esforcos['Msd_q']['formula_simbolica'] = f"M_{{sd, q}} = \\frac{{q_{{última}} \\times L^2}}{{12}}"
-            detalhes_esforcos['Msd_q']['formula_numerica'] = f"\\frac{{ \\mathbf{{{q_kn_cm*100:.2f}}} \\, kN/m \\times (\\mathbf{{{L_cm/100:.2f}}} \\, m)^2}}{{12}}"
-            detalhes_esforcos['Vsd_q']['formula_simbolica'] = f"V_{{sd, q}} = \\frac{{q_{{última}} \\times L}}{{2}}"
-            detalhes_esforcos['Vsd_q']['formula_numerica'] = f"\\frac{{ \\mathbf{{{q_kn_cm*100:.2f}}} \\, kN/m \\times \\mathbf{{{L_cm/100:.2f}}} \\, m}}{{2}}"
+            detalhes_esforcos['Msd_q']['formula_simbolica'] = "M_{sd, q} = \\frac{q_{ultima} \\times L^2}{12}"
+            detalhes_esforcos['Vsd_q']['formula_simbolica'] = "V_{sd, q} = \\frac{q_{ultima} \\times L}{2}"
         elif tipo_viga == 'Engastada e Apoiada':
             msd_q = (q_kn_cm * L**2) / 8
             vsd_q = (5 * q_kn_cm * L) / 8
-            detalhes_esforcos['Msd_q']['formula_simbolica'] = f"M_{{sd, q}} = \\frac{{q_{{última}} \\times L^2}}{{8}}"
-            detalhes_esforcos['Msd_q']['formula_numerica'] = f"\\frac{{ \\mathbf{{{q_kn_cm*100:.2f}}} \\, kN/m \\times (\\mathbf{{{L_cm/100:.2f}}} \\, m)^2}}{{8}}"
-            detalhes_esforcos['Vsd_q']['formula_simbolica'] = f"V_{{sd, q}} = \\frac{{5 \\times q_{{última}} \\times L}}{{8}}"
-            detalhes_esforcos['Vsd_q']['formula_numerica'] = f"\\frac{{5 \\times \\mathbf{{{q_kn_cm*100:.2f}}} \\, kN/m \\times \\mathbf{{{L_cm/100:.2f}}} \\, m}}{{8}}"
+            detalhes_esforcos['Msd_q']['formula_simbolica'] = "M_{sd, q} = \\frac{q_{ultima} \\times L^2}{8}"
+            detalhes_esforcos['Vsd_q']['formula_simbolica'] = "V_{sd, q} = \\frac{5 \\times q_{ultima} \\times L}{8}"
+    
     if p_load:
         P, x = p_load
+        detalhes_carga_memorial['p_ult']['valor'] = P
         P_kn = P
         L_m = L / 100.0
         x_m = x / 100.0
-        a = x_m
-        b = L_m - a
+        a_val = x_m
+        b_val = L_m - a_val
         if tipo_viga == 'Bi-apoiada':
-            msd_p = (P_kn * a * b) / L_m
-            vsd_p = max((P_kn * b) / L_m, (P_kn * a) / L_m)
-            detalhes_esforcos['Msd_p']['formula_simbolica'] = f"M_{{sd, P}} = \\frac{{P_{{última}} \\times a \\times b}}{{L}}"
-            detalhes_esforcos['Msd_p']['formula_numerica'] = f"\\frac{{ \\mathbf{{{P_kn:.2f}}} \\, kN \\times \\mathbf{{{a:.2f}}} \\, m \\times \\mathbf{{{b:.2f}}} \\, m}}{{\\mathbf{{{L_m:.2f}}} \\, m}}"
-            detalhes_esforcos['Vsd_p']['formula_simbolica'] = f"V_{{sd, P}} = \\max(\\frac{{P_{{última}} \\times b}}{{L}}, \\frac{{P_{{última}} \\times a}}{{L}})"
-            detalhes_esforcos['Vsd_p']['formula_numerica'] = f"\\max(\\frac{{ \\mathbf{{{P_kn:.2f}}} \\times \\mathbf{{{b:.2f}}} }}{{\\mathbf{{{L_m:.2f}}}}}, \\frac{{ \\mathbf{{{P_kn:.2f}}} \\times \\mathbf{{{a:.2f}}} }}{{\\mathbf{{{L_m:.2f}}}}} )"
+            msd_p = (P_kn * a_val * b_val) / L_m
+            vsd_p = max((P_kn * b_val) / L_m, (P_kn * a_val) / L_m)
+            detalhes_esforcos['Msd_p']['formula_simbolica'] = "M_{sd, P} = \\frac{P_{ultima} \\times a \\times b}{L}"
+            detalhes_esforcos['Vsd_p']['formula_simbolica'] = "V_{sd, P} = \\max(\\frac{P_{ultima} \\times b}{L}, \\frac{P_{ultima} \\times a}{L})"
         elif tipo_viga == 'Engastada e Livre (Balanço)':
-            msd_p = P_kn * a 
+            msd_p = P_kn * a_val
             vsd_p = P_kn
-            detalhes_esforcos['Msd_p']['formula_simbolica'] = f"M_{{sd, P}} = P_{{última}} \\times a"
-            detalhes_esforcos['Msd_p']['formula_numerica'] = f"\\mathbf{{{P_kn:.2f}}} \\, kN \\times \\mathbf{{{a:.2f}}} \\, m"
-            detalhes_esforcos['Vsd_p']['formula_simbolica'] = f"V_{{sd, P}} = P_{{última}}"
-            detalhes_esforcos['Vsd_p']['formula_numerica'] = f"\\mathbf{{{P_kn:.2f}}} \\, kN"
+            detalhes_esforcos['Msd_p']['formula_simbolica'] = "M_{sd, P} = P_{ultima} \\times a"
+            detalhes_esforcos['Vsd_p']['formula_simbolica'] = "V_{sd, P} = P_{ultima}"
         msd_p *= 100 
+    
     detalhes_esforcos['Msd_q']['valor'] = msd_q
     detalhes_esforcos['Vsd_q']['valor'] = vsd_q
     detalhes_esforcos['Msd_p']['valor'] = msd_p
     detalhes_esforcos['Vsd_p']['valor'] = vsd_p
+    
     msd_total = msd_q + msd_p
     vsd_total = vsd_q + vsd_p
-    return msd_total, vsd_total, detalhes_esforcos
+    
+    return msd_total, vsd_total, detalhes_esforcos, detalhes_carga_memorial
+
+def calcular_cb(tipo_viga, L_cm, q_kn_cm=0, p_load=None):
+    L_m = L_cm / 100
+    q_ult_kn_m = q_kn_cm * 100
+
+    detalhes_cb = {
+        'formula_simbolica': 'C_b = \\frac{12,5 M_{máx}}{|2,5 M_{máx} + 3 M_A + 4 M_B + 3 M_C|}',
+        'momentos': {
+            'M_max': {'final_value': 0, 'components': []},
+            'M_A': {'final_value': 0, 'components': []},
+            'M_B': {'final_value': 0, 'components': []},
+            'M_C': {'final_value': 0, 'components': []}
+        }
+    }
+
+    momentos_q = {'M_max': 0, 'M_A': 0, 'M_B': 0, 'M_C': 0}
+    momentos_p = {'M_max': 0, 'M_A': 0, 'M_B': 0, 'M_C': 0}
+
+    # --- Cálculo devido à Carga Distribuída (q) ---
+    if q_kn_cm > 0:
+        if tipo_viga == 'Bi-apoiada':
+            momentos_q['M_max'] = (q_ult_kn_m * L_m**2) / 8
+            momentos_q['M_A'] = (3 * q_ult_kn_m * L_m**2) / 32
+            momentos_q['M_B'] = momentos_q['M_max']
+            momentos_q['M_C'] = momentos_q['M_A']
+
+            detalhes_cb['momentos']['M_max']['components'].append({'desc': 'Componente de q', 'formula': 'M_{max,q} = \\frac{q_{ultima} \\times L^2}{8}', 'valores': {'q_{ultima}': q_ult_kn_m, 'L': L_m}, 'valor': momentos_q['M_max']})
+            detalhes_cb['momentos']['M_A']['components'].append({'desc': 'Componente de q', 'formula': 'M_{A,q} = \\frac{3 \\times q_{ultima} \\times L^2}{32}', 'valores': {'q_{ultima}': q_ult_kn_m, 'L': L_m}, 'valor': momentos_q['M_A']})
+            detalhes_cb['momentos']['M_B']['components'].append({'desc': 'Componente de q', 'formula': 'M_{B,q} = M_{max,q}', 'valores': {}, 'valor': momentos_q['M_B']})
+            detalhes_cb['momentos']['M_C']['components'].append({'desc': 'Componente de q', 'formula': 'M_{C,q} = M_{A,q}', 'valores': {}, 'valor': momentos_q['M_C']})
+
+        elif tipo_viga == 'Engastada e Livre (Balanço)':
+            momentos_q['M_max'] = (q_ult_kn_m * L_m**2) / 2
+            momentos_q['M_A'] = (q_ult_kn_m * (0.75 * L_m)**2) / 2
+            momentos_q['M_B'] = (q_ult_kn_m * (0.5 * L_m)**2) / 2
+            momentos_q['M_C'] = (q_ult_kn_m * (0.25 * L_m)**2) / 2
+
+            detalhes_cb['momentos']['M_max']['components'].append({'desc': 'Componente de q', 'formula': 'M_{max,q} = \\frac{q_{ultima} \\times L^2}{2}', 'valores': {'q_{ultima}': q_ult_kn_m, 'L': L_m}, 'valor': momentos_q['M_max']})
+            detalhes_cb['momentos']['M_A']['components'].append({'desc': 'Componente de q', 'formula': 'M_{A,q} = \\frac{q_{ultima} \\times (0,75L)^2}{2}', 'valores': {'q_{ultima}': q_ult_kn_m, 'L': L_m}, 'valor': momentos_q['M_A']})
+            detalhes_cb['momentos']['M_B']['components'].append({'desc': 'Componente de q', 'formula': 'M_{B,q} = \\frac{q_{ultima} \\times (0,5L)^2}{2}', 'valores': {'q_{ultima}': q_ult_kn_m, 'L': L_m}, 'valor': momentos_q['M_B']})
+            detalhes_cb['momentos']['M_C']['components'].append({'desc': 'Componente de q', 'formula': 'M_{C,q} = \\frac{q_{ultima} \\times (0,25L)^2}{2}', 'valores': {'q_{ultima}': q_ult_kn_m, 'L': L_m}, 'valor': momentos_q['M_C']})
+        else:
+              return 1.0, {'formula_simbolica': 'N/A', 'momentos': {}}
+
+    # --- Cálculo devido à Carga Pontual (P) ---
+    if p_load:
+        P_kn, x_cm = p_load
+        x_m = x_cm / 100.0
+        
+        if tipo_viga == 'Bi-apoiada':
+            a, b = x_m, L_m - x_m
+            momentos_p['M_max'] = (P_kn * a * b) / L_m if L_m > 0 else 0
+            momentos_p['M_A'] = (P_kn * b * (0.25*L_m)) / L_m if x_m > 0.25*L_m else (P_kn * a * (L_m - 0.25*L_m)) / L_m
+            momentos_p['M_B'] = (P_kn * b * (0.5*L_m)) / L_m if x_m > 0.5*L_m else (P_kn * a * (L_m - 0.5*L_m)) / L_m
+            momentos_p['M_C'] = (P_kn * b * (0.75*L_m)) / L_m if x_m > 0.75*L_m else (P_kn * a * (L_m - 0.75*L_m)) / L_m
+            
+            detalhes_cb['momentos']['M_max']['components'].append({'desc': 'Componente de P', 'formula': 'M_{max,P} = \\frac{P_{ultima} \\times a \\times b}{L}', 'valores': {'P_{ultima}': P_kn, 'a': a, 'b': b, 'L': L_m}, 'valor': momentos_p['M_max']})
+            detalhes_cb['momentos']['M_A']['components'].append({'desc': 'Componente de P', 'formula': 'M_{A,P} \\text{ (calculado em L/4)}', 'valores': {}, 'valor': momentos_p['M_A']})
+            detalhes_cb['momentos']['M_B']['components'].append({'desc': 'Componente de P', 'formula': 'M_{B,P} \\text{ (calculado em L/2)}', 'valores': {}, 'valor': momentos_p['M_B']})
+            detalhes_cb['momentos']['M_C']['components'].append({'desc': 'Componente de P', 'formula': 'M_{C,P} \\text{ (calculado em 3L/4)}', 'valores': {}, 'valor': momentos_p['M_C']})
+
+        elif tipo_viga == 'Engastada e Livre (Balanço)':
+            momentos_p['M_max'] = P_kn * x_m
+            momentos_p['M_A'] = P_kn * x_m if x_m < (0.25 * L_m) else P_kn * (x_m - 0.25 * L_m)
+            momentos_p['M_B'] = P_kn * x_m if x_m < (0.5 * L_m) else P_kn * (x_m - 0.5 * L_m)
+            momentos_p['M_C'] = P_kn * x_m if x_m < (0.75 * L_m) else P_kn * (x_m - 0.75 * L_m)
+            detalhes_cb['momentos']['M_max']['components'].append({'desc': 'Componente de P', 'formula': 'M_{max,P} = P_{ultima} \\times x', 'valores': {'P_{ultima}': P_kn, 'x': x_m}, 'valor': momentos_p['M_max']})
+            detalhes_cb['momentos']['M_A']['components'].append({'desc': 'Componente de P', 'formula': 'M_{A,P} = P_{ultima} \\times (x-0.25L)', 'valores': {}, 'valor': momentos_p['M_A']})
+            detalhes_cb['momentos']['M_B']['components'].append({'desc': 'Componente de P', 'formula': 'M_{B,P} = P_{ultima} \\times (x-0.5L)', 'valores': {}, 'valor': momentos_p['M_B']})
+            detalhes_cb['momentos']['M_C']['components'].append({'desc': 'Componente de P', 'formula': 'M_{C,P} = P_{ultima} \\times (x-0.75L)', 'valores': {}, 'valor': momentos_p['M_C']})
+        else:
+              return 1.0, {'formula_simbolica': 'N/A', 'momentos': {}}
+
+    # --- Soma das componentes e cálculo final do Cb ---
+    M_finais = {}
+    for m_key in ['M_max', 'M_A', 'M_B', 'M_C']:
+        total = sum(c['valor'] for c in detalhes_cb['momentos'][m_key]['components'])
+        detalhes_cb['momentos'][m_key]['final_value'] = abs(total)
+        M_finais[m_key] = abs(total)
+
+    denominador = (2.5 * M_finais['M_max'] + 3 * M_finais['M_A'] + 4 * M_finais['M_B'] + 3 * M_finais['M_C'])
+    Cb = min(12.5 * M_finais['M_max'] / abs(denominador), 3.0) if denominador != 0 else 1.0
+
+    return Cb, detalhes_cb
 
 def calcular_flecha_maxima(tipo_viga, L_cm, E, Ix, q_serv_kn_cm=0, p_serv_load=None):
     delta_q, delta_p = 0, 0
@@ -345,7 +429,6 @@ def calcular_flecha_maxima(tipo_viga, L_cm, E, Ix, q_serv_kn_cm=0, p_serv_load=N
         'delta_total': 0
     }
 
-    # Flecha devido à carga distribuída (q)
     if q_serv_kn_cm > 0:
         q_serv_val = q_serv_kn_cm
         if tipo_viga == 'Bi-apoiada':
@@ -366,7 +449,6 @@ def calcular_flecha_maxima(tipo_viga, L_cm, E, Ix, q_serv_kn_cm=0, p_serv_load=N
             detalhes['delta_q']['formula_numerica'] = f"\\frac{{\\mathbf{{{q_serv_val:.4f}}} \\times \\mathbf{{{L:.2f}}}^4}}{{185 \\times \\mathbf{{{E:.0f}}} \\times \\mathbf{{{Ix:.2f}}}}}"
         detalhes['delta_q']['valor'] = delta_q
 
-    # Flecha devido à carga pontual (P)
     if p_serv_load:
         P, x = p_serv_load
         a = x
@@ -387,7 +469,7 @@ def calcular_flecha_maxima(tipo_viga, L_cm, E, Ix, q_serv_kn_cm=0, p_serv_load=N
             delta_p = (P * a**3 * b**2) / (12 * E * Ix * L**3) * (a + 2*L)
             detalhes['delta_p']['formula_simbolica'] = "\\delta_p = \\frac{P_{serv} \\times a^3 \\times b^2 \\times (a + 2L)}{12 \\times E \\times I_x \\times L^3}"
             detalhes['delta_p']['formula_numerica'] = f"\\frac{{\\mathbf{{{P:.2f}}} \\times \\mathbf{{{a:.2f}}}^3 \\times \\mathbf{{{b:.2f}}}^2 \\times (\\mathbf{{{a:.2f}}} + 2 \\times \\mathbf{{{L:.2f}}})}}{{12 \\times \\mathbf{{{E:.0f}}} \\times \\mathbf{{{Ix:.2f}}} \\times \\mathbf{{{L:.2f}}}^3}}"
-        
+    
         detalhes['delta_p']['valor'] = delta_p
     
     detalhes['delta_total'] = delta_q + delta_p
@@ -404,7 +486,7 @@ def get_profile_properties(profile_series):
     for key in ['d', 'bf', 'tw', 'tf', 'h']: props[key] /= 10.0
     return props
 
-def _calcular_mrdx_flt(props, Lb, Cb, fy):
+def _calcular_mrdx_flt(props, Lb, Cb, fy, E):
     Zx, ry, Iy, Cw, J, Wx = props['Zx'], props['ry'], props['Iy'], props['Cw'], props['J'], props['Wx']
     detalhes = {'passos_calculo': [], 'passos_verificacao': []}
     
@@ -427,11 +509,11 @@ def _calcular_mrdx_flt(props, Lb, Cb, fy):
         'verif_id': 'lambda'
     })
     
-    lambda_p = Config.FATOR_LAMBDA_P_FLT * math.sqrt(Config.E_ACO / fy)
+    lambda_p = Config.FATOR_LAMBDA_P_FLT * math.sqrt(E / fy)
     detalhes['passos_calculo'].append({
         'desc': 'Esbeltez Limite Plástica (λp)',
         'formula': '\\lambda_p = 1,76 \\sqrt{\\frac{{E}}{{f_y}}}',
-        'valores': {'E': Config.E_ACO, 'f_y': fy},
+        'valores': {'E': E, 'f_y': fy},
         'valor': lambda_p,
         'ref': 'Tabela F.1',
         'verif_id': 'lambda_p'
@@ -488,11 +570,11 @@ def _calcular_mrdx_flt(props, Lb, Cb, fy):
             'verif_id': 'Mr'
         })
         
-        beta1 = ((fy - sigma_r) * Wx) / (Config.E_ACO * J) if Config.E_ACO * J != 0 else 0
+        beta1 = ((fy - sigma_r) * Wx) / (E * J) if E * J != 0 else 0
         detalhes['passos_calculo'].append({
             'desc': 'Parâmetro β1',
             'formula': '\\beta_1 = \\frac{(f_y - \\sigma_r) \\times W_x}{E \\times J}',
-            'valores': {'f_y': fy, '\\sigma_r': sigma_r, 'W_x': Wx, 'E': Config.E_ACO, 'J': J},
+            'valores': {'f_y': fy, '\\sigma_r': sigma_r, 'W_x': Wx, 'E': E, 'J': J},
             'valor': beta1,
             'unidade': '',
             'verif_id': 'beta1'
@@ -539,9 +621,9 @@ def _calcular_mrdx_flt(props, Lb, Cb, fy):
             detalhes['verificacao_limite'] = {
                 'desc': 'Verificação do Limite de Plastificação',
                 'texto': f"""A norma limita a resistência pelo momento de plastificação:
-                $$M_{{rd,calc}} = {Mrdx_calc/100:.2f} \\, kNm$$
-                $$M_{{p,rd}} = \\frac{{M_p}}{{\\gamma_{{a1}}}} = {Mp_gamma/100:.2f} \\, kNm$$
-                $$M_{{rd}} = \\min(M_{{rd,calc}}; M_{{p,rd}}) = \\mathbf{{{Mrdx/100:.2f}}} \\, kNm$$"""
+                        $$M_{{rd,calc}} = {Mrdx_calc/100:.2f} \\, kNm$$
+                        $$M_{{p,rd}} = \\frac{{M_p}}{{\\gamma_{{a1}}}} = {Mp_gamma/100:.2f} \\, kNm$$
+                        $$M_{{rd}} = \\min(M_{{rd,calc}}; M_{{p,rd}}) = \\mathbf{{{Mrdx/100:.2f}}} \\, kNm$$"""
             }
         else:
             verificacao_texto = f"λ = {lambda_val:.2f} > λr = {lambda_r:.2f}"
@@ -556,14 +638,14 @@ def _calcular_mrdx_flt(props, Lb, Cb, fy):
             
             Mcr = 0
             if Lb**2 > 0 and Iy > 0 and Cw > 0 and J > 0:
-                Mcr = ((Cb * (math.pi**2) * Config.E_ACO * Iy) / (Lb**2)) * math.sqrt((Cw/Iy) * (1 + (0.039 * J * (Lb**2) / Cw)))
+                Mcr = ((Cb * (math.pi**2) * E * Iy) / (Lb**2)) * math.sqrt((Cw/Iy) * (1 + (0.039 * J * (Lb**2) / Cw)))
             
             Mrdx = Mcr / Config.GAMMA_A1
             
             detalhes['passos_calculo'].append({
                 'desc': 'Momento Crítico Elástico (Mcr)',
                 'formula': 'M_{cr} = \\frac{{C_b \\times \\pi^2 \\times E \\times I_y}}{{L_b^2}} \\sqrt{{\\frac{{C_w}}{{I_y}}(1 + 0,039 \\times \\frac{{J \\times L_b^2}}{{C_w}})}}',
-                'valores': {'C_b': Cb, '\\pi^2': math.pi**2, 'E': Config.E_ACO, 'I_y': Iy, 'L_b': Lb, 'C_w': Cw, 'J': J},
+                'valores': {'C_b': Cb, '\\pi^2': math.pi**2, 'E': E, 'I_y': Iy, 'L_b': Lb, 'C_w': Cw, 'J': J},
                 'valor': Mcr,
                 'unidade': 'kN.cm',
                 'ref': 'Eq. F-4',
@@ -582,7 +664,7 @@ def _calcular_mrdx_flt(props, Lb, Cb, fy):
     detalhes['Mrdx'] = Mrdx
     return detalhes
 
-def _calcular_mrdx_flm(props, fy, tipo_fabricacao):
+def _calcular_mrdx_flm(props, fy, tipo_fabricacao, E):
     bf, tf, Zx, Wx, h, tw = props['bf'], props['tf'], props['Zx'], props['Wx'], props['h'], props['tw']
     detalhes = {'passos_calculo': [], 'passos_verificacao': []}
     
@@ -605,11 +687,11 @@ def _calcular_mrdx_flm(props, fy, tipo_fabricacao):
         'verif_id': 'lambda'
     })
     
-    lambda_p = Config.FATOR_LAMBDA_P_FLM * math.sqrt(Config.E_ACO / fy)
+    lambda_p = Config.FATOR_LAMBDA_P_FLM * math.sqrt(E / fy)
     detalhes['passos_calculo'].append({
         'desc': 'Esbeltez Limite Plástica (λp)',
         'formula': '\\lambda_p = 0,38 \\sqrt{{\\frac{{E}}{{f_y}}}}',
-        'valores': {'E': Config.E_ACO, 'f_y': fy},
+        'valores': {'E': E, 'f_y': fy},
         'valor': lambda_p,
         'ref': 'Tabela F.1',
         'verif_id': 'lambda_p'
@@ -666,17 +748,17 @@ def _calcular_mrdx_flm(props, fy, tipo_fabricacao):
         })
         
         if tipo_fabricacao == "Laminado":
-            lambda_r = Config.FATOR_LAMBDA_R_FLM_LAMINADO * math.sqrt(Config.E_ACO / (fy - sigma_r)) if (fy - sigma_r) > 0 else float('inf')
+            lambda_r = Config.FATOR_LAMBDA_R_FLM_LAMINADO * math.sqrt(E / (fy - sigma_r)) if (fy - sigma_r) > 0 else float('inf')
             lambda_r_formula_str = '\\lambda_r = 0,83 \\sqrt{{\\frac{{E}}{{f_y - \\sigma_r}}}}'
             detalhes['passos_calculo'].append({
                 'desc': 'Esbeltez Limite Semicompacta (λr) - Laminado',
                 'formula': lambda_r_formula_str,
-                'valores': {'E': Config.E_ACO, 'f_y': fy, '\\sigma_r': sigma_r},
+                'valores': {'E': E, 'f_y': fy, '\\sigma_r': sigma_r},
                 'valor': lambda_r,
                 'ref': 'Tabela F.1',
                 'verif_id': 'lambda_r'
             })
-        else:  # Soldado
+        else: # Soldado
             kc_val = 4 / math.sqrt(h/tw) if (h/tw) > 0 else 0.76
             kc = max(0.35, min(kc_val, 0.76))
             detalhes['passos_calculo'].append({
@@ -688,12 +770,12 @@ def _calcular_mrdx_flm(props, fy, tipo_fabricacao):
                 'verif_id': 'kc'
             })
             
-            lambda_r = Config.FATOR_LAMBDA_R_FLM_SOLDADO * math.sqrt(Config.E_ACO * kc / (fy - sigma_r)) if (fy - sigma_r) > 0 and kc > 0 else float('inf')
+            lambda_r = Config.FATOR_LAMBDA_R_FLM_SOLDADO * math.sqrt(E * kc / (fy - sigma_r)) if (fy - sigma_r) > 0 and kc > 0 else float('inf')
             lambda_r_formula_str = '\\lambda_r = 0,95 \\sqrt{{\\frac{E \\times k_c}{{f_y - \\sigma_r}}}}'
             detalhes['passos_calculo'].append({
                 'desc': 'Esbeltez Limite Semicompacta (λr) - Soldado',
                 'formula': lambda_r_formula_str,
-                'valores': {'E': Config.E_ACO, 'k_c': kc, 'f_y': fy, '\\sigma_r': sigma_r},
+                'valores': {'E': E, 'k_c': kc, 'f_y': fy, '\\sigma_r': sigma_r},
                 'valor': lambda_r,
                 'ref': 'Tabela F.1',
                 'verif_id': 'lambda_r'
@@ -730,22 +812,22 @@ def _calcular_mrdx_flm(props, fy, tipo_fabricacao):
             })
             
             if tipo_fabricacao == "Laminado":
-                Mcr = (0.69 * Config.E_ACO * Wx) / (lambda_val**2) if lambda_val > 0 else 0
+                Mcr = (0.69 * E * Wx) / (lambda_val**2) if lambda_val > 0 else 0
                 detalhes['passos_calculo'].append({
                     'desc': 'Momento Crítico (Mcr) - Laminado',
                     'formula': 'M_{cr} = \\frac{0,69 \\times E \\times W_x}{\\lambda^2}',
-                    'valores': {'E': Config.E_ACO, 'W_x': Wx, '\\lambda': lambda_val},
+                    'valores': {'E': E, 'W_x': Wx, '\\lambda': lambda_val},
                     'valor': Mcr,
                     'unidade': 'kN.cm',
                     'verif_id': 'Mcr'
                 })
-            else:  # Soldado
+            else: # Soldado
                 kc = detalhes['passos_calculo'][-2]['valor']
-                Mcr = (0.90 * Config.E_ACO * kc * Wx) / (lambda_val**2) if lambda_val > 0 else 0
+                Mcr = (0.90 * E * kc * Wx) / (lambda_val**2) if lambda_val > 0 else 0
                 detalhes['passos_calculo'].append({
                     'desc': 'Momento Crítico (Mcr) - Soldado',
                     'formula': 'M_{cr} = \\frac{0,90 \\times E \\times k_c \\times W_x}{\\lambda^2}',
-                    'valores': {'E': Config.E_ACO, 'k_c': kc, 'W_x': Wx, '\\lambda': lambda_val},
+                    'valores': {'E': E, 'k_c': kc, 'W_x': Wx, '\\lambda': lambda_val},
                     'valor': Mcr,
                     'unidade': 'kN.cm',
                     'verif_id': 'Mcr'
@@ -763,7 +845,7 @@ def _calcular_mrdx_flm(props, fy, tipo_fabricacao):
     detalhes['Mrdx'] = Mrdx
     return detalhes
 
-def _calcular_mrdx_fla(props, fy):
+def _calcular_mrdx_fla(props, fy, E):
     h, tw, Zx, Wx = props['h'], props['tw'], props['Zx'], props['Wx']
     detalhes = {'passos_calculo': [], 'passos_verificacao': []}
     
@@ -786,11 +868,11 @@ def _calcular_mrdx_fla(props, fy):
         'verif_id': 'lambda'
     })
     
-    lambda_p = Config.FATOR_LAMBDA_P_FLA * math.sqrt(Config.E_ACO / fy)
+    lambda_p = Config.FATOR_LAMBDA_P_FLA * math.sqrt(E / fy)
     detalhes['passos_calculo'].append({
         'desc': 'Esbeltez Limite Plástica (λp)',
         'formula': '\\lambda_p = 3,76 \\sqrt{{\\frac{{E}}{{f_y}}}}',
-        'valores': {'E': Config.E_ACO, 'f_y': fy},
+        'valores': {'E': E, 'f_y': fy},
         'valor': lambda_p,
         'ref': 'Tabela F.1',
         'verif_id': 'lambda_p'
@@ -826,11 +908,11 @@ def _calcular_mrdx_fla(props, fy):
             'verif_for_calc': 'lambda_p'
         })
         
-        lambda_r = Config.FATOR_LAMBDA_R_FLA * math.sqrt(Config.E_ACO / fy)
+        lambda_r = Config.FATOR_LAMBDA_R_FLA * math.sqrt(E / fy)
         detalhes['passos_calculo'].append({
             'desc': 'Esbeltez Limite Semicompacta (λr)',
             'formula': '\\lambda_r = 5,70 \\sqrt{{\\frac{{E}}{{f_y}}}}',
-            'valores': {'E': Config.E_ACO, 'f_y': fy},
+            'valores': {'E': E, 'f_y': fy},
             'valor': lambda_r,
             'ref': 'Tabela F.1',
             'verif_id': 'lambda_r'
@@ -889,137 +971,92 @@ def _calcular_mrdx_fla(props, fy):
     detalhes['Mrdx'] = Mrdx
     return detalhes
 
-def _calcular_vrd(props, fy, usa_enrijecedores, a_enr):
+def _calcular_vrd(props, fy, usa_enrijecedores, a_enr, E):
     d, h, tw = props['d'], props['h'], props['tw']
+    lambda_val = h / tw if tw > 0 else float('inf')
     detalhes = {'passos_calculo': [], 'passos_verificacao': []}
     
     Vpl = Config.FATOR_VP * d * tw * fy
     detalhes['passos_calculo'].append({
-        'desc': 'Força Cortante de Plastificação',
-        'formula': 'V_{pl} = 0,60 \\times d \\times t_{w} \\times f_{y}',
-        'valores': {'d': d, 't_{w}': tw, 'f_{y}': fy},
-        'valor': Vpl,
-        'unidade': 'kN',
-        'verif_id': 'Vpl'
+        'desc': 'Força Cortante de Plastificação', 'formula': 'V_{pl} = 0,60 \\times d \\times t_{w} \\times f_{y}',
+        'valores': {'d': d, 't_{w}': tw, 'f_{y}': fy}, 'valor': Vpl, 'unidade': 'kN', 'verif_id': 'Vpl'
     })
     
-    lambda_val = h / tw if tw > 0 else float('inf')
     detalhes['passos_calculo'].append({
-        'desc': 'Esbeltez da Alma para Cisalhamento (λ = h/tw)',
-        'formula': '\\lambda = \\frac{{h}}{{t_w}}',
-        'valores': {'h': h, 't_w': tw},
-        'valor': lambda_val,
-        'verif_id': 'lambda'
+        'desc': 'Esbeltez da Alma (λ)', 'formula': '\\lambda = \\frac{h}{t_w}',
+        'valores': {'h': h, 't_w': tw}, 'valor': lambda_val, 'verif_id': 'lambda'
     })
-    
-    kv = Config.KV_ALMA_SEM_ENRIJECEDORES
-    kv_formula = "k_v = 5.0"
-    kv_desc = "Fator de Flambagem (kv) - Alma sem enrijecedores"
-    kv_valores = {}
-    
-    if usa_enrijecedores and a_enr > 0 and h > 0:
+
+    if not usa_enrijecedores or a_enr <= 0:
+        kv = 5.0
+        detalhes['passos_calculo'].append({'desc': 'Fator de Flambagem (kv) - Alma sem enrijecedores', 'formula': 'k_v = 5,0', 'valores': {}, 'valor': kv})
+    else:
         a_h_ratio = a_enr / h
-        if a_h_ratio < 3:
-            kv = 5 + (5 / (a_h_ratio**2))
-            kv_formula = "k_v = 5 + \\frac{5}{(a/h)^2}"
-            kv_desc = "Fator de Flambagem (kv) - Com enrijecedores transversais"
-            kv_valores = {'a': a_enr, 'h': h, 'a/h': a_h_ratio}
-    
+        detalhes['passos_calculo'].append({
+            'desc': 'Relação de Enrijecedores (a/h)',
+            'formula': '\\frac{a}{h}',
+            'formula_expandida': f'\\frac{{\\mathbf{{{a_enr:.2f}}}}}{{\\mathbf{{{h:.2f}}}}}',
+            'valores': {},
+            'valor': a_h_ratio
+        })
+
+        check1_pass = a_h_ratio < 3
+        detalhes['passos_calculo'].append({
+            'type': 'verification', 'desc': 'Verificação do Espaçamento Máximo',
+            'lhs_value': a_h_ratio, 'comparator': '<', 'rhs_value': 3, 'passed': check1_pass,
+            'conclusion_pass': 'O espaçamento entre enrijecedores atende ao critério inicial.',
+            'conclusion_fail': 'O espaçamento é muito grande (a/h ≥ 3), tornando os enrijecedores ineficazes.'
+        })
+
+        check2_pass = False
+        if check1_pass:
+            limite_esbeltez = (260 / lambda_val)**2 if lambda_val > 0 else float('inf')
+            detalhes['passos_calculo'].append({
+                'desc': 'Limite de Esbeltez da Chapa', 'formula': 'Limite = (\\frac{260}{\\lambda})^2',
+                'valores': {'\\lambda': lambda_val}, 'valor': limite_esbeltez
+            })
+            check2_pass = a_h_ratio < limite_esbeltez
+            detalhes['passos_calculo'].append({
+                'type': 'verification', 'desc': 'Verificação da Esbeltez da Chapa',
+                'lhs_value': a_h_ratio, 'comparator': '<', 'rhs_value': limite_esbeltez, 'passed': check2_pass,
+                'conclusion_pass': 'A alma não é esbelta demais para o espaçamento dos enrijecedores.',
+                'conclusion_fail': 'A alma é muito esbelta para este espaçamento (a/h ≥ (260/λ)²), tornando os enrijecedores ineficazes.'
+            })
+
+        if check1_pass and check2_pass:
+            denominador_val = a_h_ratio**2
+            kv = 5 + (5 / denominador_val)
+            kv_formula_expandida = (f"k_v = 5 + \\frac{{5}}{{(\\frac{{\\mathbf{{{a_enr:.2f}}}}}{{\\mathbf{{{h:.2f}}}}})^2}} = 5 + \\frac{{5}}{{(\\mathbf{{{a_h_ratio:.2f}}})^2}} = 5 + \\frac{{5}}{{\\mathbf{{{denominador_val:.2f}}}}}")
+            detalhes['passos_calculo'].append({
+                'desc': 'Cálculo Final de kv (Enrijecedores Efetivos)', 'formula': 'k_v = 5 + \\frac{5}{(a/h)^2}', 'formula_expandida': kv_formula_expandida,
+                'valores': {'(a/h)': a_h_ratio}, 'valor': kv
+            })
+        else:
+            kv = 5.0
+            detalhes['passos_calculo'].append({'desc': 'Cálculo Final de kv (Enrijecedores Ineficazes)', 'formula': 'k_v = 5,0', 'valores': {}, 'valor': kv})
+
+    lambda_p = Config.FATOR_LAMBDA_P_VRD * math.sqrt((kv * E) / fy)
     detalhes['passos_calculo'].append({
-        'desc': kv_desc,
-        'formula': kv_formula,
-        'valores': kv_valores,
-        'valor': kv,
-        'unidade': '',
-        'verif_id': 'kv'
-    })
-    
-    lambda_p = Config.FATOR_LAMBDA_P_VRD * math.sqrt((kv * Config.E_ACO) / fy)
-    detalhes['passos_calculo'].append({
-        'desc': 'Esbeltez Limite Plástica (λp)',
-        'formula': '\\lambda_p = 1,10 \\sqrt{{\\frac{{k_v \\times E}}{{f_y}}}}',
-        'valores': {'k_v': kv, 'E': Config.E_ACO, 'f_y': fy},
-        'valor': lambda_p,
-        'verif_id': 'lambda_p'
+        'desc': 'Esbeltez Limite Plástica (λp)', 'formula': '\\lambda_p = 1,10 \\sqrt{\\frac{k_v \\times E}{f_y}}',
+        'valores': {'k_v': kv, 'E': E, 'f_y': fy}, 'valor': lambda_p, 'verif_id': 'lambda_p'
     })
     
     if lambda_val <= lambda_p:
-        verificacao_texto = f"λ = {lambda_val:.2f} ≤ λp = {lambda_p:.2f}"
-        conclusao_texto = "**ESCOAMENTO DA ALMA** - Resistência governada pelo escoamento."
-        detalhes['passos_verificacao'].append({
-            'titulo': 'Verificação 1: λ ≤ λp?',
-            'texto': verificacao_texto,
-            'conclusao': conclusao_texto,
-            'regime': 'REGIME PLÁSTICO',
-            'verif_for_calc': 'lambda_p'
-        })
-        
         Vrd = Vpl / Config.GAMMA_A1
-        detalhes['Vrd_calc'] = {
-            'desc': 'Cortante Resistente (Escoamento)',
-            'formula': 'V_{rd} = \\frac{{V_{{pl}}}}{{\\gamma_{{a1}}}}',
-            'valores': {'V_{{pl}}': Vpl, '\\gamma_{{a1}}': Config.GAMMA_A1},
-            'valor': Vrd,
-            'unidade': 'kN'
-        }
+        detalhes['passos_verificacao'].append({'titulo': 'Verificação 1: λ ≤ λp?', 'texto': f"λ = {lambda_val:.2f} ≤ λp = {lambda_p:.2f}", 'conclusao': "**ESCOAMENTO DA ALMA** - Resistência governada pelo escoamento.", 'regime': 'REGIME PLÁSTICO', 'verif_for_calc': 'lambda_p'})
+        detalhes['Vrd_calc'] = {'desc': 'Cortante Resistente (Escoamento)', 'formula': 'V_{rd} = \\frac{V_{pl}}{\\gamma_{a1}}', 'valores': {'V_{pl}': Vpl, '\\gamma_{a1}': Config.GAMMA_A1}, 'valor': Vrd, 'unidade': 'kN'}
     else:
-        verificacao_texto = f"λ = {lambda_val:.2f} > λp = {lambda_p:.2f}"
-        conclusao_texto = "**FLAMBAGEM POR CISALHAMENTO** - O regime é Inelástico ou Elástico."
-        detalhes['passos_verificacao'].append({
-            'titulo': 'Verificação 1: λ ≤ λp?',
-            'texto': verificacao_texto,
-            'conclusao': conclusao_texto,
-            'regime': 'NECESSÁRIO VERIFICAR REGIME',
-            'verif_for_calc': 'lambda_p'
-        })
-        
-        lambda_r = Config.FATOR_LAMBDA_R_VRD * math.sqrt((kv * Config.E_ACO) / fy)
-        detalhes['passos_calculo'].append({
-            'desc': 'Esbeltez Limite Inelástica (λr)',
-            'formula': '\\lambda_r = 1,37 \\sqrt{{\\frac{{k_v \\times E}}{{f_y}}}}',
-            'valores': {'k_v': kv, 'E': Config.E_ACO, 'f_y': fy},
-            'valor': lambda_r,
-            'verif_id': 'lambda_r'
-        })
-        
+        detalhes['passos_verificacao'].append({'titulo': 'Verificação 1: λ ≤ λp?', 'texto': f"λ = {lambda_val:.2f} > λp = {lambda_p:.2f}", 'conclusao': "**FLAMBAGEM POR CISALHAMENTO** - O regime é Inelástico ou Elástico.", 'regime': 'NECESSÁRIO VERIFICAR REGIME', 'verif_for_calc': 'lambda_p'})
+        lambda_r = Config.FATOR_LAMBDA_R_VRD * math.sqrt((kv * E) / fy)
+        detalhes['passos_calculo'].append({'desc': 'Esbeltez Limite Inelástica (λr)', 'formula': '\\lambda_r = 1,37 \\sqrt{\\frac{k_v \\times E}{f_y}}', 'valores': {'k_v': kv, 'E': E, 'f_y': fy}, 'valor': lambda_r, 'verif_id': 'lambda_r'})
         if lambda_val <= lambda_r:
-            verificacao_texto = f"λ = {lambda_val:.2f} ≤ λr = {lambda_r:.2f}"
-            conclusao_texto = "**FLAMBAGEM INELÁSTICA** - Regime de transição por cisalhamento."
-            detalhes['passos_verificacao'].append({
-                'titulo': 'Verificação 2: λ ≤ λr?',
-                'texto': verificacao_texto,
-                'conclusao': conclusao_texto,
-                'regime': 'REGIME INELÁSTICO',
-                'verif_for_calc': 'lambda_r'
-            })
-            
+            detalhes['passos_verificacao'].append({'titulo': 'Verificação 2: λ ≤ λr?', 'texto': f"λ = {lambda_val:.2f} ≤ λr = {lambda_r:.2f}", 'conclusao': "**FLAMBAGEM INELÁSTICA** - Regime de transição por cisalhamento.", 'regime': 'REGIME INELÁSTICO', 'verif_for_calc': 'lambda_r'})
             Vrd = (lambda_p / lambda_val) * (Vpl / Config.GAMMA_A1) if lambda_val > 0 else 0
-            detalhes['Vrd_calc'] = {
-                'desc': 'Cortante Resistente (Flambagem Inelástica)',
-                'formula': 'V_{rd} = \\frac{{\\lambda_p}}{{\\lambda}} \\times \\frac{{V_{{pl}}}}{{\\gamma_{{a1}}}}',
-                'valores': {'\\lambda_p': lambda_p, '\\lambda': lambda_val, 'V_{{pl}}': Vpl, '\\gamma_{{a1}}': Config.GAMMA_A1},
-                'valor': Vrd,
-                'unidade': 'kN'
-            }
+            detalhes['Vrd_calc'] = {'desc': 'Cortante Resistente (Flambagem Inelástica)', 'formula': 'V_{rd} = \\frac{\\lambda_p}{\\lambda} \\times \\frac{V_{pl}}{\\gamma_{a1}}', 'valores': {'\\lambda_p': lambda_p, '\\lambda': lambda_val, 'V_{pl}': Vpl, '\\gamma_{a1}': Config.GAMMA_A1}, 'valor': Vrd, 'unidade': 'kN'}
         else:
-            verificacao_texto = f"λ = {lambda_val:.2f} > λr = {lambda_r:.2f}"
-            conclusao_texto = "**FLAMBAGEM ELÁSTICA** - Regime elástico por cisalhamento."
-            detalhes['passos_verificacao'].append({
-                'titulo': 'Verificação 2: λ ≤ λr?',
-                'texto': verificacao_texto,
-                'conclusao': conclusao_texto,
-                'regime': 'REGIME ELÁSTICO',
-                'verif_for_calc': 'lambda_r'
-            })
-            
+            detalhes['passos_verificacao'].append({'titulo': 'Verificação 2: λ ≤ λr?', 'texto': f"λ = {lambda_val:.2f} > λr = {lambda_r:.2f}", 'conclusao': "**FLAMBAGEM ELÁSTICA** - Regime elástico por cisalhamento.", 'regime': 'REGIME ELÁSTICO', 'verif_for_calc': 'lambda_r'})
             Vrd = (Config.FATOR_VRD_ELASTICO * (lambda_p / lambda_val)**2) * (Vpl / Config.GAMMA_A1) if lambda_val > 0 else 0
-            detalhes['Vrd_calc'] = {
-                'desc': 'Cortante Resistente (Flambagem Elástica)',
-                'formula': 'V_{rd} = 1,24 (\\frac{{\\lambda_p}}{{\\lambda}})^2 \\times \\frac{{V_{{pl}}}}{{\\gamma_{{a1}}}}',
-                'valores': {'\\lambda_p': lambda_p, '\\lambda': lambda_val, 'V_{{pl}}': Vpl, '\\gamma_{{a1}}': Config.GAMMA_A1},
-                'valor': Vrd,
-                'unidade': 'kN'
-            }
+            detalhes['Vrd_calc'] = {'desc': 'Cortante Resistente (Flambagem Elástica)', 'formula': 'V_{rd} = 1,24 (\\frac{\\lambda_p}{\\lambda})^2 \\times \\frac{V_{pl}}{\\gamma_{a1}}', 'valores': {'\\lambda_p': lambda_p, '\\lambda': lambda_val, 'V_{pl}': Vpl, '\\gamma_{a1}': Config.GAMMA_A1}, 'valor': Vrd, 'unidade': 'kN'}
     
     detalhes['Vrd'] = Vrd
     return detalhes
@@ -1042,14 +1079,14 @@ def create_metrics_dashboard(input_params):
     
     msd_value = input_params.get('Msd', 0)
     vsd_value = input_params.get('Vsd', 0)
-
-    # Define 7 columns for all parameters
+    cb_value = input_params.get('Cb_projeto', 1.0)
+    
     col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
     
     with col1:
         st.metric(label="📐 Norma", value="NBR 8800")
     with col2:
-        st.metric(label="⚡ Módulo E", value="20.000 kN/cm²")
+        st.metric(label="⚡ Módulo E", value=f"{input_params['E_aco']:.0f} kN/cm²")
     with col3:
         st.metric(label="🛡️ γa1", value="1,10")
     with col4:
@@ -1057,7 +1094,6 @@ def create_metrics_dashboard(input_params):
     with col5:
         st.metric(label="🔥 fy", value=f"{input_params['fy_aco']:.1f} kN/cm²")
     
-    # Display efforts with icons
     with col6:
         st.metric(
             label=" Msd (Momento)",
@@ -1070,15 +1106,17 @@ def create_metrics_dashboard(input_params):
             value=f"{vsd_value:.2f} kN" if vsd_value > 0 else "-",
             help="Força Cortante Solicitante de Cálculo"
         )
+    
+    st.markdown(f"**Fator Cb:** {cb_value:.2f} | **Lb:** {input_params['Lb_projeto']:.2f} cm")
 
 def style_classic_dataframe(df):
     """Aplica estilização clássica com cores sólidas ao DataFrame."""
     def color_efficiency(val):
         if pd.isna(val) or not isinstance(val, (int, float)): return ''
-        if val > 100:   color = '#f8d7da' # Red
-        elif val > 95:  color = '#ffeeba' # Yellow
-        elif val > 80:  color = '#fff3cd' # Light Yellow
-        else:           color = '#d4edda' # Green
+        if val > 100:   color = '#f8d7da'
+        elif val > 95:  color = '#ffeeba'
+        elif val > 80:  color = '#fff3cd'
+        else:           color = '#d4edda'
         return f'background-color: {color}'
 
     def style_status(val):
@@ -1113,12 +1151,52 @@ def create_top_profiles_chart(df_approved, top_n=10):
     )
     return fig
 
+def create_profile_efficiency_chart(perfil_nome, eficiencias):
+    """
+    Cria um gráfico de barras comparando as eficiências de um perfil.
+    """
+    labels = list(eficiencias.keys())
+    values = [min(v, 150) for v in eficiencias.values()]
+    
+    colors = ['#1e40af' if v < 90 else '#60a5fa' if v <= 100 else '#ef4444' for v in values]
+    
+    fig = go.Figure(data=[
+        go.Bar(
+            x=labels,
+            y=values,
+            text=[f'{v:.1f}%' for v in eficiencias.values()],
+            textposition='auto',
+            marker_color=colors
+        )
+    ])
+    
+    fig.add_hline(y=100, line_dash="dash", line_color="#10b981", 
+                    annotation_text="Limite de Aprovação (100%)", 
+                    annotation_position="bottom right")
+
+    fig.update_layout(
+        title=f'Análise de Eficiência para o Perfil: {perfil_nome}',
+        yaxis_title='Eficiência (%)',
+        xaxis_title='Verificação',
+        yaxis_range=[0, max(max(values), 100) + 10],
+        template='plotly_white',
+    )
+    return fig
+
 def create_professional_memorial_html(perfil_nome, perfil_tipo, resultados, input_details, projeto_info):
     conteudo_memorial = f"""
-        <h2>1. Resumo Executivo</h2>
-        <div class="result-highlight">{resultados['resumo_html']}</div>
+    <h2>1. Resumo Executivo</h2>
+    <div class="result-highlight">{resultados['resumo_html']}</div>
+    
+    <h2>2. Dados de Entrada e Solicitações</h2>
+    <div class="info-card">
+        <h3>2.1. Propriedades do Perfil e Materiais</h3>
         {input_details}
-        {resultados['passo_a_passo_html']}
+    </div>
+    {resultados.get('esforcos_html', '')}
+    {resultados.get('cb_calc_html', '')}
+    <h2>3. Verificações de Resistência (ELU)</h2>
+    {resultados['passo_a_passo_html']}
     """
     html_template = f"""
     <!DOCTYPE html><html lang="pt-BR"><head>
@@ -1152,15 +1230,187 @@ def _build_verification_block_html(title, solicitante, s_symbol, resistente, r_s
     comp_symbol = "\\le" if status == "APROVADO" else ">"
     return f"""<h4>{title}</h4><div class="formula-block"><p class="formula">$${s_symbol} = {solicitante:.2f} \\, {unit}$$</p><p class="formula">$${r_symbol} = {resistente:.2f} \\, {unit}$$</p><p class="formula">$$\\text{{Verificação: }} {s_symbol} {comp_symbol} {r_symbol}$$</p><p class="formula">$$\\text{{Eficiência}} = \\frac{{{s_symbol}}}{{{r_symbol}}} = \\frac{{{solicitante:.2f}}}{{{resistente:.2f}}} = {eficiencia:.1f}\\%$$</p><div class="final-status {status_class}">{status}</div></div>"""
 
-# ==============================================================================
-# 4. FUNÇÕES DE ORQUESTRAÇÃO E ANÁLISE (MODIFICADAS)
-# ==============================================================================
+def _render_cb_calc_section(cb_details, Cb_final, input_mode):
+    """Renderiza a seção de cálculo de Cb no memorial com passo a passo detalhado."""
+    html = "<h3>2.3. Cálculo do Fator de Modificação Cb</h3>"
+    
+    if input_mode == 'Inserir Esforços Manualmente' or not cb_details or 'N/A' in cb_details.get('formula_simbolica', ''):
+        html += "<div class='formula-block'>"
+        html += f"<h5>Descrição:</h5><p>Fator Cb = **{Cb_final:.2f}** (Valor inserido manualmente ou não aplicável)</p>"
+        html += "</div>"
+        return html
 
-def perform_all_checks(props, fy_aco, Lb_projeto, Cb_projeto, L_cm, Msd, Vsd, q_serv_kn_cm, p_load_serv, tipo_viga, input_mode, tipo_fabricacao, usa_enrijecedores, a_enr, limite_flecha_divisor, projeto_info, detalhado=False, **kwargs):
-    res_flt = _calcular_mrdx_flt(props, Lb_projeto, Cb_projeto, fy_aco)
-    res_flm = _calcular_mrdx_flm(props, fy_aco, tipo_fabricacao)
-    res_fla = _calcular_mrdx_fla(props, fy_aco)
-    res_vrd = _calcular_vrd(props, fy_aco, usa_enrijecedores, a_enr)
+    # Renderização Detalhada
+    html += "<h4>Passo a Passo do Cálculo dos Momentos ($kNm$)</h4>"
+    momentos_detalhes = cb_details.get('momentos', {})
+
+    for m_key, m_data in momentos_detalhes.items():
+        html += f"<div class='formula-block'>"
+        html += f"<h5>Cálculo de ${m_key}$</h5>"
+        
+        # Renderiza cada componente de carga
+        for component in m_data.get('components', []):
+            html += _render_calculation_step(component)
+        
+        # Se houver mais de uma componente, mostra a soma
+        if len(m_data.get('components', [])) > 1:
+            comp_vals = [c['valor'] for c in m_data['components']]
+            sum_str = ' + '.join([f'{abs(v):.2f}' for v in comp_vals])
+            html += f"""<h6>Soma das Componentes para ${m_key}$</h6>
+                        <p class="formula">$${m_key} = {sum_str} = \\mathbf{{{m_data['final_value']:.2f}}} \\, kNm$$</p>"""
+        
+        # Mostra o resultado final do momento
+        html += f"<div class='final-status pass' style='font-size: 1.1em; padding: 0.75rem;'>Valor Final: ${m_key} = {m_data['final_value']:.2f} \\, kNm$</div>"
+        html += "</div>"
+
+    # Renderização do cálculo final do Cb
+    html += "<div class='formula-block'>"
+    html += f"<h4>Cálculo Final do Fator Cb</h4>"
+    html += f"<p class='formula'>$${cb_details['formula_simbolica']}$$</p>"
+    
+    M_max_val = momentos_detalhes['M_max']['final_value']
+    M_A_val = momentos_detalhes['M_A']['final_value']
+    M_B_val = momentos_detalhes['M_B']['final_value']
+    M_C_val = momentos_detalhes['M_C']['final_value']
+    
+    numerador_val = 12.5 * M_max_val
+    denominador_val = 2.5 * M_max_val + 3 * M_A_val + 4 * M_B_val + 3 * M_C_val
+        
+    html += f"<h5>Cálculo numérico:</h5>"
+    html += f"<p class='formula'>$$C_b = \\frac{{12,5 \\times \\mathbf{{{M_max_val:.2f}}}}}{{|2,5 \\times \\mathbf{{{M_max_val:.2f}}} + 3 \\times \\mathbf{{{M_A_val:.2f}}} + 4 \\times \\mathbf{{{M_B_val:.2f}}} + 3 \\times \\mathbf{{{M_C_val:.2f}}}|}} = \\frac{{{numerador_val:.2f}}}{{{abs(denominador_val):.2f}}}$$</p>"
+    html += f"<p class='formula'>$$C_b = \\mathbf{{{Cb_final:.2f}}}$$</p>"
+    html += "</div>"
+    return html
+
+def _render_esforcos_viga_section(params):
+    """Gera a seção do memorial com o cálculo dos esforços solicitantes."""
+    # --- AJUSTE: Nova apresentação visual para o modo de entrada manual ---
+    if params['input_mode'] == 'Inserir Esforços Manualmente':
+        msd_knm = params['Msd'] / 100
+        vsd_kn = params['Vsd']
+        return f"""
+        <h3>2.2. Esforços Solicitantes de Cálculo (ELU)</h3>
+        <div class="info-card">
+            <div style="display: flex; justify-content: space-around; align-items: stretch; flex-wrap: wrap; gap: 1rem; padding: 1rem 0;">
+
+                <div style="text-align: center; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.5rem; width: 45%; min-width: 200px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                    <span style="font-size: 2em; line-height: 1;">🔄</span>
+                    <h5 style="margin: 0.5rem 0; color: var(--text-secondary); font-weight: 500;">Momento Fletor ($M_{{sd}}$)</h5>
+                    <p style="font-size: 2.2em; font-weight: 700; color: var(--primary-color); margin: 0; line-height: 1.2;">
+                        {msd_knm:.2f}
+                        <span style="font-size: 0.5em; font-weight: 500; color: var(--text-primary);">kNm</span>
+                    </p>
+                </div>
+
+                <div style="text-align: center; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.5rem; width: 45%; min-width: 200px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                    <span style="font-size: 2em; line-height: 1;">✂️</span>
+                    <h5 style="margin: 0.5rem 0; color: var(--text-secondary); font-weight: 500;">Força Cortante ($V_{{sd}}$)</h5>
+                    <p style="font-size: 2.2em; font-weight: 700; color: var(--primary-color); margin: 0; line-height: 1.2;">
+                        {vsd_kn:.2f}
+                        <span style="font-size: 0.5em; font-weight: 500; color: var(--text-primary);">kN</span>
+                    </p>
+                </div>
+
+            </div>
+            <p style="text-align: center; font-size: 0.9em; color: var(--text-secondary); margin-top: 1rem;"><i>(Valores inseridos manualmente)</i></p>
+        </div>
+        """
+    
+    # Renderização para o modo de cálculo automático (permanece inalterada)
+    html = f"""
+    <h3>2.2. Esforços Solicitantes de Cálculo (ELU)</h3>
+    <div class="info-card">
+        <h4>Cálculo das Cargas de Projeto (Últimas)</h4>
+        <div class="formula-block">
+            <h5>Largura de Influência (B)</h5>
+            <p class="formula">$$B = \\frac{{b_{{esq}}}}{2} + \\frac{{b_{{dir}}}}{2} = \\frac{{ {params['larg_esq_cm']:.2f} }}{2} + \\frac{{ {params['larg_dir_cm']:.2f} }}{2} = \\mathbf{{ {params['larg_inf_total_m']:.2f} \\, m}}$$</p>
+            
+            <h5>Carga Distribuída de Serviço (q_serv)</h5>
+            <p class="formula">$$q_{{serv}} = Carga_{{area}} \\times B = {params['carga_area']:.2f} \\, kN/m^2 \\times {params['larg_inf_total_m']:.2f} \\, m = \\mathbf{{ {params['q_servico_kn_m']:.2f} \\, kN/m}}$$</p>
+            
+            <h5>Carga Distribuída de Cálculo (q_ultima)</h5>
+            <p class="formula">$$q_{{ultima}} = q_{{serv}} \\times \\gamma_f = {params['q_servico_kn_m']:.2f} \\times {params['gamma_f']:.2f} = \\mathbf{{ {params['q_ult_kn_cm']*100:.2f} \\, kN/m}}$$</p>
+    """
+    if params.get('p_load_serv'):
+        html += f"""
+            <h5>Carga Pontual de Cálculo (P_ultima)</h5>
+            <p class="formula">$$P_{{ultima}} = P_{{serv}} \\times \\gamma_f = {params['p_load_serv'][0]:.2f} \\times {params['gamma_f']:.2f} = \\mathbf{{ {params['p_load_ult'][0]:.2f} \\, kN}}$$</p>
+        """
+    html += """
+        </div>
+    </div>
+    """
+
+    html += f"<h4>Cálculo dos Esforços para Viga {params['tipo_viga']}</h4>"
+    html += "<div class='formula-block'>"
+    
+    detalhes = params['detalhes_esforcos']
+    
+    # Momento
+    html += f"<h5>Momento Fletor de Cálculo (Msd)</h5>"
+    if detalhes['Msd_q']['valor'] > 0:
+        html += _render_calculation_step({
+            'desc': 'Momento devido à carga distribuída (M_q)',
+            'formula': detalhes['Msd_q']['formula_simbolica'],
+            'valores': {'q_{ultima}': params['q_ult_kn_cm']*100, 'L': params['L_cm']/100},
+            'valor': detalhes['Msd_q']['valor'],
+            'unidade': 'kN.cm'
+        })
+    if detalhes['Msd_p']['valor'] > 0:
+        html += _render_calculation_step({
+            'desc': 'Momento devido à carga pontual (M_p)',
+            'formula': detalhes['Msd_p']['formula_simbolica'],
+            'valores': {'P_{ultima}': params['p_load_ult'][0], 'a': params['p_load_ult'][1]/100, 'b': (params['L_cm']-params['p_load_ult'][1])/100, 'L': params['L_cm']/100},
+            'valor': detalhes['Msd_p']['valor'],
+            'unidade': 'kN.cm'
+        })
+    
+    # Soma dos momentos
+    if (detalhes['Msd_q']['valor'] > 0 or detalhes['Msd_p']['valor'] > 0):
+        mom_q = detalhes['Msd_q']['valor'] if detalhes['Msd_q']['valor'] > 0 else 0
+        mom_p = detalhes['Msd_p']['valor'] if detalhes['Msd_p']['valor'] > 0 else 0
+        if mom_q > 0 and mom_p > 0:
+            html += f"<p class='formula'>$$M_{{sd, total}} = {mom_q:.2f} + {mom_p:.2f} = \\mathbf{{{params['Msd']:.2f}}} \\, kN.cm$$</p>"
+        else:
+            html += f"<p class='formula'>$$M_{{sd}} = \\mathbf{{{params['Msd']:.2f}}} \\, kN.cm$$</p>"
+
+    # Cortante
+    html += f"<h5>Força Cortante de Cálculo (Vsd)</h5>"
+    if detalhes['Vsd_q']['valor'] > 0:
+        html += _render_calculation_step({
+            'desc': 'Cortante devido à carga distribuída (V_q)',
+            'formula': detalhes['Vsd_q']['formula_simbolica'],
+            'valores': {'q_{ultima}': params['q_ult_kn_cm']*100, 'L': params['L_cm']/100},
+            'valor': detalhes['Vsd_q']['valor'],
+            'unidade': 'kN'
+        })
+    if detalhes['Vsd_p']['valor'] > 0:
+        html += _render_calculation_step({
+            'desc': 'Cortante devido à carga pontual (V_p)',
+            'formula': detalhes['Vsd_p']['formula_simbolica'],
+            'valores': {'P_{ultima}': params['p_load_ult'][0], 'a': params['p_load_ult'][1]/100, 'b': (params['L_cm']-params['p_load_ult'][1])/100, 'L': params['L_cm']/100},
+            'valor': detalhes['Vsd_p']['valor'],
+            'unidade': 'kN'
+        })
+    
+    # Soma dos cortantes
+    if (detalhes['Vsd_q']['valor'] > 0 or detalhes['Vsd_p']['valor'] > 0):
+        v_q = detalhes['Vsd_q']['valor'] if detalhes['Vsd_q']['valor'] > 0 else 0
+        v_p = detalhes['Vsd_p']['valor'] if detalhes['Vsd_p']['valor'] > 0 else 0
+        if v_q > 0 and v_p > 0:
+            html += f"<p class='formula'>$$V_{{sd, total}} = {v_q:.2f} + {v_p:.2f} = \\mathbf{{{params['Vsd']:.2f}}} \\, kN$$</p>"
+        else:
+            html += f"<p class='formula'>$$V_{{sd}} = \\mathbf{{{params['Vsd']:.2f}}} \\, kN$$</p>"
+    
+    html += "</div>"
+    
+    return html
+
+def perform_all_checks(props, fy_aco, Lb_projeto, Cb_projeto, L_cm, Msd, Vsd, q_serv_kn_cm, p_load_serv, tipo_viga, input_mode, tipo_fabricacao, usa_enrijecedores, a_enr, limite_flecha_divisor, projeto_info, E_aco, detalhado=False, **kwargs):
+    res_flt = _calcular_mrdx_flt(props, Lb_projeto, Cb_projeto, fy_aco, E_aco)
+    res_flm = _calcular_mrdx_flm(props, fy_aco, tipo_fabricacao, E_aco)
+    res_fla = _calcular_mrdx_fla(props, fy_aco, E_aco)
+    res_vrd = _calcular_vrd(props, fy_aco, usa_enrijecedores, a_enr, E_aco)
     
     if res_flt['Mrdx'] > 0: res_flt['eficiencia'] = (Msd / res_flt['Mrdx']) * 100
     else: res_flt['eficiencia'] = float('inf')
@@ -1176,7 +1426,7 @@ def perform_all_checks(props, fy_aco, Lb_projeto, Cb_projeto, L_cm, Msd, Vsd, q_
     flecha_max, flecha_limite, eficiencia_flecha, status_flecha = 0, 0, 0, "N/A"
     detalhes_flecha = {}
     if input_mode == "Calcular a partir de Cargas na Viga":
-        detalhes_flecha = calcular_flecha_maxima(tipo_viga, L_cm, Config.E_ACO, props['Ix'], q_serv_kn_cm, p_load_serv)
+        detalhes_flecha = calcular_flecha_maxima(tipo_viga, L_cm, E_aco, props['Ix'], q_serv_kn_cm, p_load_serv)
         flecha_max = detalhes_flecha['delta_total']
         flecha_limite = L_cm / limite_flecha_divisor if L_cm > 0 else 0
         eficiencia_flecha = (flecha_max / flecha_limite) * 100 if flecha_limite > 0 else float('inf')
@@ -1216,8 +1466,7 @@ def build_summary_html(Msd, Vsd, res_flt, res_flm, res_fla, res_cisalhamento, re
     </table>"""
 
 def build_step_by_step_html(L, Msd, Vsd, res_flexao, res_cisalhamento, res_flecha, res_flt, res_flm, res_fla, res_vrd, input_mode):
-    html = """"""
-    html += """<h2>3. Verificações de Resistência (ELU)</h2>"""
+    html = ""
     html += _render_resistance_calc_section(
         "Flambagem Lateral com Torção (FLT)", Msd, "M_{sd}", "kNm", res_flt, 'Mrdx', "M_{rd}"
     )
@@ -1253,9 +1502,9 @@ def build_step_by_step_html(L, Msd, Vsd, res_flexao, res_cisalhamento, res_flech
             html += f"<p class='formula'>$${delta_p_details['formula_numerica']} = \\mathbf{{{delta_p_details['valor']:.4f}}} \\, cm$$</p>"
 
         html += f"<h5>Flecha Total</h5>"
-        q_val = delta_q_details.get('valor', 0)
-        p_val = delta_p_details.get('valor', 0)
-        html += f"<p class='formula'>$$\\delta_{{max}} = \\delta_q + \\delta_p = {q_val:.4f} + {p_val:.4f} = \\mathbf{{{res_flecha['flecha_max']:.4f}}} \\, cm$$</p>"
+        q_val = detalhes_flecha.get('delta_q', {}).get('valor', 0)
+        p_val = detalhes_flecha.get('delta_p', {}).get('valor', 0)
+        html += f"<p class='formula'>$$\\delta_{{max}} = {q_val:.4f} + {p_val:.4f} = \\mathbf{{{res_flecha['flecha_max']:.4f}}} \\, cm$$</p>"
         html += "</div>"
 
         html += "<h3>4.2. Cálculo da Flecha Limite (δ_lim)</h3>"
@@ -1275,31 +1524,36 @@ def _render_resistance_calc_section(title, solicitante_val, solicitante_sym, sol
     verificacoes_map = {v.get('verif_for_calc'): v for v in details_dict.get('passos_verificacao', [])}
     
     for step in details_dict.get('passos_calculo', []):
-        html += _render_calculation_step(step)
-        if step.get('verif_id') in verificacoes_map:
-            verificacao_step = verificacoes_map.get(step['verif_id'])
-            status_class = "pass" if "COMPACTA" in verificacao_step['conclusao'] or "PLÁSTICO" in verificacao_step['regime'] or "ESCOAMENTO" in verificacao_step['conclusao'] else "fail"
-            html += f"""<div class='verification-step'>
-                            <h5>🔍 {verificacao_step['titulo']}</h5>
-                            <p><strong>Comparação:</strong> {verificacao_step['texto']}</p>
-                            <p class='conclusion {status_class}'>{verificacao_step['conclusao']}</p>
-                            <p><strong>Classificação:</strong> {verificacao_step['regime']}</p>
-                        </div>"""
+        if step.get('type') == 'verification':
+            html += _render_verification_step(step)
+        else:
+            html += _render_calculation_step(step)
+            
+            if step.get('verif_id') in verificacoes_map:
+                verificacao_step = verificacoes_map.get(step['verif_id'])
+                is_pass = any(s in verificacao_step['conclusao'] for s in ["COMPACTA", "PLÁSTICO", "ESCOAMENTO"])
+                status_class = "pass" if is_pass else "fail"
+                
+                html += f"""
+                <div class='verification-step'>
+                    <h5>🔍 {verificacao_step['titulo']}</h5>
+                    <p><strong>Comparação:</strong> {verificacao_step['texto']}</p>
+                    <p class='conclusion {status_class}'>{verificacao_step['conclusao']}</p>
+                    <p><strong>Classificação:</strong> {verificacao_step['regime']}</p>
+                </div>
+                """
 
-    # Renderiza o cálculo final do momento/força resistente
     if details_dict.get('Mrdx_calc') or details_dict.get('Vrd_calc'):
         final_calc_key = 'Mrdx_calc' if 'Mrdx_calc' in details_dict else 'Vrd_calc'
         final_calc_info = details_dict[final_calc_key]
         html += _render_calculation_step(final_calc_info)
     
-    # Renderiza verificações adicionais (ex: limite de plastificação para FLT)
     if 'verificacao_limite' in details_dict:
         limite_info = details_dict['verificacao_limite']
         html += f"<h5>⚖️ {limite_info['desc']}</h5><div class='verification-step'>{limite_info['texto']}</div>"
     
     html += "</div>"
     
-    # Renderiza a verificação de eficiência final para esta seção
     res_val = details_dict.get(res_key, 0)
     solicitante_display = solicitante_val / 100 if solicitante_unit == "kNm" else solicitante_val
     
@@ -1313,35 +1567,84 @@ def _render_resistance_calc_section(title, solicitante_val, solicitante_sym, sol
     
     return html
 
+def _render_verification_step(step_dict):
+    """Renderiza um bloco de verificação (comparação) no memorial."""
+    desc = step_dict.get('desc', 'Verificação')
+    lhs_val = step_dict.get('lhs_value', 0)
+    rhs_val = step_dict.get('rhs_value', 0)
+    comparator = step_dict.get('comparator', '<')
+    passed = step_dict.get('passed', False)
+    
+    status_text = "ATENDE" if passed else "NÃO ATENDE"
+    status_class = "pass" if passed else "fail"
+    conclusion = step_dict.get('conclusion_pass', '') if passed else step_dict.get('conclusion_fail', '')
+
+    html = f"""
+    <h5><span style="font-size: 0.8em; color: #6b7280;">Passo de Verificação</span><br>📊 {desc}</h5>
+    <div class="verification-step">
+        <p class="formula" style="font-size: 1.2em;">
+            $$ {lhs_val:.2f} \\, {comparator} \\, {rhs_val:.2f} $$
+        </p>
+        <div class="final-status {status_class}" style="font-size: 1.1em; padding: 0.75rem; text-transform: none;">Resultado: {status_text}</div>
+        <p style="text-align: center; margin-top: 1rem;"><b>Conclusão:</b> {conclusion}</p>
+    </div>
+    """
+    return html
+
 def _render_calculation_step(step_dict):
-    """Helper para renderizar um passo de cálculo com fórmula e valor."""
-    formula_simbolica = step_dict['formula']
-    formula_numerica = step_dict['formula']
-    
-    for var, val_num in step_dict['valores'].items():
-        if isinstance(val_num, (int, float)):
-            val_str = f"{val_num:.2f}" if val_num != int(val_num) else f"{val_num:.0f}"
-        else:
-            val_str = str(val_num)
-        formula_numerica = formula_numerica.replace(var, f"\\mathbf{{{val_str}}}")
-    
-    valor_final = step_dict['valor']
+    """
+    Renderiza um passo de cálculo de forma padronizada e explícita:
+    1. Fórmula Simbólica
+    2. Fórmula Numérica com substituições = Resultado
+    """
+    desc = step_dict.get('desc', 'Cálculo')
+    formula_simbolica = step_dict.get('formula', '')
+    valores = step_dict.get('valores', {})
+    formula_expandida = step_dict.get('formula_expandida')
+    valor_final = step_dict.get('valor')
     unidade = step_dict.get('unidade', '')
-    
+    ref = f"<p class='ref-norma'>{step_dict.get('ref', '')}</p>" if step_dict.get('ref') else ""
+    nota = step_dict.get('nota', '')
+
+    valor_final_str = ""
     if isinstance(valor_final, (int, float)):
         if valor_final == float('inf'):
             valor_final_str = "\\infty"
         else:
-            valor_final_str = f"{valor_final:.2f}" if valor_final != int(valor_final) else f"{valor_final:.0f}"
-    else:
+            if abs(valor_final) > 0.01 or valor_final == 0:
+                valor_final_str = f"{valor_final:.2f}"
+            else:
+                valor_final_str = f"{valor_final:.4f}"
+    elif valor_final is not None:
         valor_final_str = str(valor_final)
+
+    formula_numerica_final = None
+    if formula_expandida:
+        formula_numerica_final = formula_expandida
+    elif valores:
+        formula_numerica = formula_simbolica
+        for var, val_num in valores.items():
+            if isinstance(val_num, (int, float)):
+                if abs(val_num) > 0.01 or val_num == 0: val_str = f"{val_num:.2f}"
+                else: val_str = f"{val_num:.3f}"
+            else:
+                val_str = str(val_num)
+            formula_numerica = formula_numerica.replace(var, f"\\mathbf{{{val_str}}}")
+        formula_numerica_final = formula_numerica
     
-    ref = f"<p class='ref-norma'>{step_dict.get('ref', '')}</p>" if step_dict.get('ref') else ""
+    titulo = f"<h6>{desc}</h6>" if '(' in desc else f"<h5>📏 {desc}</h5>"
     
-    return f"""<h5>📏 {step_dict['desc']}</h5>
-             <p class="formula">$${formula_simbolica}$$</p>
-             <p class="formula">$${formula_numerica} = \\mathbf{{{valor_final_str}}} \\, {unidade}$$</p>
-             {ref}"""
+    html_output = f"""{titulo}
+                    <p class="formula">$${formula_simbolica}$$</p>"""
+    
+    if formula_numerica_final:
+        html_output += f"""<p class="formula">$${formula_numerica_final} = \\mathbf{{{valor_final_str}}} \\, {unidade}$$</p>"""
+    elif valor_final is not None:
+          html_output += f"""<p class="formula">$${formula_simbolica} = \\mathbf{{{valor_final_str}}} \\, {unidade}$$</p>"""
+
+    html_output += f"{ref}{nota}"
+    
+    return html_output
 
 # ==============================================================================
 # 5. APLICAÇÃO PRINCIPAL STREAMLIT (REESTRUTURADA)
@@ -1354,6 +1657,8 @@ def main():
         st.session_state.detailed_analysis_html = None
     if 'analysis_mode' not in st.session_state:
         st.session_state.analysis_mode = "batch"
+    if 'profile_efficiency_chart' not in st.session_state:
+        st.session_state.profile_efficiency_chart = None
 
     all_sheets = load_data_from_local_file()
     if not all_sheets:
@@ -1379,7 +1684,10 @@ def main():
         st.markdown("### ⚖️ Carregamento")
         input_mode = st.radio("Método de entrada:", ("Calcular a partir de Cargas na Viga", "Inserir Esforços Manualmente"), key='input_mode')
 
-        Msd, Vsd, q_serv_kn_cm, p_load_serv, input_details_html = 0, 0, 0, None, ""
+        Msd, Vsd, q_serv_kn_cm, p_load_serv = 0, 0, 0, None
+        q_ult_kn_cm, p_load_ult = 0, None
+        detalhes_esforcos_memorial = {}
+        
         if input_mode == "Calcular a partir de Cargas na Viga":
             with st.container(border=True):
                 st.subheader("Carga Distribuída (q)")
@@ -1399,19 +1707,43 @@ def main():
                 q_serv_kn_cm = q_servico_kn_m / 100.0
                 q_ult_kn_cm = q_serv_kn_cm * gamma_f
                 p_load_ult = (p_load_serv[0] * gamma_f, p_load_serv[1]) if p_load_serv else None
-                Msd, Vsd, detalhes_esforcos = calcular_esforcos_viga(tipo_viga, L_cm, q_ult_kn_cm, p_load_ult)
+                Msd, Vsd, detalhes_esforcos_internos, _ = calcular_esforcos_viga(tipo_viga, L_cm, q_ult_kn_cm, p_load_ult)
+                detalhes_esforcos_memorial = {
+                    'input_mode': input_mode, 'tipo_viga': tipo_viga,
+                    'larg_esq_cm': larg_esq_cm, 'larg_dir_cm': larg_dir_cm, 'larg_inf_total_m': larg_inf_total_m,
+                    'carga_area': carga_area, 'q_servico_kn_m': q_servico_kn_m, 'gamma_f': gamma_f,
+                    'q_ult_kn_cm': q_ult_kn_cm, 'p_load_serv': p_load_serv, 'p_load_ult': p_load_ult,
+                    'detalhes_esforcos': detalhes_esforcos_internos, 'Msd': Msd, 'Vsd': Vsd, 'L_cm': L_cm
+                }
         else:
             with st.container(border=True):
-                st.warning("No modo manual, a verificação de flecha (ELS) não é realizada.")
+                st.warning("No modo manual, a verificação de flecha (ELS) e o cálculo automático de Cb não são realizados.")
                 msd_input = st.number_input("Momento Solicitante de Cálculo (Msd, kNm)", min_value=0.0, value=100.0, key='msd_input')
                 Msd = msd_input * 100
                 Vsd = st.number_input("Força Cortante Solicitante de Cálculo (Vsd, kN)", min_value=0.0, value=50.0, key='vsd_input')
+            detalhes_esforcos_memorial = {
+                'input_mode': input_mode, 'Msd': Msd, 'Vsd': Vsd, 'L_cm': L_cm
+            }
         
         st.markdown("---")
         st.markdown("### 🔩 Parâmetros do Aço e Viga")
+        E_aco_input = st.number_input("Módulo de Elasticidade (E, kN/cm²)", value=20000.0, step=100.0, key='E_aco_input')
         fy_aco = st.number_input("Tensão de Escoamento (fy, kN/cm²)", 20.0, 50.0, 34.5, 0.5, key='fy_aco')
         Lb_projeto = st.number_input("Comprimento Destravado (Lb, cm)", 10.0, value=L_cm, step=10.0, key='Lb_projeto')
-        Cb_projeto = st.number_input("Fator de Modificação (Cb)", 1.0, 3.0, 1.10, key='Cb_projeto')
+        
+        # --- AJUSTE: CÁLCULO DO CB AGORA É MANUAL POR PADRÃO ---
+        cb_modo_auto = st.checkbox("Calcular Cb automaticamente?", value=False, disabled=(input_mode == "Inserir Esforços Manualmente"))
+        Cb_projeto = 0
+        detalhes_cb_memorial = None
+        
+        if cb_modo_auto: # Se o usuário marcar a caixa
+            Cb_projeto, detalhes_cb_memorial = calcular_cb(tipo_viga, L_cm, q_ult_kn_cm, p_load_ult)
+            st.info(f"Fator Cb calculado: **{Cb_projeto:.2f}**")
+        else: # Se a caixa não estiver marcada (padrão)
+            Cb_projeto = st.number_input("Fator de Modificação (Cb)", 1.0, 3.0, 1.10, key='Cb_projeto')
+            detalhes_cb_memorial = {'formula_simbolica': 'N/A', 'momentos': {}}
+            if input_mode == "Inserir Esforços Manualmente":
+                st.caption("Cálculo automático de Cb indisponível no modo manual.")
         
         with st.container(border=True):
             st.subheader("Enrijecedores de Alma")
@@ -1425,7 +1757,23 @@ def main():
         limite_flecha_divisor = st.selectbox("Limite de Flecha (L/x)", (180, 250, 350, 500), index=2, key='limite_flecha_divisor')
 
     projeto_info = {'nome': projeto_nome, 'engenheiro': engenheiro, 'data': data_projeto.strftime('%d/%m/%Y'), 'revisao': revisao}
-    input_params = {'tipo_viga': tipo_viga, 'L_cm': L_cm, 'input_mode': input_mode,'Msd': Msd, 'Vsd': Vsd, 'q_serv_kn_cm': q_serv_kn_cm, 'p_load_serv': p_load_serv, 'fy_aco': fy_aco, 'Lb_projeto': Lb_projeto, 'Cb_projeto': Cb_projeto,'input_details_html': input_details_html, 'usa_enrijecedores': usa_enrijecedores, 'a_enr': a_enr, 'limite_flecha_divisor': limite_flecha_divisor, 'projeto_info': projeto_info}
+    input_params = {
+        'tipo_viga': tipo_viga, 'L_cm': L_cm, 'input_mode': input_mode, 'Msd': Msd, 'Vsd': Vsd,
+        'q_serv_kn_cm': q_serv_kn_cm, 'p_load_serv': p_load_serv, 'fy_aco': fy_aco, 
+        'Lb_projeto': Lb_projeto, 'Cb_projeto': Cb_projeto, 'detalhes_esforcos_memorial': detalhes_esforcos_memorial, 
+        'usa_enrijecedores': usa_enrijecedores, 'a_enr': a_enr, 'limite_flecha_divisor': limite_flecha_divisor, 
+        'projeto_info': projeto_info, 'cb_modo_auto': cb_modo_auto, 'detalhes_cb_memorial': detalhes_cb_memorial,
+        'E_aco': E_aco_input # Novo parâmetro adicionado
+    }
+    
+    if input_mode == "Calcular a partir de Cargas na Viga":
+        input_params.update({
+            'larg_esq_cm': larg_esq_cm, 'larg_dir_cm': larg_dir_cm, 'larg_inf_total_m': larg_inf_total_m,
+            'carga_area': carga_area, 'q_servico_kn_m': q_servico_kn_m, 'gamma_f': gamma_f,
+            'q_ult_kn_cm': q_ult_kn_cm, 'p_load_ult': p_load_ult,
+        })
+    else:
+        input_params.update({'q_ult_kn_cm': 0, 'p_load_ult': None})
 
     create_metrics_dashboard(input_params)
 
@@ -1477,6 +1825,9 @@ def main():
             run_detailed_analysis(df_selecionado, perfil_selecionado_nome, selected_display_name, input_params)
         
         if st.session_state.detailed_analysis_html:
+            st.subheader("📊 Resumo Visual da Análise")
+            st.plotly_chart(st.session_state.profile_efficiency_chart, use_container_width=True)
+            
             st.subheader("📄 Visualização do Memorial")
             with st.expander("Clique para expandir ou recolher o memorial", expanded=True):
                 st.components.v1.html(st.session_state.detailed_analysis_html, height=1000, scrolling=True)
@@ -1496,16 +1847,50 @@ def run_detailed_analysis(df, perfil_nome, perfil_tipo_display, input_params):
 
             tipo_fabricacao = "Soldado" if "Soldado" in perfil_tipo_display else "Laminado"
 
+            esforcos_html = _render_esforcos_viga_section(input_params['detalhes_esforcos_memorial'])
+            
+            cb_calc_html = ""
+            if input_params.get('cb_modo_auto'):
+                cb_calc_html = _render_cb_calc_section(input_params['detalhes_cb_memorial'], input_params['Cb_projeto'], input_params['input_mode'])
+
             res_flt, res_flm, res_fla, res_cis, res_flecha, passo_a_passo = perform_all_checks(
                 props=props, detalhado=True, tipo_fabricacao=tipo_fabricacao, **input_params
             )
             
+            eficiencias = {
+                "FLT": res_flt['eficiencia'],
+                "FLM": res_flm['eficiencia'],
+                "FLA": res_fla['eficiencia'],
+                "Cisalhamento": res_cis['eficiencia'],
+                "Flecha": res_flecha['eficiencia'],
+            }
+            st.session_state.profile_efficiency_chart = create_profile_efficiency_chart(perfil_nome, eficiencias)
+            
             resumo_html = build_summary_html(input_params['Msd'], input_params['Vsd'], res_flt, res_flm, res_fla, res_cis, res_flecha)
-            resultados = {'resumo_html': resumo_html, 'passo_a_passo_html': passo_a_passo}
+            resultados = {'resumo_html': resumo_html, 'passo_a_passo_html': passo_a_passo, 'esforcos_html': esforcos_html, 'cb_calc_html': cb_calc_html}
             
             html_content = create_professional_memorial_html(
-                perfil_nome, perfil_tipo_display, resultados, 
-                input_params['input_details_html'], input_params['projeto_info']
+                perfil_nome, perfil_tipo_display, resultados,
+                f"""
+                <div style="text-align: left;">
+                    <p><strong>Módulo de Elasticidade (E):</strong> {input_params['E_aco']:.2f} kN/cm²</p>
+                    <p><strong>Tensão de Escoamento (fy):</strong> {input_params['fy_aco']:.2f} kN/cm²</p>
+                    <p><strong>Altura total (d):</strong> {perfil_series.get('d (mm)'):.2f} mm</p>
+                    <p><strong>Largura da Mesa (bf):</strong> {perfil_series.get('bf (mm)'):.2f} mm</p>
+                    <p><strong>Espessura da Alma (tw):</strong> {perfil_series.get('tw (mm)'):.2f} mm</p>
+                    <p><strong>Espessura da Mesa (tf):</strong> {perfil_series.get('tf (mm)'):.2f} mm</p>
+                    <p><strong>Altura da Alma (h):</strong> {perfil_series.get('h (mm)'):.2f} mm</p>
+                    <p><strong>Área (A):</strong> {perfil_series.get('Área (cm2)'):.2f} cm²</p>
+                    <p><strong>Inércia Ix:</strong> {perfil_series.get('Ix (cm4)'):.2f} cm⁴</p>
+                    <p><strong>Módulo de Seção Elástico (Wx):</strong> {perfil_series.get('Wx (cm3)'):.2f} cm³</p>
+                    <p><strong>Raio de Giração (rx):</strong> {props.get('rx'):.2f} cm</p>
+                    <p><strong>Módulo de Seção Plástico (Zx):</strong> {props.get('Zx'):.2f} cm³</p>
+                    <p><strong>Inércia Iy:</strong> {props.get('Iy'):.2f} cm⁴</p>
+                    <p><strong>Raio de Giração (ry):</strong> {props.get('ry'):.2f} cm</p>
+                    <p><strong>Constante de Torção (J):</strong> {props.get('J'):.2f} cm⁴</p>
+                    <p><strong>Constante de Empenamento (Cw):</strong> {props.get('Cw'):.2f} cm⁶</p>
+                </div>
+                """, input_params['projeto_info']
             )
             st.session_state.detailed_analysis_html = html_content
         except Exception as e:
@@ -1535,17 +1920,16 @@ def run_batch_analysis(all_sheets, input_params):
                     status_geral = "REPROVADO"
                 
                 all_results.append({
-                    'Tipo': sheet_name, 'Perfil': row['Bitola (mm x kg/m)'], 
-                    'Peso (kg/m)': props.get('Peso', 0), 'Status': status_geral, 
+                    'Tipo': sheet_name, 'Perfil': row['Bitola (mm x kg/m)'],
+                    'Peso (kg/m)': props.get('Peso', 0), 'Status': status_geral,
                     'Ef. FLT (%)': res_flt['eficiencia'], 'Ef. FLM (%)': res_flm['eficiencia'],
-                    'Ef. FLA (%)': res_fla['eficiencia'], 'Ef. Cisalhamento (%)': res_cis['eficiencia'], 
+                    'Ef. FLA (%)': res_fla['eficiencia'], 'Ef. Cisalhamento (%)': res_cis['eficiencia'],
                     'Ef. Flecha (%)': res_flecha['eficiencia']
                 })
             except (ValueError, KeyError):
                 continue
     progress_bar.empty()
     st.session_state.analysis_results = pd.DataFrame(all_results) if all_results else pd.DataFrame()
-
 
 if __name__ == '__main__':
     main()
