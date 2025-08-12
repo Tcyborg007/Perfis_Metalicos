@@ -1650,6 +1650,8 @@ def _render_calculation_step(step_dict):
 # 5. APLICAÇÃO PRINCIPAL STREAMLIT (REESTRUTURADA)
 # ==============================================================================
 
+import base64 # Importe a biblioteca base64 para a opção de download em HTML
+
 def main():
     if 'analysis_results' not in st.session_state:
         st.session_state.analysis_results = None
@@ -1738,7 +1740,6 @@ def main():
             key='Lb_projeto'
         )
         
-        # --- AJUSTE: CÁLCULO DO CB AGORA É MANUAL POR PADRÃO ---
         cb_modo_auto = st.checkbox("Calcular Cb automaticamente?", value=False, disabled=(input_mode == "Inserir Esforços Manualmente"))
         Cb_projeto = 0
         detalhes_cb_memorial = None
@@ -1810,6 +1811,12 @@ def main():
                         st.plotly_chart(create_top_profiles_chart(df_aprovados_cat), use_container_width=True)
                         with st.expander(f"Ver todos os {len(df_aprovados_cat)} perfis aprovados"):
                             st.dataframe(style_classic_dataframe(df_aprovados_cat), use_container_width=True)
+                            
+                            # Botão de download para o HTML estilizado
+                            styled_df_html = style_classic_dataframe(df_aprovados_cat).to_html()
+                            b64 = base64.b64encode(styled_df_html.encode()).decode()
+                            href = f'<a href="data:text/html;base64,{b64}" download="tabela_aprovados_{sheet_name}.html">📥 Baixar Tabela HTML (com cores)</a>'
+                            st.markdown(href, unsafe_allow_html=True)
                     else:
                         st.info("Nenhum perfil aprovado nesta categoria.")
 
@@ -1837,7 +1844,7 @@ def main():
 
             with st.expander("📄 Visualização do Memorial", expanded=True):
                 st.components.v1.html(st.session_state.detailed_analysis_html, height=3000, width=2500, scrolling=True)
-
+            
             # O botão de download foi movido para fora do expander,
             # mas ainda dentro do if que verifica se o memorial existe.
             # Isso garante que ele apareça logo abaixo do expander.
@@ -1849,8 +1856,6 @@ def main():
                 use_container_width=True
             )
 
-
-            
 def run_detailed_analysis(df, perfil_nome, perfil_tipo_display, input_params):
     with st.spinner(f"Gerando análise completa para {perfil_nome}..."):
         try:
@@ -1944,14 +1949,7 @@ def run_batch_analysis(all_sheets, input_params):
     st.session_state.analysis_results = pd.DataFrame(all_results) if all_results else pd.DataFrame()
 
 if __name__ == '__main__':
-
     main()
-
-
-
-
-
-
 
 
 
