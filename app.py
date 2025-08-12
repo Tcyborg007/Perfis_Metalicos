@@ -1235,12 +1235,12 @@ def create_profile_efficiency_chart(perfil_nome, eficiencias):
         template='plotly_white',
     )
     return fig
-
+brazilia_tz = pytz.timezone('America/Sao_Paulo')
 def create_professional_memorial_html(perfil_nome, perfil_tipo, resultados, input_details, projeto_info):
     conteudo_memorial = f"""
     <h2>1. Resumo Executivo</h2>
     <div class="result-highlight">{resultados['resumo_html']}</div>
-    brazilia_tz = pytz.timezone('America/Sao_Paulo')
+    
 
     <h2>2. Dados de Entrada e Solicitações</h2>
     <div class="info-card">
@@ -2005,4 +2005,5 @@ def run_batch_analysis(all_sheets, input_params):
 
 if __name__ == '__main__':
     main()
+
 
