@@ -1817,34 +1817,38 @@ def main():
                         with st.expander(f"Ver os {len(df_reprovados_cat)} perfis reprovados"):
                             st.dataframe(style_classic_dataframe(df_reprovados_cat), use_container_width=True)
 
-    elif st.session_state.analysis_mode == "detailed":
+elif st.session_state.analysis_mode == "detailed":
         st.header("📋 Memorial Detalhado")
         display_names = [PROFILE_TYPE_MAP.get(name, name) for name in all_sheets.keys()]
         reverse_name_map = {v: k for k, v in PROFILE_TYPE_MAP.items()}
-        
+
         col1, col2 = st.columns(2)
         selected_display_name = col1.selectbox("Selecione o Tipo de Perfil:", display_names)
         sheet_name = reverse_name_map.get(selected_display_name, selected_display_name)
         df_selecionado = all_sheets[sheet_name]
         perfil_selecionado_nome = col2.selectbox("Selecione o Perfil Específico:", df_selecionado['Bitola (mm x kg/m)'])
-        
+
         if st.button("📄 Gerar Memorial Completo", type="primary", use_container_width=True):
             run_detailed_analysis(df_selecionado, perfil_selecionado_nome, selected_display_name, input_params)
-        
+
         if st.session_state.detailed_analysis_html:
             st.subheader("📊 Resumo Visual da Análise")
             st.plotly_chart(st.session_state.profile_efficiency_chart, use_container_width=True)
-            
+
             st.subheader("📄 Visualização do Memorial")
             with st.expander("Clique para expandir ou recolher o memorial", expanded=True):
                 st.components.v1.html(st.session_state.detailed_analysis_html, height=1000, width=2000, scrolling=True)
-                st.download_button(
-                    label="📥 Baixar Memorial em HTML",
-                    data=st.session_state.detailed_analysis_html.encode('utf-8'),
-                    file_name=f"Memorial_{perfil_selecionado_nome.replace(' ', '_')}.html",
-                    mime="text/html",
-                    use_container_width=True
-                )
+
+            # O botão de download foi movido para fora do expander,
+            # mas ainda dentro do if que verifica se o memorial existe.
+            # Isso garante que ele apareça logo abaixo do expander.
+            st.download_button(
+                label="📥 Baixar Memorial em HTML",
+                data=st.session_state.detailed_analysis_html.encode('utf-8'),
+                file_name=f"Memorial_{perfil_selecionado_nome.replace(' ', '_')}.html",
+                mime="text/html",
+                use_container_width=True
+            )
 
 def run_detailed_analysis(df, perfil_nome, perfil_tipo_display, input_params):
     with st.spinner(f"Gerando análise completa para {perfil_nome}..."):
@@ -1941,5 +1945,6 @@ def run_batch_analysis(all_sheets, input_params):
 if __name__ == '__main__':
 
     main()
+
 
 
