@@ -1836,7 +1836,7 @@ def main():
                 st.plotly_chart(st.session_state.profile_efficiency_chart, use_container_width=True)
 
             with st.expander("📄 Visualização do Memorial", expanded=True):
-                st.components.v1.html(st.session_state.detailed_analysis_html, height=1500, width=100, scrolling=True)
+                st.components.v1.html(st.session_state.detailed_analysis_html, height=2000, width=2500, scrolling=True)
 
             # O botão de download foi movido para fora do expander,
             # mas ainda dentro do if que verifica se o memorial existe.
@@ -1946,6 +1946,7 @@ def run_batch_analysis(all_sheets, input_params):
 if __name__ == '__main__':
 
     main()
+
 
 
 
