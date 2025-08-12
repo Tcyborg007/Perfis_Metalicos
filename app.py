@@ -3,6 +3,10 @@ import pandas as pd
 import math
 import plotly.graph_objects as go
 from datetime import datetime
+import io
+import openpyxl
+from openpyxl.styles import PatternFill
+import base64 # Manter, pois é útil para downloads em geral
 
 # ==============================================================================
 # 1. CONFIGURAÇÕES E CONSTANTES GLOBAIS APRIMORADAS
@@ -620,10 +624,10 @@ def _calcular_mrdx_flt(props, Lb, Cb, fy, E):
             
             detalhes['verificacao_limite'] = {
                 'desc': 'Verificação do Limite de Plastificação',
-                'texto': f"""A norma limita a resistência pelo momento de plastificação:
-                        $$M_{{rd,calc}} = {Mrdx_calc/100:.2f} \\, kNm$$
-                        $$M_{{p,rd}} = \\frac{{M_p}}{{\\gamma_{{a1}}}} = {Mp_gamma/100:.2f} \\, kNm$$
-                        $$M_{{rd}} = \\min(M_{{rd,calc}}; M_{{p,rd}}) = \\mathbf{{{Mrdx/100:.2f}}} \\, kNm$$"""
+                'texto': f"""
+                    $M_{{rd,calc}} = {Mrdx_calc/100:.2f} \\, kNm$
+                    $M_{{p,rd}} = \\frac{{M_p}}{{\\gamma_{{a1}}}} = {Mp_gamma/100:.2f} \\, kNm$
+                    $M_{{rd}} = \\min(M_{{rd,calc}}; M_{{p,rd}}) = \\mathbf{{{Mrdx/100:.2f}}} \\, kNm$"""
             }
         else:
             verificacao_texto = f"λ = {lambda_val:.2f} > λr = {lambda_r:.2f}"
@@ -1065,6 +1069,55 @@ def _calcular_vrd(props, fy, usa_enrijecedores, a_enr, E):
 # 3. FUNÇÕES DE GERAÇÃO DE INTERFACE E GRÁFICOS
 # ==============================================================================
 
+def create_excel_with_colors(df_list, sheet_names):
+    """
+    Cria um arquivo Excel com múltiplas abas, aplicando formatação de cores
+    baseada na eficiência dos perfis.
+    """
+    output = io.BytesIO()
+    workbook = openpyxl.Workbook()
+
+    # Remova a folha padrão criada automaticamente
+    if 'Sheet' in workbook.sheetnames:
+        workbook.remove(workbook['Sheet'])
+
+    for df, sheet_name in zip(df_list, sheet_names):
+        sheet = workbook.create_sheet(title=sheet_name)
+
+        # Escreva os cabeçalhos
+        for col_idx, col_name in enumerate(df.columns, 1):
+            sheet.cell(row=1, column=col_idx, value=col_name)
+
+        # Defina os estilos de cores
+        fill_fail = PatternFill(start_color='F8D7DA', end_color='F8D7DA', fill_type='solid') # Vermelho
+        fill_warning_high = PatternFill(start_color='FFEBAE', end_color='FFEBAE', fill_type='solid') # Amarelo escuro (95-100%)
+        fill_warning_low = PatternFill(start_color='FFF3CD', end_color='FFF3CD', fill_type='solid') # Amarelo claro (80-95%)
+        fill_pass = PatternFill(start_color='D4EDDA', end_color='D4EDDA', fill_type='solid') # Verde
+        
+        # Escreva os dados e aplique as cores
+        for row_idx, row_data in enumerate(df.itertuples(index=False), 2):
+            for col_idx, value in enumerate(row_data, 1):
+                cell = sheet.cell(row=row_idx, column=col_idx, value=value)
+                
+                # Regras de formatação para as colunas de eficiência
+                if 'Ef.' in df.columns[col_idx-1]:
+                    try:
+                        efficiency = float(value)
+                        if efficiency > 100.1:
+                            cell.fill = fill_fail
+                        elif efficiency > 95:
+                            cell.fill = fill_warning_high
+                        elif efficiency > 80:
+                            cell.fill = fill_warning_low
+                        else:
+                            cell.fill = fill_pass
+                    except (ValueError, TypeError):
+                        pass
+
+    workbook.save(output)
+    output.seek(0)
+    return output
+
 def create_professional_header():
     st.markdown("""
     <div class="pro-header">
@@ -1148,38 +1201,6 @@ def create_top_profiles_chart(df_approved, top_n=10):
     fig.update_layout(
         title={'text': f'🏆 Top {top_n} Perfis Mais Leves (Aprovados)', 'x': 0.5},
         xaxis_title='Peso (kg/m)', yaxis_title='Perfil', template='plotly_white', height=500, margin=dict(l=150)
-    )
-    return fig
-
-def create_profile_efficiency_chart(perfil_nome, eficiencias):
-    """
-    Cria um gráfico de barras comparando as eficiências de um perfil.
-    """
-    labels = list(eficiencias.keys())
-    values = [min(v, 150) for v in eficiencias.values()]
-    
-    colors = ['#1e40af' if v < 90 else '#60a5fa' if v <= 100 else '#ef4444' for v in values]
-    
-    fig = go.Figure(data=[
-        go.Bar(
-            x=labels,
-            y=values,
-            text=[f'{v:.1f}%' for v in eficiencias.values()],
-            textposition='auto',
-            marker_color=colors
-        )
-    ])
-    
-    fig.add_hline(y=100, line_dash="dash", line_color="#10b981", 
-                    annotation_text="Limite de Aprovação (100%)", 
-                    annotation_position="bottom right")
-
-    fig.update_layout(
-        title=f'Análise de Eficiência para o Perfil: {perfil_nome}',
-        yaxis_title='Eficiência (%)',
-        xaxis_title='Verificação',
-        yaxis_range=[0, max(max(values), 100) + 10],
-        template='plotly_white',
     )
     return fig
 
@@ -1650,8 +1671,6 @@ def _render_calculation_step(step_dict):
 # 5. APLICAÇÃO PRINCIPAL STREAMLIT (REESTRUTURADA)
 # ==============================================================================
 
-import base64 # Importe a biblioteca base64 para a opção de download em HTML
-
 def main():
     if 'analysis_results' not in st.session_state:
         st.session_state.analysis_results = None
@@ -1807,16 +1826,22 @@ def main():
                     df_aprovados_cat = df_type[df_type['Status'] == 'APROVADO'].copy().sort_values(by='Peso (kg/m)')
                     df_reprovados_cat = df_type[df_type['Status'] == 'REPROVADO'].copy().sort_values(by='Peso (kg/m)')
 
+                    # Botão de download para todos os resultados em uma aba (ou em abas separadas)
+                    if not df_type.empty:
+                        df_total = pd.concat([df_aprovados_cat, df_reprovados_cat])
+                        excel_data = create_excel_with_colors([df_total], [f"{sheet_name}_Resultados"])
+                        st.download_button(
+                            label=f"📥 Baixar todos os resultados ({sheet_name}) em XLSX",
+                            data=excel_data,
+                            file_name=f"resultados_{sheet_name}.xlsx",
+                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                            use_container_width=True
+                        )
+
                     if not df_aprovados_cat.empty:
                         st.plotly_chart(create_top_profiles_chart(df_aprovados_cat), use_container_width=True)
                         with st.expander(f"Ver todos os {len(df_aprovados_cat)} perfis aprovados"):
                             st.dataframe(style_classic_dataframe(df_aprovados_cat), use_container_width=True)
-                            
-                            # Botão de download para o HTML estilizado
-                            styled_df_html = style_classic_dataframe(df_aprovados_cat).to_html()
-                            b64 = base64.b64encode(styled_df_html.encode()).decode()
-                            href = f'<a href="data:text/html;base64,{b64}" download="tabela_aprovados_{sheet_name}.html">📥 Baixar Tabela HTML (com cores)</a>'
-                            st.markdown(href, unsafe_allow_html=True)
                     else:
                         st.info("Nenhum perfil aprovado nesta categoria.")
 
@@ -1845,9 +1870,6 @@ def main():
             with st.expander("📄 Visualização do Memorial", expanded=True):
                 st.components.v1.html(st.session_state.detailed_analysis_html, height=3000, width=2500, scrolling=True)
             
-            # O botão de download foi movido para fora do expander,
-            # mas ainda dentro do if que verifica se o memorial existe.
-            # Isso garante que ele apareça logo abaixo do expander.
             st.download_button(
                 label="📥 Baixar Memorial em HTML",
                 data=st.session_state.detailed_analysis_html.encode('utf-8'),
@@ -1950,6 +1972,3 @@ def run_batch_analysis(all_sheets, input_params):
 
 if __name__ == '__main__':
     main()
-
-
-
