@@ -1061,59 +1061,9 @@ def _calcular_vrd(props, fy, usa_enrijecedores, a_enr, E):
     detalhes['Vrd'] = Vrd
     return detalhes
 
-
 # ==============================================================================
 # 3. FUNÇÕES DE GERAÇÃO DE INTERFACE E GRÁFICOS
 # ==============================================================================
-
-def create_excel_with_colors(df_list, sheet_names):
-    """
-    Cria um arquivo Excel com múltiplas abas, aplicando formatação de cores
-    baseada na eficiência dos perfis.
-    """
-    output = io.BytesIO()
-    workbook = openpyxl.Workbook()
-
-    # Remova a folha padrão criada automaticamente
-    if 'Sheet' in workbook.sheetnames:
-        workbook.remove(workbook['Sheet'])
-
-    for df, sheet_name in zip(df_list, sheet_names):
-        sheet = workbook.create_sheet(title=sheet_name)
-
-        # Escreva os cabeçalhos
-        for col_idx, col_name in enumerate(df.columns, 1):
-            sheet.cell(row=1, column=col_idx, value=col_name)
-
-        # Defina os estilos de cores
-        fill_fail = PatternFill(start_color='F8D7DA', end_color='F8D7DA', fill_type='solid') # Vermelho
-        fill_warning_high = PatternFill(start_color='FFEBAE', end_color='FFEBAE', fill_type='solid') # Amarelo escuro (95-100%)
-        fill_warning_low = PatternFill(start_color='FFF3CD', end_color='FFF3CD', fill_type='solid') # Amarelo claro (80-95%)
-        fill_pass = PatternFill(start_color='D4EDDA', end_color='D4EDDA', fill_type='solid') # Verde
-        
-        # Escreva os dados e aplique as cores
-        for row_idx, row_data in enumerate(df.itertuples(index=False), 2):
-            for col_idx, value in enumerate(row_data, 1):
-                cell = sheet.cell(row=row_idx, column=col_idx, value=value)
-                
-                # Regras de formatação para as colunas de eficiência
-                if 'Ef.' in df.columns[col_idx-1]:
-                    try:
-                        efficiency = float(value)
-                        if efficiency > 100.1:
-                            cell.fill = fill_fail
-                        elif efficiency > 95:
-                            cell.fill = fill_warning_high
-                        elif efficiency > 80:
-                            cell.fill = fill_warning_low
-                        else:
-                            cell.fill = fill_pass
-                    except (ValueError, TypeError):
-                        pass
-
-    workbook.save(output)
-    output.seek(0)
-    return output
 
 def create_professional_header():
     st.markdown("""
@@ -1198,6 +1148,38 @@ def create_top_profiles_chart(df_approved, top_n=10):
     fig.update_layout(
         title={'text': f'🏆 Top {top_n} Perfis Mais Leves (Aprovados)', 'x': 0.5},
         xaxis_title='Peso (kg/m)', yaxis_title='Perfil', template='plotly_white', height=500, margin=dict(l=150)
+    )
+    return fig
+
+def create_profile_efficiency_chart(perfil_nome, eficiencias):
+    """
+    Cria um gráfico de barras comparando as eficiências de um perfil.
+    """
+    labels = list(eficiencias.keys())
+    values = [min(v, 150) for v in eficiencias.values()]
+    
+    colors = ['#1e40af' if v < 90 else '#60a5fa' if v <= 100 else '#ef4444' for v in values]
+    
+    fig = go.Figure(data=[
+        go.Bar(
+            x=labels,
+            y=values,
+            text=[f'{v:.1f}%' for v in eficiencias.values()],
+            textposition='auto',
+            marker_color=colors
+        )
+    ])
+    
+    fig.add_hline(y=100, line_dash="dash", line_color="#10b981", 
+                    annotation_text="Limite de Aprovação (100%)", 
+                    annotation_position="bottom right")
+
+    fig.update_layout(
+        title=f'Análise de Eficiência para o Perfil: {perfil_nome}',
+        yaxis_title='Eficiência (%)',
+        xaxis_title='Verificação',
+        yaxis_range=[0, max(max(values), 100) + 10],
+        template='plotly_white',
     )
     return fig
 
@@ -1756,6 +1738,7 @@ def main():
             key='Lb_projeto'
         )
         
+        # --- AJUSTE: CÁLCULO DO CB AGORA É MANUAL POR PADRÃO ---
         cb_modo_auto = st.checkbox("Calcular Cb automaticamente?", value=False, disabled=(input_mode == "Inserir Esforços Manualmente"))
         Cb_projeto = 0
         detalhes_cb_memorial = None
@@ -1823,18 +1806,6 @@ def main():
                     df_aprovados_cat = df_type[df_type['Status'] == 'APROVADO'].copy().sort_values(by='Peso (kg/m)')
                     df_reprovados_cat = df_type[df_type['Status'] == 'REPROVADO'].copy().sort_values(by='Peso (kg/m)')
 
-                    # Botão de download para todos os resultados em uma aba (ou em abas separadas)
-                    if not df_type.empty:
-                        df_total = pd.concat([df_aprovados_cat, df_reprovados_cat])
-                        excel_data = create_excel_with_colors([df_total], [f"{sheet_name}_Resultados"])
-                        st.download_button(
-                            label=f"📥 Baixar todos os resultados ({sheet_name}) em XLSX",
-                            data=excel_data,
-                            file_name=f"resultados_{sheet_name}.xlsx",
-                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                            use_container_width=True
-                        )
-
                     if not df_aprovados_cat.empty:
                         st.plotly_chart(create_top_profiles_chart(df_aprovados_cat), use_container_width=True)
                         with st.expander(f"Ver todos os {len(df_aprovados_cat)} perfis aprovados"):
@@ -1866,7 +1837,10 @@ def main():
 
             with st.expander("📄 Visualização do Memorial", expanded=True):
                 st.components.v1.html(st.session_state.detailed_analysis_html, height=3000, width=2500, scrolling=True)
-            
+
+            # O botão de download foi movido para fora do expander,
+            # mas ainda dentro do if que verifica se o memorial existe.
+            # Isso garante que ele apareça logo abaixo do expander.
             st.download_button(
                 label="📥 Baixar Memorial em HTML",
                 data=st.session_state.detailed_analysis_html.encode('utf-8'),
@@ -1875,6 +1849,8 @@ def main():
                 use_container_width=True
             )
 
+
+            
 def run_detailed_analysis(df, perfil_nome, perfil_tipo_display, input_params):
     with st.spinner(f"Gerando análise completa para {perfil_nome}..."):
         try:
@@ -1968,7 +1944,9 @@ def run_batch_analysis(all_sheets, input_params):
     st.session_state.analysis_results = pd.DataFrame(all_results) if all_results else pd.DataFrame()
 
 if __name__ == '__main__':
+
     main()
+
 
 
 
