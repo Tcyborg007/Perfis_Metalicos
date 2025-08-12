@@ -1832,11 +1832,10 @@ def main():
             run_detailed_analysis(df_selecionado, perfil_selecionado_nome, selected_display_name, input_params)
 
         if st.session_state.detailed_analysis_html:
-            st.subheader("📊 Resumo Visual da Análise")
-            st.plotly_chart(st.session_state.profile_efficiency_chart, use_container_width=True)
+            with st.expander("📊 Resumo Visual da Análise", expanded=True):
+                st.plotly_chart(st.session_state.profile_efficiency_chart, use_container_width=True)
 
-            st.subheader("📄 Visualização do Memorial")
-            with st.expander("Clique para expandir ou recolher o memorial", expanded=True):
+            with st.expander("📄 Visualização do Memorial", expanded=True):
                 st.components.v1.html(st.session_state.detailed_analysis_html, height=1000, width=2000, scrolling=True)
 
             # O botão de download foi movido para fora do expander,
@@ -1849,6 +1848,9 @@ def main():
                 mime="text/html",
                 use_container_width=True
             )
+
+
+            
 def run_detailed_analysis(df, perfil_nome, perfil_tipo_display, input_params):
     with st.spinner(f"Gerando análise completa para {perfil_nome}..."):
         try:
@@ -1944,6 +1946,7 @@ def run_batch_analysis(all_sheets, input_params):
 if __name__ == '__main__':
 
     main()
+
 
 
 
