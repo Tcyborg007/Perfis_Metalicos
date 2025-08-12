@@ -1123,7 +1123,7 @@ def create_professional_header():
     <div class="pro-header">
         <h1>🏗️ Calculadora Estrutural</h1>
         <p>Análise de Perfis Metálicos | NBR 8800:2008</p>
-        <p>Desenvoldido por: Otávio Augusto</p>
+        <p>By: Otávio Augusto</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -2006,6 +2006,7 @@ def run_batch_analysis(all_sheets, input_params):
 
 if __name__ == '__main__':
     main()
+
 
 
 
