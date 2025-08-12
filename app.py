@@ -1817,7 +1817,7 @@ def main():
                         with st.expander(f"Ver os {len(df_reprovados_cat)} perfis reprovados"):
                             st.dataframe(style_classic_dataframe(df_reprovados_cat), use_container_width=True)
 
-elif st.session_state.analysis_mode == "detailed":
+    elif st.session_state.analysis_mode == "detailed":
         st.header("📋 Memorial Detalhado")
         display_names = [PROFILE_TYPE_MAP.get(name, name) for name in all_sheets.keys()]
         reverse_name_map = {v: k for k, v in PROFILE_TYPE_MAP.items()}
@@ -1849,7 +1849,6 @@ elif st.session_state.analysis_mode == "detailed":
                 mime="text/html",
                 use_container_width=True
             )
-
 def run_detailed_analysis(df, perfil_nome, perfil_tipo_display, input_params):
     with st.spinner(f"Gerando análise completa para {perfil_nome}..."):
         try:
@@ -1945,6 +1944,7 @@ def run_batch_analysis(all_sheets, input_params):
 if __name__ == '__main__':
 
     main()
+
 
 
 
