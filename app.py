@@ -1726,10 +1726,17 @@ def main():
             }
         
         st.markdown("---")
-        st.markdown("### 🔩 Parâmetros do Aço e Viga")
-        E_aco_input = st.number_input("Módulo de Elasticidade (E, kN/cm²)", value=20000.0, step=100.0, key='E_aco_input')
-        fy_aco = st.number_input("Tensão de Escoamento (fy, kN/cm²)", 20.0, 50.0, 34.5, 0.5, key='fy_aco')
-        Lb_projeto = st.number_input("Comprimento Destravado (Lb, cm)", 10.0, value=L_cm, step=10.0, key='Lb_projeto')
+        st.markdown("### 🔩 Parâmetros do Aço e Viga")
+        E_aco_input = st.number_input("Módulo de Elasticidade (E, kN/cm²)", value=20000.0, step=100.0, key='E_aco_input')
+        fy_aco = st.number_input("Tensão de Escoamento (fy, kN/cm²)", 20.0, 50.0, 34.5, 0.5, key='fy_aco')
+        Lb_projeto = st.number_input(
+            "Comprimento Destravado (Lb, cm)", 
+            min_value=1.0, 
+            max_value=L_cm, 
+            value=L_cm, 
+            step=1.0, 
+            key='Lb_projeto'
+        )
         
         # --- AJUSTE: CÁLCULO DO CB AGORA É MANUAL POR PADRÃO ---
         cb_modo_auto = st.checkbox("Calcular Cb automaticamente?", value=False, disabled=(input_mode == "Inserir Esforços Manualmente"))
@@ -1932,4 +1939,5 @@ def run_batch_analysis(all_sheets, input_params):
     st.session_state.analysis_results = pd.DataFrame(all_results) if all_results else pd.DataFrame()
 
 if __name__ == '__main__':
+
     main()
