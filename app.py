@@ -545,7 +545,7 @@ def _calcular_mrdx_flt(props, Lb, Cb, fy, E):
         }
     else:
         verificacao_texto = f"λ = {lambda_val:.2f} > λp = {lambda_p:.2f}"
-        conclusao_texto = "**SEÇÃO NÃO COMPACTA** - O regime de flambagem é Inelástico ou Elástico."
+        conclusao_texto = "SEÇÃO NÃO COMPACTA - O regime de flambagem é Inelástico ou Elástico."
         detalhes['passos_verificacao'].append({
             'titulo': 'Verificação 1: λ ≤ λp?',
             'texto': verificacao_texto,
@@ -600,7 +600,7 @@ def _calcular_mrdx_flt(props, Lb, Cb, fy, E):
 
         if lambda_val <= lambda_r:
             verificacao_texto = f"λ = {lambda_val:.2f} ≤ λr = {lambda_r:.2f}"
-            conclusao_texto = "**REGIME INELÁSTICO** - Flambagem no regime inelástico."
+            conclusao_texto = "REGIME INELÁSTICO - Flambagem no regime inelástico."
             detalhes['passos_verificacao'].append({
                 'titulo': 'Verificação 2: λ ≤ λr?',
                 'texto': verificacao_texto,
@@ -631,7 +631,7 @@ def _calcular_mrdx_flt(props, Lb, Cb, fy, E):
             }
         else:
             verificacao_texto = f"λ = {lambda_val:.2f} > λr = {lambda_r:.2f}"
-            conclusao_texto = "**REGIME ELÁSTICO** - Flambagem no regime elástico."
+            conclusao_texto = "REGIME ELÁSTICO - Flambagem no regime elástico."
             detalhes['passos_verificacao'].append({
                 'titulo': 'Verificação 2: λ ≤ λr?',
                 'texto': verificacao_texto,
@@ -703,7 +703,7 @@ def _calcular_mrdx_flm(props, fy, tipo_fabricacao, E):
 
     if lambda_val <= lambda_p:
         verificacao_texto = f"λ = {lambda_val:.2f} ≤ λp = {lambda_p:.2f}"
-        conclusao_texto = "**MESA COMPACTA** - Não ocorre flambagem local da mesa."
+        conclusao_texto = "MESA COMPACTA - Não ocorre flambagem local da mesa."
         detalhes['passos_verificacao'].append({
             'titulo': 'Verificação 1: λ ≤ λp?',
             'texto': verificacao_texto,
@@ -722,7 +722,7 @@ def _calcular_mrdx_flm(props, fy, tipo_fabricacao, E):
         }
     else:
         verificacao_texto = f"λ = {lambda_val:.2f} > λp = {lambda_p:.2f}"
-        conclusao_texto = "**MESA NÃO COMPACTA** - Verificar se é semicompacta ou esbelta."
+        conclusao_texto = "MESA NÃO COMPACTA - Verificar se é semicompacta ou esbelta."
         detalhes['passos_verificacao'].append({
             'titulo': 'Verificação 1: λ ≤ λp?',
             'texto': verificacao_texto,
@@ -787,7 +787,7 @@ def _calcular_mrdx_flm(props, fy, tipo_fabricacao, E):
 
         if lambda_val <= lambda_r:
             verificacao_texto = f"λ = {lambda_val:.2f} ≤ λr = {lambda_r:.2f}"
-            conclusao_texto = "**MESA SEMICOMPACTA** - O regime é de transição."
+            conclusao_texto = "MESA SEMICOMPACTA - O regime é de transição."
             detalhes['passos_verificacao'].append({
                 'titulo': 'Verificação 2: λ ≤ λr?',
                 'texto': verificacao_texto,
@@ -806,7 +806,7 @@ def _calcular_mrdx_flm(props, fy, tipo_fabricacao, E):
             }
         else:
             verificacao_texto = f"λ = {lambda_val:.2f} > λr = {lambda_r:.2f}"
-            conclusao_texto = "**MESA ESBELTA** - O regime de flambagem é elástico."
+            conclusao_texto = "MESA ESBELTA - O regime de flambagem é elástico."
             detalhes['passos_verificacao'].append({
                 'titulo': 'Verificação 2: λ ≤ λr?',
                 'texto': verificacao_texto,
@@ -884,7 +884,7 @@ def _calcular_mrdx_fla(props, fy, E):
 
     if lambda_val <= lambda_p:
         verificacao_texto = f"λ = {lambda_val:.2f} ≤ λp = {lambda_p:.2f}"
-        conclusao_texto = "**ALMA COMPACTA** - Não ocorre flambagem local da alma."
+        conclusao_texto = "ALMA COMPACTA - Não ocorre flambagem local da alma."
         detalhes['passos_verificacao'].append({
             'titulo': 'Verificação 1: λ ≤ λp?',
             'texto': verificacao_texto,
@@ -903,7 +903,7 @@ def _calcular_mrdx_fla(props, fy, E):
         }
     else:
         verificacao_texto = f"λ = {lambda_val:.2f} > λp = {lambda_p:.2f}"
-        conclusao_texto = "**ALMA NÃO COMPACTA** - Verificar se é semicompacta ou esbelta."
+        conclusao_texto = "ALMA NÃO COMPACTA - Verificar se é semicompacta ou esbelta."
         detalhes['passos_verificacao'].append({
             'titulo': 'Verificação 1: λ ≤ λp?',
             'texto': verificacao_texto,
@@ -934,7 +934,7 @@ def _calcular_mrdx_fla(props, fy, E):
 
         if lambda_val <= lambda_r:
             verificacao_texto = f"λ = {lambda_val:.2f} ≤ λr = {lambda_r:.2f}"
-            conclusao_texto = "**ALMA SEMICOMPACTA** - O regime é de transição."
+            conclusao_texto = "ALMA SEMICOMPACTA - O regime é de transição."
             detalhes['passos_verificacao'].append({
                 'titulo': 'Verificação 2: λ ≤ λr?',
                 'texto': verificacao_texto,
@@ -953,7 +953,7 @@ def _calcular_mrdx_fla(props, fy, E):
             }
         else:
             verificacao_texto = f"λ = {lambda_val:.2f} > λr = {lambda_r:.2f}"
-            conclusao_texto = "**ALMA ESBELTA** - Regime elástico (Ver Anexo H da NBR 8800)"
+            conclusao_texto = "ALMA ESBELTA - Regime elástico (Ver Anexo H da NBR 8800)"
             detalhes['passos_verificacao'].append({
                 'titulo': 'Verificação 2: λ ≤ λr?',
                 'texto': verificacao_texto,
@@ -2005,5 +2005,6 @@ def run_batch_analysis(all_sheets, input_params):
 
 if __name__ == '__main__':
     main()
+
 
 
