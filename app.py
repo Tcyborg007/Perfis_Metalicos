@@ -1726,7 +1726,7 @@ def main():
             }
         
         st.markdown("---")
-        st.markdown("### 🔩 Parâmetros do Aço e Viga")
+        st.markdown("###🔩Parâmetros do Aço e Viga")
         E_aco_input = st.number_input("Módulo de Elasticidade (E, kN/cm²)", value=20000.0, step=100.0, key='E_aco_input')
         fy_aco = st.number_input("Tensão de Escoamento (fy, kN/cm²)", 20.0, 50.0, 34.5, 0.5, key='fy_aco')
         Lb_projeto = st.number_input(
@@ -1941,5 +1941,6 @@ def run_batch_analysis(all_sheets, input_params):
 if __name__ == '__main__':
 
     main()
+
 
 
