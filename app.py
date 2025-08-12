@@ -525,7 +525,7 @@ def _calcular_mrdx_flt(props, Lb, Cb, fy, E):
 
     if lambda_val <= lambda_p:
         verificacao_texto = f"λ = {lambda_val:.2f} ≤ λp = {lambda_p:.2f}"
-        conclusao_texto = "**SEÇÃO COMPACTA** - O regime de flambagem é Plástico."
+        conclusao_texto = "SEÇÃO COMPACTA - O regime de flambagem é Plástico."
         detalhes['passos_verificacao'].append({
             'titulo': 'Verificação 1: λ ≤ λp?',
             'texto': verificacao_texto,
@@ -1047,18 +1047,18 @@ def _calcular_vrd(props, fy, usa_enrijecedores, a_enr, E):
 
     if lambda_val <= lambda_p:
         Vrd = Vpl / Config.GAMMA_A1
-        detalhes['passos_verificacao'].append({'titulo': 'Verificação 1: λ ≤ λp?', 'texto': f"λ = {lambda_val:.2f} ≤ λp = {lambda_p:.2f}", 'conclusao': "**ESCOAMENTO DA ALMA** - Resistência governada pelo escoamento.", 'regime': 'REGIME PLÁSTICO', 'verif_for_calc': 'lambda_p'})
+        detalhes['passos_verificacao'].append({'titulo': 'Verificação 1: λ ≤ λp?', 'texto': f"λ = {lambda_val:.2f} ≤ λp = {lambda_p:.2f}", 'conclusao': "ESCOAMENTO DA ALMA - Resistência governada pelo escoamento.", 'regime': 'REGIME PLÁSTICO', 'verif_for_calc': 'lambda_p'})
         detalhes['Vrd_calc'] = {'desc': 'Cortante Resistente (Escoamento)', 'formula': 'V_{rd} = \\frac{V_{pl}}{\\gamma_{a1}}', 'valores': {'V_{pl}': Vpl, '\\gamma_{a1}': Config.GAMMA_A1}, 'valor': Vrd, 'unidade': 'kN'}
     else:
-        detalhes['passos_verificacao'].append({'titulo': 'Verificação 1: λ ≤ λp?', 'texto': f"λ = {lambda_val:.2f} > λp = {lambda_p:.2f}", 'conclusao': "**FLAMBAGEM POR CISALHAMENTO** - O regime é Inelástico ou Elástico.", 'regime': 'NECESSÁRIO VERIFICAR REGIME', 'verif_for_calc': 'lambda_p'})
+        detalhes['passos_verificacao'].append({'titulo': 'Verificação 1: λ ≤ λp?', 'texto': f"λ = {lambda_val:.2f} > λp = {lambda_p:.2f}", 'conclusao': "FLAMBAGEM POR CISALHAMENTO - O regime é Inelástico ou Elástico.", 'regime': 'NECESSÁRIO VERIFICAR REGIME', 'verif_for_calc': 'lambda_p'})
         lambda_r = Config.FATOR_LAMBDA_R_VRD * math.sqrt((kv * E) / fy)
         detalhes['passos_calculo'].append({'desc': 'Esbeltez Limite Inelástica (λr)', 'formula': '\\lambda_r = 1,37 \\sqrt{\\frac{k_v \\times E}{f_y}}', 'valores': {'k_v': kv, 'E': E, 'f_y': fy}, 'valor': lambda_r, 'verif_id': 'lambda_r'})
         if lambda_val <= lambda_r:
-            detalhes['passos_verificacao'].append({'titulo': 'Verificação 2: λ ≤ λr?', 'texto': f"λ = {lambda_val:.2f} ≤ λr = {lambda_r:.2f}", 'conclusao': "**FLAMBAGEM INELÁSTICA** - Regime de transição por cisalhamento.", 'regime': 'REGIME INELÁSTICO', 'verif_for_calc': 'lambda_r'})
+            detalhes['passos_verificacao'].append({'titulo': 'Verificação 2: λ ≤ λr?', 'texto': f"λ = {lambda_val:.2f} ≤ λr = {lambda_r:.2f}", 'conclusao': "FLAMBAGEM INELÁSTICA - Regime de transição por cisalhamento.", 'regime': 'REGIME INELÁSTICO', 'verif_for_calc': 'lambda_r'})
             Vrd = (lambda_p / lambda_val) * (Vpl / Config.GAMMA_A1) if lambda_val > 0 else 0
             detalhes['Vrd_calc'] = {'desc': 'Cortante Resistente (Flambagem Inelástica)', 'formula': 'V_{rd} = \\frac{\\lambda_p}{\\lambda} \\times \\frac{V_{pl}}{\\gamma_{a1}}', 'valores': {'\\lambda_p': lambda_p, '\\lambda': lambda_val, 'V_{pl}': Vpl, '\\gamma_{a1}': Config.GAMMA_A1}, 'valor': Vrd, 'unidade': 'kN'}
         else:
-            detalhes['passos_verificacao'].append({'titulo': 'Verificação 2: λ ≤ λr?', 'texto': f"λ = {lambda_val:.2f} > λr = {lambda_r:.2f}", 'conclusao': "**FLAMBAGEM ELÁSTICA** - Regime elástico por cisalhamento.", 'regime': 'REGIME ELÁSTICO', 'verif_for_calc': 'lambda_r'})
+            detalhes['passos_verificacao'].append({'titulo': 'Verificação 2: λ ≤ λr?', 'texto': f"λ = {lambda_val:.2f} > λr = {lambda_r:.2f}", 'conclusao': "FLAMBAGEM ELÁSTICA - Regime elástico por cisalhamento.", 'regime': 'REGIME ELÁSTICO', 'verif_for_calc': 'lambda_r'})
             Vrd = (Config.FATOR_VRD_ELASTICO * (lambda_p / lambda_val)**2) * (Vpl / Config.GAMMA_A1) if lambda_val > 0 else 0
             detalhes['Vrd_calc'] = {'desc': 'Cortante Resistente (Flambagem Elástica)', 'formula': 'V_{rd} = 1,24 (\\frac{\\lambda_p}{\\lambda})^2 \\times \\frac{V_{pl}}{\\gamma_{a1}}', 'valores': {'\\lambda_p': lambda_p, '\\lambda': lambda_val, 'V_{pl}': Vpl, '\\gamma_{a1}': Config.GAMMA_A1}, 'valor': Vrd, 'unidade': 'kN'}
 
@@ -2006,6 +2006,7 @@ def run_batch_analysis(all_sheets, input_params):
 
 if __name__ == '__main__':
     main()
+
 
 
 
