@@ -1161,7 +1161,7 @@ def create_metrics_dashboard(input_params):
             help="Força Cortante Solicitante de Cálculo"
         )
     
-    st.markdown(f"**Fator Cb:** {cb_value:.2f} | **Lb:** {input_params['Lb_projeto']:.2f} cm")
+    st.markdown(f"**Fator Cb:** {cb_value:.2f} | **Lb:** {input_params['Lb_projeto']:.2f} cm" | f"**Flecha Limite:** {limite_flecha_divisor})
 
 def style_classic_dataframe(df):
     """Aplica estilização clássica com cores sólidas ao DataFrame."""
@@ -2006,6 +2006,7 @@ def run_batch_analysis(all_sheets, input_params):
 
 if __name__ == '__main__':
     main()
+
 
 
 
