@@ -7,7 +7,7 @@ import io
 import openpyxl
 from openpyxl.styles import PatternFill
 import base64
-
+import pytz
 # ==============================================================================
 # 1. CONFIGURAÇÕES E CONSTANTES GLOBAIS APRIMORADAS
 # ==============================================================================
@@ -1240,7 +1240,8 @@ def create_professional_memorial_html(perfil_nome, perfil_tipo, resultados, inpu
     conteudo_memorial = f"""
     <h2>1. Resumo Executivo</h2>
     <div class="result-highlight">{resultados['resumo_html']}</div>
-    
+    brazilia_tz = pytz.timezone('America/Sao_Paulo')
+
     <h2>2. Dados de Entrada e Solicitações</h2>
     <div class="info-card">
         <h3>2.1. Propriedades do Perfil e Materiais</h3>
@@ -1272,7 +1273,7 @@ def create_professional_memorial_html(perfil_nome, perfil_tipo, resultados, inpu
         </div>
         {conteudo_memorial}
         <div style="text-align: center; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border); color: var(--text-secondary);">
-            <p>Memorial gerado em {datetime.now().strftime('%d/%m/%Y às %H:%M')}</p>
+            <p>Memorial gerado em {datetime.now(brazilia_tz).strftime('%d/%m/%Y às %H:%M')}</p>
         </div>
     </div></body></html>
     """
@@ -2004,3 +2005,4 @@ def run_batch_analysis(all_sheets, input_params):
 
 if __name__ == '__main__':
     main()
+
