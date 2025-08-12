@@ -1837,7 +1837,7 @@ def main():
             
             st.subheader("📄 Visualização do Memorial")
             with st.expander("Clique para expandir ou recolher o memorial", expanded=True):
-                st.components.v1.html(st.session_state.detailed_analysis_html, height=1000, scrolling=True)
+                st.components.v1.html(st.session_state.detailed_analysis_html, height=1000, width=2000, scrolling=True)
                 st.download_button(
                     label="📥 Baixar Memorial em HTML",
                     data=st.session_state.detailed_analysis_html.encode('utf-8'),
@@ -1941,4 +1941,5 @@ def run_batch_analysis(all_sheets, input_params):
 if __name__ == '__main__':
 
     main()
+
 
