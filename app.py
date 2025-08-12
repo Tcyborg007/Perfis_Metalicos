@@ -13,13 +13,13 @@ import pytz
 # ==============================================================================
 
 st.set_page_config(
-    page_title="🏗️ Calculadora Estrutural Pro - Perfis Metálicos",
+    page_title="🏗️ Calculadora Estrutural - Perfis Metálicos",
     layout="wide",
     initial_sidebar_state="expanded",
     menu_items={
         'Get Help': 'https://www.abnt.org.br',
         'Report a bug': None,
-        'About': "# Calculadora Estrutural Pro\nCálculos baseados na ABNT NBR 8800:2008"
+        'About': "# Calculadora Estrutural\nCálculos baseados na ABNT NBR 8800:2008"
     }
 )
 
@@ -1121,8 +1121,9 @@ def create_excel_with_colors(df_list, sheet_names):
 def create_professional_header():
     st.markdown("""
     <div class="pro-header">
-        <h1>🏗️ Calculadora Estrutural Pro</h1>
-        <p>Análise Avançada de Perfis Metálicos | NBR 8800:2008</p>
+        <h1>🏗️ Calculadora Estrutural</h1>
+        <p>Análise de Perfis Metálicos | NBR 8800:2008</p>
+        <p>Desenvoldido por: Otávio Augusto</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -2005,6 +2006,7 @@ def run_batch_analysis(all_sheets, input_params):
 
 if __name__ == '__main__':
     main()
+
 
 
 
