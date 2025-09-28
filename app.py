@@ -248,6 +248,60 @@ HTML_TEMPLATE_CSS_PRO = """
 </style>
 """
 
+
+
+
+def create_navigation_buttons():
+    """Cria os botões de navegação para voltar ao site principal ou à página de ferramentas."""
+    
+    # URLs completas para os links
+    ferramentas_url = "https://hqengenharia.eng.br/ferramentas.html"
+    site_url = "https://hqengenharia.eng.br/index.html"
+    
+    # Estilos CSS para os botões
+    button_style = """
+        display: inline-flex;
+        align-items: center;
+        padding: 0.6rem 1.2rem;
+        border-radius: 0.375rem; /* rounded-md */
+        font-weight: bold;
+        text-decoration: none;
+        transition: all 0.2s ease-in-out;
+        margin-left: 1rem;
+        font-family: 'Poppins', sans-serif;
+        font-size: 0.9rem;
+    """
+    
+    secondary_style = "border: 2px solid #fbbd24; color: #fbbd24;"
+    secondary_hover = ":hover { background-color: #fbbd24; color: #1e2b3b; }"
+    
+    primary_style = "background-color: #fbbd24; color: #1e2b3b; border: 2px solid #fbbd24;"
+    primary_hover = ":hover { background-color: #f59e0b; border-color: #f59e0b; }"
+
+    # HTML com os botões
+    st.markdown(f"""
+        <style>
+            .nav-button-secondary {{ {button_style} {secondary_style} }}
+            .nav-button-secondary:hover {{ {secondary_hover} }}
+            .nav-button-primary {{ {button_style} {primary_style} }}
+            .nav-button-primary:hover {{ {primary_hover} }}
+        </style>
+        
+        <div style="display: flex; justify-content: flex-end; width: 100%; align-items: center;">
+            <a href="{ferramentas_url}" target="_self" class="nav-button-secondary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="M15.5 2.5a1.5 1.5 0 0 1 2.5 0l2.5 2.5a1.5 1.5 0 0 1 0 2.5l-10 10a1.5 1.5 0 0 1-2.5 0l-2.5-2.5a1.5 1.5 0 0 1 0-2.5l2.5-2.5a1.5 1.5 0 0 1 2.5 0l2.5 2.5a1.5 1.5 0 0 1 0 2.5l-4.5 4.5"/><path d="m21.5 14.5-5-5"/></svg>
+                Ferramentas
+            </a>
+            <a href="{site_url}" target="_self" class="nav-button-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                Voltar ao Site
+            </a>
+        </div>
+        <hr style="border-color: var(--border); margin-top: 1.5rem; margin-bottom: 1.5rem;">
+    """, unsafe_allow_html=True)
+
+
+
 # ==============================================================================
 # 2. FUNÇÕES DE CÁLCULO E UTILITÁRIAS
 # ==============================================================================
@@ -1749,6 +1803,9 @@ def main():
     all_sheets = load_data_from_local_file()
     if not all_sheets:
         st.stop()
+    
+    # ADICIONE A CHAMADA DA FUNÇÃO AQUI
+    create_navigation_buttons()
     
     st.markdown(HTML_TEMPLATE_CSS_PRO, unsafe_allow_html=True)
     create_professional_header()
