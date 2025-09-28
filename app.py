@@ -1867,7 +1867,7 @@ def main():
     else:
         input_params.update({'q_ult_kn_cm': 0, 'p_load_ult': None})
 
-create_metrics_dashboard(input_params)
+    create_metrics_dashboard(input_params)
 
     st.subheader("🎯 Modo de Análise")
     col1, col2 = st.columns(2)
@@ -1943,25 +1943,6 @@ create_metrics_dashboard(input_params)
                 use_container_width=True
             )
             
-
-def run_detailed_analysis(df, perfil_nome, perfil_tipo_display, input_params):
-    with st.spinner(f"Gerando análise completa para {perfil_nome}..."):
-        try:
-            perfil_series = df[df['Bitola (mm x kg/m)'] == perfil_nome].iloc[0]
-            props = get_profile_properties(perfil_series)
-
-            tipo_fabricacao = "Soldado" if "Soldado" in perfil_tipo_display else "Laminado"
-
-            esforcos_html = _render_esforcos_viga_section(input_params['detalhes_esforcos_memorial'])
-            
-            cb_calc_html = ""
-            if input_params.get('cb_modo_auto'):
-                cb_calc_html = _render_cb_calc_section(input_params['detalhes_cb_memorial'], input_params['Cb_projeto'], input_params['input_mode'])
-
-            res_flt, res_flm, res_fla, res_cis, res_flecha, passo_a_passo = perform_all_checks(
-                props=props, detalhado=True, tipo_fabricacao=tipo_fabricacao, **input_params
-            )
-            
             eficiencias = {
                 "FLT": res_flt['eficiencia'],
                 "FLM": res_flm['eficiencia'],
@@ -1978,7 +1959,7 @@ def run_detailed_analysis(df, perfil_nome, perfil_tipo_display, input_params):
                 perfil_nome, perfil_tipo_display, resultados,
                 f"""
 
-
+                
                 <div style="text-align: left;">
                     <p><strong>Módulo de Elasticidade (E):</strong> {input_params['E_aco']:.2f} kN/cm²</p>
                     <p><strong>Tensão de Escoamento (fy):</strong> {input_params['fy_aco']:.2f} kN/cm²</p>
