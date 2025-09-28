@@ -47,65 +47,148 @@ PROFILE_TYPE_MAP = {
 }
 
 
+# Substitua a variável HTML_TEMPLATE_CSS_PRO inteira por esta:
 HTML_TEMPLATE_CSS_PRO = """
 <style>
-    /* Google Fonts: Inter & Poppins */
+    /* Google Fonts: Inter & Poppins & JetBrains Mono */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap');
-    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+    @import url('https://fonts.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
 
     :root {
-        --background: #0f172a; /* slate-900 */
-        --surface: #1e293b;    /* slate-800 */
-        --border: #334155;     /* slate-700 */
-        --text-primary: #f1f5f9; /* slate-100 */
-        --text-secondary: #94a3b8;/* slate-400 */
-        --accent-gold: #fbbd24; /* amber-400 */
-        --accent-amber: #f59e0b;  /* amber-500 */
-        --success: #10b981;    /* emerald-500 */
-        --success-bg: #052e16;   /* emerald-900 */
-        --error: #ef4444;      /* red-500 */
-        --error-bg: #3f1212;     /* red-900 */
+        --background-dark: #0A0A0F; /* Mais escuro */
+        --surface-medium: #15151F; /* Fundo principal */
+        --surface-light: #20202A;  /* Cards e elementos */
+        --border-color: #30303A;   /* Linhas de borda */
+        --text-primary: #F0F0F0;   /* Texto claro */
+        --text-secondary: #AAAAAA; /* Texto secundário */
+        --accent-gold: #FFD700;    /* Ouro puro */
+        --accent-amber: #FFBF00;   /* Âmbar mais vibrante */
+        --button-primary: #FFBF00; /* Botão principal */
+        --button-hover: #FFD700;   /* Hover do botão */
+        --button-text: #0A0A0F;    /* Texto escuro no botão */
+        --success: #32CD32;        /* Verde para sucesso */
+        --error: #FF4500;          /* Laranja avermelhado para erro */
+        --shadow-color: rgba(0, 0, 0, 0.4); /* Sombra mais escura */
     }
 
-    /* Base Body Styling */
-    body {
+    /* --- Base Body & Streamlit Overrides --- */
+    html, body {
         font-family: 'Inter', sans-serif;
-        background-color: var(--background);
+        background-color: var(--background-dark);
+        color: var(--text-primary);
+        line-height: 1.6;
+    }
+
+    .stApp {
+        background-color: var(--background-dark);
         color: var(--text-primary);
     }
-    
-    .container {
-        background: transparent; /* O container principal não precisa de fundo */
-        box-shadow: none;
+
+    /* Remove Streamlit default padding and margin */
+    .block-container {
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+        padding-left: 3rem;
+        padding-right: 3rem;
     }
 
+    /* Streamlit Sidebar */
+    .css-1d391kg, .css-1dp5vir { /* Targets sidebar content and overall sidebar */
+        background-color: var(--surface-medium);
+        color: var(--text-primary);
+    }
+    .css-1dp5vir .css-1v3fvcr { /* Sidebar header */
+        color: var(--accent-gold);
+        font-family: 'Poppins', sans-serif;
+        font-weight: 700;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 1rem;
+        margin-bottom: 1rem;
+    }
+    .css-1dp5vir .stSelectbox > label, 
+    .css-1dp5vir .stNumberInput > label,
+    .css-1dp5vir .stDateInput > label,
+    .css-1dp5vir .stTextInput > label,
+    .css-1dp5vir .stRadio > label,
+    .css-1dp5vir .stCheckbox > label {
+        color: var(--text-primary);
+        font-weight: 600;
+    }
+    .css-1dp5vir .stSelectbox div[data-baseweb="select"] button,
+    .css-1dp5vir .stNumberInput input,
+    .css-1dp5vir .stTextInput input,
+    .css-1dp5vir .stDateInput input {
+        background-color: var(--surface-light);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+    }
+    .css-1dp5vir .stSelectbox div[data-baseweb="select"] button:hover,
+    .css-1dp5vir .stNumberInput input:hover,
+    .css-1dp5vir .stTextInput input:hover,
+    .css-1dp5vir .stDateInput input:hover {
+        border-color: var(--accent-gold);
+    }
+    .css-1dp5vir .stSelectbox [data-baseweb="menu"] {
+        background-color: var(--surface-light);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+    }
+    .css-1dp5vir .stSelectbox [data-baseweb="menu"] li {
+        color: var(--text-primary);
+    }
+    .css-1dp5vir .stSelectbox [data-baseweb="menu"] li:hover {
+        background-color: var(--background-dark);
+        color: var(--accent-gold);
+    }
+    
     /* --- Header Profissional com Logo --- */
     .pro-header {
-        background: var(--surface);
-        color: white;
-        padding: 2rem;
+        background: var(--surface-light);
+        color: var(--text-primary);
+        padding: 3rem 2rem; /* Mais padding */
         border-radius: 12px;
-        border: 1px solid var(--border);
+        border: 1px solid var(--border-color);
         text-align: center;
-        margin-bottom: 2rem;
+        margin-bottom: 2.5rem;
+        box-shadow: 0 8px 25px var(--shadow-color); /* Sombra proeminente */
         position: relative;
+        overflow: hidden; /* Para o efeito de borda */
+    }
+
+    /* Efeito de borda dourada para o cabeçalho */
+    .pro-header::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        border-radius: 12px;
+        padding: 2px; /* Espessura da borda */
+        background: linear-gradient(45deg, var(--accent-amber), var(--accent-gold), var(--accent-amber));
+        -webkit-mask: 
+            linear-gradient(#fff 0 0) content-box, 
+            linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
     }
 
     .header-content {
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 1rem;
+        gap: 1.5rem; /* Mais espaçamento */
+        position: relative; /* Para ficar acima do ::before */
+        z-index: 1;
     }
 
     .pro-header img {
-        height: 80px; /* Tamanho da logo */
+        height: 100px; /* Logo maior */
         width: auto;
-        border-radius: 8px;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); /* Sombra na logo */
     }
 
     .pro-header h1 {
-        font-size: 2.5rem;
+        font-size: 3rem; /* Título maior */
         font-weight: 800;
         font-family: 'Poppins', sans-serif;
         margin: 0;
@@ -113,13 +196,13 @@ HTML_TEMPLATE_CSS_PRO = """
     }
     
     .pro-header p {
-        font-size: 1.1rem;
+        font-size: 1.2rem; /* Subtítulo maior */
         margin: 0;
         color: var(--text-secondary);
     }
     
     .gradient-text {
-        background: linear-gradient(135deg, #FBBF24 0%, #FDE68A 50%, #D4AF37 100%);
+        background: linear-gradient(135deg, var(--accent-amber) 0%, var(--accent-gold) 50%, #FFD700 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
@@ -130,90 +213,254 @@ HTML_TEMPLATE_CSS_PRO = """
         font-family: 'Poppins', sans-serif;
         color: var(--text-primary);
         font-weight: 700;
+        margin-top: 2rem;
+        margin-bottom: 1rem;
     }
 
     h2 {
-        border-bottom: 1px solid var(--border);
-        padding-bottom: 10px;
+        border-bottom: 2px solid var(--border-color);
+        padding-bottom: 15px;
+        color: var(--accent-gold); /* H2 em dourado */
+        font-size: 1.8rem;
     }
     
-    h3 { color: var(--accent-gold); }
+    h3 { 
+        color: var(--accent-amber); 
+        font-size: 1.5rem;
+        margin-top: 1.5rem;
+    }
 
-    /* --- Tabelas de Resumo --- */
+    /* --- Seções de Parâmetros e Modos --- */
+    .stColumns > div > div {
+        background: var(--surface-light);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px var(--shadow-color); /* Sombra nos cards */
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 0.5rem;
+    }
+    .stColumns > div > div h3 {
+        margin-top: 0;
+        font-size: 1.3rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: var(--text-primary); /* Título do card */
+    }
+    .stColumns > div > div h3 .icon {
+        color: var(--accent-gold); /* Ícone dourado */
+        font-size: 1.5rem;
+    }
+    .stColumns > div > div p {
+        margin: 0;
+        font-size: 1.1rem;
+        color: var(--text-secondary);
+    }
+    .stColumns > div > div p strong {
+        color: var(--text-primary);
+        font-weight: 600;
+    }
+
+    /* --- Icones --- */
+    .icon {
+        font-size: 1.2rem;
+        margin-right: 0.5rem;
+        color: var(--accent-gold); /* Ícones com a cor dourada */
+    }
+    
+    /* --- Botões --- */
+    .stButton button {
+        background-color: var(--button-primary);
+        color: var(--button-text);
+        font-weight: bold;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+    .stButton button:hover {
+        background-color: var(--button-hover);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        transform: translateY(-2px);
+    }
+    .stButton button:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+    .stButton button.secondary-button { /* Para botões secundários */
+        background-color: var(--surface-light);
+        color: var(--accent-gold);
+        border: 1px solid var(--accent-gold);
+    }
+    .stButton button.secondary-button:hover {
+        background-color: var(--accent-gold);
+        color: var(--button-text);
+    }
+    
+    /* --- Entradas de Texto/Número e Seletores --- */
+    .stNumberInput label, .stSelectbox label, .stTextInput label, .stDateInput label {
+        color: var(--text-primary);
+        font-weight: 600;
+        font-size: 1rem;
+        margin-bottom: 0.5rem;
+    }
+    .stNumberInput input, .stTextInput input {
+        background-color: var(--surface-medium);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 0.75rem;
+        font-size: 1rem;
+        transition: border-color 0.2s ease;
+    }
+    .stNumberInput input:focus, .stTextInput input:focus {
+        border-color: var(--accent-gold);
+        box-shadow: 0 0 0 2px rgba(255, 191, 0, 0.3); /* Dourado suave */
+        outline: none;
+    }
+    .stSelectbox div[data-baseweb="select"] button {
+        background-color: var(--surface-medium);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 0.75rem;
+        font-size: 1rem;
+        transition: border-color 0.2s ease;
+    }
+    .stSelectbox div[data-baseweb="select"] button:hover {
+        border-color: var(--accent-gold);
+    }
+    .stSelectbox [data-baseweb="menu"] {
+        background-color: var(--surface-medium);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+    }
+    .stSelectbox [data-baseweb="menu"] li {
+        color: var(--text-primary);
+        padding: 0.75rem 1rem;
+    }
+    .stSelectbox [data-baseweb="menu"] li:hover {
+        background-color: var(--surface-light);
+        color: var(--accent-gold);
+    }
+
+
+    /* --- Tabelas de Resumo (se houver) --- */
     .summary-table {
         border-collapse: separate;
         border-spacing: 0;
-        border: 1px solid var(--border);
+        border: 1px solid var(--border-color);
         border-radius: 8px;
         overflow: hidden;
+        margin-top: 1.5rem;
+        box-shadow: 0 4px 15px var(--shadow-color);
     }
 
     .summary-table thead tr th {
-        background: var(--background);
+        background: var(--surface-light);
         color: var(--accent-gold);
         padding: 1rem;
         font-weight: 600;
-        font-size: 0.9rem;
+        font-size: 0.95rem;
         text-transform: uppercase;
-        border-bottom: 2px solid var(--border);
+        border-bottom: 2px solid var(--border-color);
+        text-align: left;
     }
 
     .summary-table tbody tr td {
         padding: 1rem;
-        background: var(--surface);
-        border-bottom: 1px solid var(--border);
+        background: var(--surface-medium);
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-primary);
     }
     .summary-table tbody tr:last-child td { border-bottom: none; }
+    .summary-table tbody tr:nth-child(even) td { background: var(--surface-light); } /* Linhas alternadas */
 
     /* --- Blocos de Detalhes e Fórmulas --- */
     .info-card, .formula-block {
-        background: var(--surface);
-        border: 1px solid var(--border);
+        background: var(--surface-light);
+        border: 1px solid var(--border-color);
         padding: 1.5rem;
         margin: 1.5rem 0;
-        border-radius: 8px;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px var(--shadow-color);
     }
     .formula-block {
-        background-color: var(--background);
-        border-left: 4px solid var(--accent-amber);
+        background-color: var(--background-dark);
+        border-left: 5px solid var(--accent-amber); /* Borda mais grossa */
     }
     
     .formula {
         font-family: 'JetBrains Mono', monospace;
-        background: var(--surface);
+        background: var(--surface-medium);
         padding: 1rem;
         border-radius: 6px;
-        border: 1px solid var(--border);
+        border: 1px solid var(--border-color);
         margin: 1rem 0;
+        color: var(--text-primary);
+        font-size: 0.95rem;
     }
     
     .verification-step {
-        background-color: var(--background);
-        border: 1px solid var(--border);
-        padding: 1rem;
+        background-color: var(--surface-medium);
+        border: 1px solid var(--border-color);
+        padding: 1.5rem;
         margin-top: 1.5rem;
-        border-radius: 8px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px var(--shadow-color);
     }
 
     /* --- Indicadores de Status --- */
-    .pass { color: var(--success); font-weight: 600; }
-    .fail { color: var(--error); font-weight: 600; }
+    .pass { color: var(--success); font-weight: 700; }
+    .fail { color: var(--error); font-weight: 700; }
     .conclusion.pass { color: var(--success); }
     .conclusion.fail { color: var(--error); }
 
     .final-status.pass {
-        background-color: var(--success-bg);
-        color: #a7f3d0;
+        background-color: rgba(50, 205, 50, 0.15); /* Fundo verde translúcido */
+        color: var(--success);
         border: 1px solid var(--success);
     }
     .final-status.fail {
-        background-color: var(--error-bg);
-        color: #f87171;
+        background-color: rgba(255, 69, 0, 0.15); /* Fundo vermelho translúcido */
+        color: var(--error);
         border: 1px solid var(--error);
     }
     .final-status {
-        font-size: 1.2em; font-weight: bold; text-align: center;
-        padding: 0.75rem; border-radius: 6px; margin: 1rem 0;
+        font-size: 1.3em; font-weight: bold; text-align: center;
+        padding: 1rem; border-radius: 8px; margin: 1.5rem 0;
+        box-shadow: 0 4px 15px var(--shadow-color);
+    }
+
+    /* --- Rodapé (Opcional, se você tiver um) --- */
+    .footer {
+        text-align: center;
+        margin-top: 3rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border-color);
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+
+    /* Remove padding default de colunas para melhor controle do card */
+    .st-emotion-cache-1uj3h0e { /* Target column content */
+        padding: 0px !important;
+    }
+    
+    /* Small adjustments to column gaps if needed */
+    .st-emotion-cache-1sdc03s { /* Parent of columns */
+        gap: 20px; /* Adjust gap between cards */
+    }
+
+    /* Icones dentro dos titulos h3 nos cards */
+    h3 > span:first-child {
+        color: var(--accent-gold);
     }
 
 </style>
@@ -1080,10 +1327,9 @@ def create_excel_with_colors(df_list, sheet_names):
     output.seek(0)
     return output
 
-# Substitua a função create_professional_header inteira por esta:
+# Mantenha esta função como está:
 def create_professional_header():
-    # Use o mesmo link da logo que você forneceu no outro código
-    logo_url = "https://lh3.googleusercontent.com/a/ACg8ocKplHKwLPBbUbVCvtwvTPhn0aboS42tEQxuNtiVPVZ7Xboh1pk=s96-c"
+    logo_url = "https://lh3.googleusercontent.com/a/ACg8ocKplHKwLPBbUbVCvtwvTPhn0aboS42tEQxuNtiVPVZ7Xboh1pk=s96-c" # Substitua pela URL da sua logo
     
     st.markdown(f"""
     <div class="pro-header">
