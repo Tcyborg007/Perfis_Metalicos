@@ -1869,7 +1869,9 @@ def main():
 
     create_metrics_dashboard(input_params)
 
-    st.markdown("### 🎯 Modo de Análise")
+    # st.markdown("### 🎯 Modo de Análise") # <- Esta linha foi removida
+    st.subheader("🎯 Modo de Análise") # <- Substituída por esta
+    
     col1, col2 = st.columns(2)
     if col1.button("📊 Análise em Lote e Otimização", use_container_width=True, type="secondary"):
         st.session_state.analysis_mode = "batch"
@@ -1877,7 +1879,9 @@ def main():
         st.session_state.analysis_mode = "detailed"
 
     if st.session_state.analysis_mode == "batch":
-        st.header("📊 Análise em Lote")
+        # st.header("📊 Análise em Lote") # <- Esta linha foi removida
+        st.subheader("📊 Análise em Lote") # <- Substituída por esta
+        
         if st.button("🚀 Iniciar Análise Otimizada", type="primary", use_container_width=True):
             run_batch_analysis(all_sheets, input_params)
         
@@ -1915,7 +1919,9 @@ def main():
                             st.dataframe(style_classic_dataframe(df_reprovados_cat), use_container_width=True)
 
     elif st.session_state.analysis_mode == "detailed":
-        st.header("📋 Memorial Detalhado")
+        # st.header("📋 Memorial Detalhado") # <- Esta linha foi removida
+        st.subheader("📋 Memorial Detalhado") # <- Substituída por esta
+        
         display_names = [PROFILE_TYPE_MAP.get(name, name) for name in all_sheets.keys()]
         reverse_name_map = {v: k for k, v in PROFILE_TYPE_MAP.items()}
 
