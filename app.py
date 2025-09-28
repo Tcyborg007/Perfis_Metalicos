@@ -1863,9 +1863,9 @@ def main():
     st.markdown("### 🎯 Modo de Análise")
     col1, col2 = st.columns(2)
     if col1.button("📊 Análise em Lote e Otimização", use_container_width=True, type="secondary"):
-    st.session_state.analysis_mode = "batch"
+        st.session_state.analysis_mode = "batch"
     if col2.button("📋 Memorial Detalhado de Perfil", use_container_width=True, type="secondary"):
-    st.session_state.analysis_mode = "detailed"
+        st.session_state.analysis_mode = "detailed"
 
     if st.session_state.analysis_mode == "batch":
         st.header("📊 Análise em Lote")
