@@ -48,7 +48,7 @@ PROFILE_TYPE_MAP = {
 
 
 # ==============================================================================
-# SUBSTITUA TODA A SUA VARIÁVEL 'HTML_TEMPLATE_CSS_PRO' POR ESTA
+# SUBSTITUA TODA A SUA VARIÁVEL 'HTML_TEMPLATE_CSS_PRO' POR ESTA VERSÃO ATUALIZADA
 # ==============================================================================
 HTML_TEMPLATE_CSS_PRO = """
 <style>
@@ -59,7 +59,7 @@ HTML_TEMPLATE_CSS_PRO = """
     /* --- Paleta de Cores Definitiva HQ Engenharia --- */
     :root {
         --background: #0f172a;
-        --surface: #1e2b3b; /* Um pouco mais claro que o anterior */
+        --surface: #1e2b3b;
         --border: #334155;
         --text-display: #ffffff;
         --text-primary: #e2e8f0;
@@ -67,6 +67,7 @@ HTML_TEMPLATE_CSS_PRO = """
         --accent-gold: #fbbd24;
         --accent-amber: #f59e0b;
         --button-text: #1e293b;
+        --chart-text-color: #e2e8f0; /* Nova variável para texto de gráficos */
     }
 
     /* --- Base e Overrides Globais do Streamlit --- */
@@ -92,7 +93,7 @@ HTML_TEMPLATE_CSS_PRO = """
         background-color: var(--surface) !important;
         border-right: 1px solid var(--border);
     }
-    [data-testid="stSidebar"] h2, 
+    [data-testid="stSidebar"] h2,
     [data-testid="stSidebar"] h3 {
         color: var(--accent-gold);
     }
@@ -103,29 +104,26 @@ HTML_TEMPLATE_CSS_PRO = """
         font-weight: 600;
         font-family: 'Inter', sans-serif;
     }
-    .stRadio > label {
+    /* Rótulos de radio/checkbox específicos */
+    .stRadio > label, .stCheckbox > label {
         color: var(--text-secondary) !important;
         font-weight: 600;
         margin-bottom: 0.5rem;
     }
-    .stRadio [data-testid="stMarkdownContainer"] p {
-        color: var(--text-primary); /* Texto das opções do Radio */
+    .stRadio [data-testid="stMarkdownContainer"] p, .stCheckbox [data-testid="stMarkdownContainer"] p {
+        color: var(--text-primary); /* Texto das opções */
     }
 
-    /* INPUTS, SELECTBOX, EXPANDER - TEMA DARK UNIVERSAL */
+    /* INPUTS, SELECTBOX, TEXTAREA - TEMA DARK UNIVERSAL */
     input, 
     div[data-baseweb="select"] > div,
-    [data-testid="stExpander"] > summary,
     textarea {
         background-color: var(--background) !important;
         color: var(--text-primary) !important;
         border: 1px solid var(--border) !important;
         border-radius: 8px !important;
     }
-    [data-testid="stExpander"] > summary p {
-        color: var(--text-primary) !important;
-        font-weight: 600;
-    }
+    /* stDateInput específico */
     .stDateInput input {
         color: var(--text-primary) !important;
     }
@@ -138,11 +136,34 @@ HTML_TEMPLATE_CSS_PRO = """
         box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.3) !important;
     }
     
+    /* Cores do texto dentro do Selectbox */
     .stSelectbox div[data-baseweb="select"] div,
     .stSelectbox div[data-baseweb="select"] span {
         color: var(--text-primary) !important;
     }
     
+    /* --- ST.EXPANDER (RESUMO VISUAL, MEMORIAL DETALHADO, etc.) --- */
+    [data-testid="stExpander"] > div:first-child { /* O cabeçalho do expander */
+        background-color: var(--surface) !important; /* Cor de fundo do cabeçalho */
+        border: 1px solid var(--border) !important;
+        border-radius: 8px !important;
+        padding: 0.5rem 1rem !important; /* Ajuste de padding */
+        margin-bottom: 0.5rem; /* Espaço entre expanders */
+    }
+    [data-testid="stExpander"] > div:first-child summary p {
+        color: var(--text-primary) !important; /* Texto do título do expander */
+        font-weight: 600;
+        font-size: 1.1rem; /* Tamanho da fonte para os títulos */
+    }
+    /* Ícone de seta do expander */
+    [data-testid="stExpander"] > div:first-child svg {
+        fill: var(--text-primary) !important;
+    }
+    /* Conteúdo do expander */
+    [data-testid="stExpander"] .st-emotion-cache-16txtl3 {
+        padding-top: 1rem; /* Espaço entre o cabeçalho e o conteúdo */
+    }
+
     /* --- Cabeçalho e Métricas --- */
     .pro-header {
         background: var(--surface); padding: 2.5rem; border-radius: 12px;
@@ -174,13 +195,24 @@ HTML_TEMPLATE_CSS_PRO = """
     .stButton > button[kind="primary"]:hover, .stDownloadButton > button:hover {
         background-color: #ffd042; border-color: #ffd042; transform: translateY(-2px);
     }
-    /* Botão Secundário (Contorno Dourado) */
+    /* Botão Secundário (Contorno Dourado) - para "Resumo Visual" e "Memorial" */
     .stButton > button[kind="secondary"] {
         background-color: transparent; color: var(--accent-gold) !important;
     }
     .stButton > button[kind="secondary"]:hover {
         background-color: var(--accent-gold); color: var(--button-text) !important;
     }
+    /* Botões específicos para "Resumo Visual da Análise" e "Visualização do Memorial" */
+    /* Se você quiser que eles sejam primários, use a classe "primary" no st.button */
+    /* Caso contrário, a regra "secondary" acima já os deixará com contorno dourado */
+    /* Para forçar eles a serem dourados sólidos: */
+    /*
+    .st-emotion-cache-1r6dm1b button { # Este é um seletor genérico, pode precisar de ajuste específico
+        background-color: var(--accent-gold) !important;
+        color: var(--button-text) !important;
+        border-color: var(--accent-gold) !important;
+    }
+    */
 
     /* --- Abas (Tabs) --- */
     .stTabs [data-baseweb="tab-list"] button {
