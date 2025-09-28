@@ -58,24 +58,21 @@ HTML_TEMPLATE_CSS_PRO = """
 
     /* --- Paleta de Cores Definitiva HQ Engenharia --- */
     :root {
-        --background: #0f172a;      /* slate-900 */
-        --surface: #1e293b;         /* slate-800 */
-        --border: #334155;          /* slate-700 */
-        
-        /* Paleta de Texto com Hierarquia e Contraste */
-        --text-display: #ffffff;    /* Títulos principais, valores importantes */
-        --text-primary: #e2e8f0;    /* Texto principal, corpo, valores (slate-200) */
-        --text-secondary: #94a3b8;   /* Rótulos e textos de apoio (slate-400) */
-
-        --accent-gold: #fbbd24;      /* amber-400 */
-        --accent-amber: #f59e0b;     /* amber-500 */
-        --button-text: #1e293b;      /* slate-800 para texto do botão */
+        --background: #0f172a;
+        --surface: #1e2b3b; /* Um pouco mais claro que o anterior */
+        --border: #334155;
+        --text-display: #ffffff;
+        --text-primary: #e2e8f0;
+        --text-secondary: #94a3b8;
+        --accent-gold: #fbbd24;
+        --accent-amber: #f59e0b;
+        --button-text: #1e293b;
     }
 
     /* --- Base e Overrides Globais do Streamlit --- */
     body {
         font-family: 'Inter', sans-serif;
-        background-color: var(--background); /* Essencial para o HTML do memorial */
+        background-color: var(--background);
         color: var(--text-primary);
     }
     .stApp {
@@ -90,40 +87,59 @@ HTML_TEMPLATE_CSS_PRO = """
         padding: 2rem 3rem 3rem 3rem;
     }
 
-    /* --- Estilização Universal de Componentes Streamlit --- */
+    /* --- BARRA LATERAL (SIDEBAR) - CORREÇÃO COMPLETA --- */
+    [data-testid="stSidebar"] {
+        background-color: var(--surface) !important;
+        border-right: 1px solid var(--border);
+    }
+    [data-testid="stSidebar"] h2, 
+    [data-testid="stSidebar"] h3 {
+        color: var(--accent-gold);
+    }
     
-    /* LABELS (RÓTULOS) - CORREÇÃO DE VISIBILIDADE */
-    label, [data-testid="stMetricLabel"], .st-emotion-cache-16txtl3 {
+    /* RÓTULOS (LABELS) - CORREÇÃO DE VISIBILIDADE */
+    label, [data-testid="stMetricLabel"], .st-emotion-cache-16txtl3 > summary p {
         color: var(--text-secondary) !important;
         font-weight: 600;
+        font-family: 'Inter', sans-serif;
     }
-    .stRadio label {
+    .stRadio > label {
         color: var(--text-secondary) !important;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
     }
-    
+    .stRadio [data-testid="stMarkdownContainer"] p {
+        color: var(--text-primary); /* Texto das opções do Radio */
+    }
+
     /* INPUTS, SELECTBOX, EXPANDER - TEMA DARK UNIVERSAL */
     input, 
     div[data-baseweb="select"] > div,
-    [data-testid="stExpander"] summary {
-        background-color: var(--surface) !important;
+    [data-testid="stExpander"] > summary,
+    textarea {
+        background-color: var(--background) !important;
         color: var(--text-primary) !important;
         border: 1px solid var(--border) !important;
         border-radius: 8px !important;
     }
-    [data-testid="stExpander"] summary p { /* Texto do expander */
-        color: var(--text-primary);
+    [data-testid="stExpander"] > summary p {
+        color: var(--text-primary) !important;
         font-weight: 600;
+    }
+    .stDateInput input {
+        color: var(--text-primary) !important;
     }
 
     /* Foco dos Inputs */
     input:focus, 
-    div[data-baseweb="select"] > div:focus-within {
+    div[data-baseweb="select"] > div:focus-within,
+    textarea:focus {
         border-color: var(--accent-gold) !important;
         box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.3) !important;
     }
     
-    /* Corrigir texto dentro do selectbox */
-    .stSelectbox div[data-baseweb="select"] div {
+    .stSelectbox div[data-baseweb="select"] div,
+    .stSelectbox div[data-baseweb="select"] span {
         color: var(--text-primary) !important;
     }
     
@@ -134,6 +150,7 @@ HTML_TEMPLATE_CSS_PRO = """
         box-shadow: 0 8px 30px rgba(0,0,0,0.3);
     }
     .pro-header h1 { font-size: 2.8rem; }
+    .pro-header p { color: var(--text-secondary); }
     .gradient-text {
         background: linear-gradient(135deg, #FBBF24 0%, #FDE68A 50%, #D4AF37 100%);
         -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
@@ -146,25 +163,23 @@ HTML_TEMPLATE_CSS_PRO = """
 
     /* --- Botões (Principal, Secundário e Download) --- */
     .stButton > button, .stDownloadButton > button {
-        width: 100%; padding: 12px; border-radius: 8px; cursor: pointer;
-        transition: all 0.2s ease-in-out; font-weight: bold; font-size: 1rem;
-        font-family: 'Poppins', sans-serif;
+        padding: 12px; border-radius: 8px; font-weight: bold; font-size: 1rem;
+        font-family: 'Poppins', sans-serif; border: 2px solid var(--accent-gold);
+        transition: all 0.2s ease-in-out;
     }
-    /* Botão Primário e de Download (Dourado) */
+    /* Botão Primário e de Download (Dourado Sólido) */
     .stButton > button[kind="primary"], .stDownloadButton > button {
-        background-color: var(--accent-gold); color: var(--button-text);
-        border: 2px solid var(--accent-gold);
+        background-color: var(--accent-gold); color: var(--button-text) !important;
     }
     .stButton > button[kind="primary"]:hover, .stDownloadButton > button:hover {
         background-color: #ffd042; border-color: #ffd042; transform: translateY(-2px);
     }
-    /* Botão Secundário (Contorno) */
+    /* Botão Secundário (Contorno Dourado) */
     .stButton > button[kind="secondary"] {
-        background-color: transparent; color: var(--accent-gold);
-        border: 2px solid var(--accent-gold);
+        background-color: transparent; color: var(--accent-gold) !important;
     }
     .stButton > button[kind="secondary"]:hover {
-        background-color: var(--accent-gold); color: var(--button-text);
+        background-color: var(--accent-gold); color: var(--button-text) !important;
     }
 
     /* --- Abas (Tabs) --- */
@@ -172,23 +187,23 @@ HTML_TEMPLATE_CSS_PRO = """
         color: var(--text-secondary); padding: 1rem;
     }
     .stTabs [data-baseweb="tab-list"] button[aria-selected="true"] {
-        color: var(--accent-gold);
-        border-bottom-color: var(--accent-gold);
+        color: var(--accent-gold); border-bottom-color: var(--accent-gold);
     }
 
     /* --- Estilos Específicos para o MEMORIAL HTML --- */
-    .container { color: var(--text-primary); }
+    .container { font-family: 'Inter', sans-serif; color: var(--text-primary); }
     .container .pro-header { background: var(--surface); }
-    .container h1, .container h2, .container h3, .container h4 { color: var(--text-display); }
-    .container h2 { border-bottom: 1px solid var(--border); }
+    .container h1, .container h2, .container h3, .container h4 { color: var(--text-display); font-family: 'Poppins', sans-serif; }
+    .container h2 { border-bottom: 1px solid var(--border); padding-bottom: 10px; }
     .container h3 { color: var(--accent-gold); }
     .container strong { color: var(--text-display); }
     .container .info-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; }
-    .container table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    .container table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-family: 'JetBrains Mono', monospace; }
     .container th, .container td { text-align: left; padding: 0.75rem; border-bottom: 1px solid var(--border); }
     .container th { color: var(--accent-gold); }
-    .container .REPROVADO { color: #FF6B6B; font-weight: bold; } /* Vermelho claro */
-    .container .APROVADO { color: #63E6BE; font-weight: bold; } /* Verde claro */
+    .container td.fail, .container span.fail { color: #FF6B6B !important; font-weight: bold; }
+    .container td.pass, .container span.pass { color: #63E6BE !important; font-weight: bold; }
+    .container .formula-block { background-color: var(--background); border-left: 4px solid var(--accent-amber); border-radius: 4px; padding: 1px 15px 15px; margin: 15px 0;}
 
 </style>
 """
@@ -1449,6 +1464,7 @@ def perform_all_checks(props, fy_aco, Lb_projeto, Cb_projeto, L_cm, Msd, Vsd, q_
 
     return res_flt, res_flm, res_fla, res_cis, res_flecha, passo_a_passo_html
 
+# Substitua a função build_summary_html por esta versão:
 def build_summary_html(Msd, Vsd, res_flt, res_flm, res_fla, res_cisalhamento, res_flecha):
     verificacoes = [
         ('Flexão (FLT)', f"{Msd/100:.2f} kNm", f"{res_flt['Mrdx']/100:.2f} kNm", res_flt['eficiencia'], "APROVADO" if res_flt['eficiencia'] <= 100.1 else "REPROVADO"),
@@ -1459,9 +1475,12 @@ def build_summary_html(Msd, Vsd, res_flt, res_flm, res_fla, res_cisalhamento, re
     ]
     rows_html = ""
     for nome, sol, res, efic, status in verificacoes:
+        # A MUDANÇA ESTÁ AQUI: adiciona a classe 'pass' ou 'fail' ao <td> do status
         status_class = "pass" if status == "APROVADO" else "fail"
-        rows_html += f"""<tr><td>{nome}</td><td>{sol}</td><td>{res}</td><td>{efic:.1f}%</td><td class="{status_class}">{status}</td></tr>"""
+        efic_str = f"{efic:.1f}%" if isinstance(efic, (int, float)) else "N/A"
+        rows_html += f"""<tr><td>{nome}</td><td>{sol}</td><td>{res}</td><td>{efic_str}</td><td class="{status_class}">{status}</td></tr>"""
 
+    # Retorna o HTML da tabela para ser usado no memorial
     return f"""<table class="summary-table">
         <thead><tr><th>Verificação</th><th>Solicitante</th><th>Resistente</th><th>Eficiência</th><th>Status</th></tr></thead>
         <tbody>{rows_html}</tbody>
