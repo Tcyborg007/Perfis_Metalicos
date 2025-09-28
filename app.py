@@ -48,22 +48,25 @@ PROFILE_TYPE_MAP = {
 
 HTML_TEMPLATE_CSS_PRO = """
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+    /* Importa as fontes do Google Fonts usadas no site HQ Engenharia */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 
+    /* --- Variáveis de Cores (Tema Escuro HQ Engenharia) --- */
     :root {
-        --primary-color: #1e40af;
-        --secondary-color: #3b82f6;
-        --accent-color: #60a5fa;
-        --success-color: #10b981;
-        --warning-color: #f59e0b;
-        --error-color: #ef4444;
-        --background: #f8fafc;
-        --surface: #ffffff;
-        --text-primary: #1f2937;
-        --text-secondary: #6b7280;
-        --border: #e5e7eb;
+        --background: #0f172a;      /* slate-900 */
+        --surface: #1e293b;         /* slate-800 */
+        --border: #334155;          /* slate-700 */
+        --text-primary: #f1f5f9;     /* slate-100 */
+        --text-secondary: #94a3b8;    /* slate-400 */
+        --accent-color: #fbbd24;      /* amber-400 */
+        --accent-color-dark: #f59e0b; /* amber-500 */
+        --success-color: #10b981;     /* emerald-500 */
+        --success-surface: #052e16;   /* emerald-950 */
+        --error-color: #ef4444;       /* red-500 */
+        --error-surface: #3f1212;     /* red-950 */
     }
 
+    /* --- Estilos Base --- */
     body {
         font-family: 'Inter', sans-serif;
         line-height: 1.6;
@@ -75,186 +78,93 @@ HTML_TEMPLATE_CSS_PRO = """
         margin: 0 auto;
         padding: 2rem;
         background: var(--surface);
-        border-radius: 16px;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         width: 100%;
         max-width: 100%;
     }
+    
+    .gradient-text {
+        background: linear-gradient(135deg, #FBBF24 0%, #FDE68A 50%, #D4AF37 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
 
-    /* Header Profissional */
+    /* --- Cabeçalho Principal (Com Logo e Botão) --- */
     .pro-header {
-        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-        color: white;
-        padding: 3rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem 2rem;
         border-radius: 16px;
         text-align: center;
         margin-bottom: 2rem;
-        position: relative;
-        overflow: hidden;
+        border: 1px solid var(--border);
+        background: var(--surface);
+    }
+    .header-center { text-align: center; flex-grow: 1; }
+    .header-left, .header-right { flex-shrink: 0; min-width: 150px; }
+    .header-right { text-align: right; }
+
+    .logo-img {
+        height: 56px; /* 14 * 4px = h-14 do Tailwind */
+        width: auto;
+        border-radius: 6px;
+        vertical-align: middle;
+    }
+    
+    .back-button {
+        background-color: var(--accent-color-dark);
+        color: var(--surface);
+        padding: 10px 20px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: bold;
+        transition: all 0.2s ease-in-out;
+        font-family: 'Inter', sans-serif;
+    }
+    .back-button:hover {
+        background-color: var(--accent-color);
+        transform: translateY(-2px);
     }
 
     .pro-header h1 {
-        font-size: 3rem;
-        font-weight: 700;
+        font-family: 'Poppins', sans-serif;
+        font-size: 2.5rem; /* Reduzido para melhor encaixe */
+        font-weight: 800;
         margin: 0;
-        position: relative;
-        z-index: 1;
     }
-
     .pro-header p {
-        font-size: 1.25rem;
-        margin: 0.5rem 0 0;
-        opacity: 0.9;
-        position: relative;
-        z-index: 1;
-    }
-
-    /* Títulos Hierárquicos */
-    h1, h2, h3, h4, h5, h6 {
-        font-family: 'Inter', sans-serif;
-        color: var(--text-primary);
-        font-weight: 600;
-        line-height: 1.3;
-    }
-
-    h1 { font-size: 2.5rem; margin: 2rem 0 1rem; }
-    h2 {
-        font-size: 2rem;
-        margin: 2.5rem 0 1.5rem;
-        padding-bottom: 0.75rem;
-        border-bottom: 3px solid var(--primary-color);
-        position: relative;
-    }
-
-    h2::after {
-        content: '';
-        position: absolute;
-        bottom: -3px;
-        left: 0;
-        width: 60px;
-        height: 3px;
-        background: var(--accent-color);
-    }
-
-    h3 {
-        font-size: 1.5rem;
-        margin: 2rem 0 1rem;
-        color: var(--secondary-color);
-    }
-
-    h4 {
-        font-size: 1.25rem;
-        font-weight: 600;
-        color: var(--text-primary);
-        margin: 1.5rem 0 0.5rem;
-    }
-
-    h5 {
-        font-size: 1rem;
-        font-weight: 600;
+        font-size: 1.1rem;
+        margin: 0.25rem 0 0;
         color: var(--text-secondary);
-        margin: 1rem 0 0.25rem;
     }
 
-    /* Tabela de Resultados Premium */
-    .summary-table {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
-        margin: 2rem 0;
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    }
+    /* --- Hierarquia de Títulos (sem alteração) --- */
+    h2 { font-size: 2rem; margin: 2.5rem 0 1.5rem; padding-bottom: 0.75rem; border-bottom: 2px solid var(--border); }
+    h3 { font-size: 1.5rem; margin: 2rem 0 1rem; color: var(--accent-color); }
+    h4 { font-size: 1.25rem; margin: 1.5rem 0 0.5rem; }
+    h5 { font-size: 1rem; font-weight: 600; color: var(--text-secondary); margin: 1rem 0 0.25rem; }
 
-    .summary-table thead tr th {
-        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-        color: white;
-        padding: 1.25rem;
-        text-align: center;
-        font-weight: 600;
-        font-size: 0.95rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .summary-table tbody tr td {
-        padding: 1rem;
-        text-align: center;
-        vertical-align: middle;
-        border-bottom: 1px solid var(--border);
-        background: white;
-    }
-
+    /* --- Demais estilos (sem alteração) --- */
+    .summary-table { width: 100%; border-collapse: separate; border-spacing: 0; margin: 2rem 0; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
+    .summary-table thead tr th { background: var(--background); color: var(--accent-color); padding: 1rem; text-align: center; font-weight: 600; font-size: 0.9rem; text-transform: uppercase; border-bottom: 2px solid var(--accent-color-dark); }
+    .summary-table tbody tr td { padding: 1rem; text-align: center; vertical-align: middle; border-bottom: 1px solid var(--border); background: var(--surface); }
     .summary-table tbody tr:last-child td { border-bottom: none; }
-
-    /* Cards de Fórmulas Avançados */
-    .formula-block {
-        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-        border: 1px solid var(--border);
-        border-left: 5px solid var(--accent-color);
-        padding: 2rem;
-        margin: 2rem 0;
-        border-radius: 12px;
-    }
-
-    .verification-step {
-        background-color: #e2e8f0;
-        border: 1px solid #cbd5e1;
-        padding: 1rem;
-        margin-top: 1.5rem;
-        border-radius: 8px;
-    }
-
-    /* Status Indicators */
+    .formula-block, .info-card { background: var(--background); border: 1px solid var(--border); border-left: 5px solid var(--accent-color-dark); padding: 1.5rem; margin: 1.5rem 0; border-radius: 8px; }
+    .verification-step { background-color: var(--surface); border: 1px solid var(--border); padding: 1rem; margin-top: 1.5rem; border-radius: 8px; }
+    .formula { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; text-align: center; margin: 1rem 0; padding: 1rem; background: var(--surface); border-radius: 8px; border: 1px solid var(--border); color: var(--text-primary); }
     .pass { color: var(--success-color); font-weight: 600; }
     .fail { color: var(--error-color); font-weight: 600; }
-    .conclusion.pass { color: var(--success-color); font-weight: 600; }
-    .conclusion.fail { color: var(--error-color); font-weight: 600; }
-
-    .final-status.pass {
-        background: linear-gradient(135deg, var(--success-color), #059669);
-        color: white; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
-        font-size: 1.4em; font-weight: 700; text-align: center;
-        padding: 1rem; border-radius: 8px; margin: 1rem 0;
-        text-transform: uppercase; letter-spacing: 1px;
-    }
-
-    .final-status.fail {
-        background: linear-gradient(135deg, var(--error-color), #dc2626);
-        color: white; box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
-        font-size: 1.4em; font-weight: 700; text-align: center;
-        padding: 1rem; border-radius: 8px; margin: 1rem 0;
-        text-transform: uppercase; letter-spacing: 1px;
-    }
-
-    .formula {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 1.1rem;
-        text-align: center;
-        margin: 1.5rem 0;
-        padding: 1.5rem;
-        background: white;
-        border-radius: 8px;
-        border: 1px solid var(--border);
-    }
-
-    .ref-norma {
-        text-align: right;
-        font-size: 0.85rem;
-        color: var(--text-secondary);
-        margin-top: 0.5rem;
-        font-style: italic;
-    }
-
-    .info-card {
-        background: white;
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin: 1rem 0;
-    }
+    .final-status { font-size: 1.2em; font-weight: 700; text-align: center; padding: 0.75rem; border-radius: 8px; margin: 1rem 0; border: 1px solid; }
+    .final-status.pass { background-color: var(--success-surface); color: #a7f3d0; border-color: var(--success-color); }
+    .final-status.fail { background-color: var(--error-surface); color: #f87171; border-color: var(--error-color); }
+    .ref-norma { text-align: right; font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.5rem; font-style: italic; }
 </style>
+"""
+
 """
 
 # ==============================================================================
@@ -1121,9 +1031,8 @@ def create_excel_with_colors(df_list, sheet_names):
 def create_professional_header():
     st.markdown("""
     <div class="pro-header">
-        <h1>🏗️ Calculadora Estrutural</h1>
-        <p>Análise de Perfis Metálicos | NBR 8800:2008</p>
-        <p>By: Otávio Augusto</p>
+        <h1 class="gradient-text">Calculadora Estrutural</h1>
+        <p>Análise de Perfis Metálicos | ABNT NBR 8800:2008</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -2006,13 +1915,3 @@ def run_batch_analysis(all_sheets, input_params):
 
 if __name__ == '__main__':
     main()
-
-
-
-
-
-
-
-
-
-
