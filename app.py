@@ -46,261 +46,216 @@ PROFILE_TYPE_MAP = {
     "VS": "Perfis Soldados"
 }
 
-
 HTML_TEMPLATE_CSS_PRO = """
 <style>
-    /* Google Fonts */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap');
-    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
-    /* --- Paleta de Cores Definitiva HQ Engenharia --- */
     :root {
-        --background: #0f172a;
-        --surface: #1e2b3b;
-        --border: #334155;
-        --text-display: #ffffff;
-        --text-primary: #e2e8f0;
-        --text-secondary: #94a3b8;
-        --accent-gold: #fbbd24;
-        --accent-amber: #f59e0b;
-        --button-text: #1e293b;
+        --primary-color: #1e40af;
+        --secondary-color: #3b82f6;
+        --accent-color: #60a5fa;
+        --success-color: #10b981;
+        --warning-color: #f59e0b;
+        --error-color: #ef4444;
+        --background: #f8fafc;
+        --surface: #ffffff;
+        --text-primary: #1f2937;
+        --text-secondary: #6b7280;
+        --border: #e5e7eb;
     }
 
-    /* --- Base e Overrides Globais do Streamlit --- */
     body {
         font-family: 'Inter', sans-serif;
-        background-color: var(--background);
+        line-height: 1.6;
         color: var(--text-primary);
-    }
-    .stApp {
-        background-color: var(--background);
-    }
-    .block-container {
-        padding: 2rem 3rem 3rem 3rem;
+        background: var(--background);
     }
 
-    /* --- Títulos e Textos Genéricos --- */
-    h1, h2 {
-        font-family: 'Poppins', sans-serif;
-        color: var(--text-display);
-        font-weight: 700;
-    }
-    /* Força a cor dos títulos de seção (H3) para dourado */
-    h3 {
-        font-family: 'Poppins', sans-serif;
-        color: var(--accent-gold) !important;
-        font-weight: 700;
-    }
-    /* Garante que os títulos H3 dentro do markdown também sejam dourados */
-    [data-testid="stMarkdownContainer"] h3 {
-        color: var(--accent-gold) !important;
-    }
-    /* Estiliza o texto "Fator Cb..." para ser branco e legível */
-    .metric-footer {
-        color: var(--text-primary) !important;
-        font-family: 'Inter', sans-serif;
-        font-size: 0.9rem;
-        text-align: center;
-        margin-top: -0.5rem;
-        margin-bottom: 2rem;
+    .container {
+        margin: 0 auto;
+        padding: 2rem;
+        background: var(--surface);
+        border-radius: 16px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        width: 100%;
+        max-width: 100%;
     }
 
-    /* --- BARRA LATERAL (SIDEBAR) --- */
-    [data-testid="stSidebar"] {
-        background-color: var(--surface) !important;
-        border-right: 1px solid var(--border);
-    }
-    [data-testid="stSidebar"] h2,
-    [data-testid="stSidebar"] h3 {
-        color: var(--accent-gold);
-    }
-    
-    /* RÓTULOS (LABELS) */
-    label, [data-testid="stMetricLabel"] {
-        color: var(--text-secondary) !important;
-        font-weight: 600;
-        font-family: 'Inter', sans-serif;
-    }
-    .stRadio > label, .stCheckbox > label {
-        color: var(--text-secondary) !important;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-    }
-    .stRadio [data-testid="stMarkdownContainer"] p, .stCheckbox [data-testid="stMarkdownContainer"] p {
-        color: var(--text-primary);
-    }
-
-    /* INPUTS, SELECTBOX, TEXTAREA */
-    input, 
-    div[data-baseweb="select"] > div,
-    textarea {
-        background-color: var(--background) !important;
-        color: var(--text-primary) !important;
-        border: 1px solid var(--border) !important;
-        border-radius: 8px !important;
-    }
-    .stDateInput input {
-        color: var(--text-primary) !important;
-    }
-    input:focus, 
-    div[data-baseweb="select"] > div:focus-within,
-    textarea:focus {
-        border-color: var(--accent-gold) !important;
-        box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.3) !important;
-    }
-    
-    .stSelectbox div[data-baseweb="select"] div,
-    .stSelectbox div[data-baseweb="select"] span {
-        color: var(--text-primary) !important;
-    }
-    
-    /* --- ST.EXPANDER --- */
-    [data-testid="stExpander"] {
-        border: none !important;
-        box-shadow: none !important;
-        background: none !important;
-    }
-    [data-testid="stExpander"] summary {
-        background-color: var(--surface) !important;
-        color: var(--text-primary) !important;
-        border: 1px solid var(--border) !important;
-        border-radius: 8px !important;
-        margin-bottom: 0.5rem;
-        padding: 0.75rem 1rem !important;
-    }
-    [data-testid="stExpander"] summary p {
-        color: var(--text-primary) !important;
-        font-weight: 600;
-        font-size: 1.1rem;
-    }
-    [data-testid="stExpander"] summary svg {
-        fill: var(--text-primary) !important;
-    }
-    [data-testid="stExpander"] .st-emotion-cache-16txtl3 {
-        background-color: var(--surface) !important;
-        border: 1px solid var(--border) !important;
-        border-top: none !important;
-        border-radius: 0 0 8px 8px !important;
-        padding: 1rem !important;
-        margin-top: -0.5rem;
-    }
-
-    /* --- Cabeçalho e Métricas --- */
+    /* Header Profissional */
     .pro-header {
-        background: var(--surface); padding: 2.5rem; border-radius: 12px;
-        border: 1px solid var(--border); text-align: center; margin-bottom: 2rem;
-        box-shadow: 0 8px 30px rgba(0,0,0,0.3);
-    }
-    .pro-header h1 { font-size: 2.8rem; }
-    .pro-header p { color: var(--text-secondary); }
-    .gradient-text {
-        background: linear-gradient(135deg, #FBBF24 0%, #FDE68A 50%, #D4AF37 100%);
-        -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-    }
-    [data-testid="stMetric"] {
-        background-color: var(--surface); border: 1px solid var(--border);
-        border-left: 5px solid var(--accent-amber); border-radius: 8px; padding: 1.5rem;
-    }
-    [data-testid="stMetricValue"] { color: var(--text-display); }
-
-    /* --- Botões --- */
-    .stButton > button, .stDownloadButton > button {
-        padding: 12px; border-radius: 8px; font-weight: bold; font-size: 1rem;
-        font-family: 'Poppins', sans-serif; border: 2px solid var(--accent-gold);
-        transition: all 0.2s ease-in-out;
-    }
-    .stButton > button[kind="primary"], .stDownloadButton > button {
-        background-color: var(--accent-gold); color: var(--button-text) !important;
-    }
-    .stButton > button[kind="primary"]:hover, .stDownloadButton > button:hover {
-        background-color: #ffd042; border-color: #ffd042; transform: translateY(-2px);
-    }
-    .stButton > button[kind="secondary"] {
-        background-color: transparent; color: var(--accent-gold) !important;
-    }
-    .stButton > button[kind="secondary"]:hover {
-        background-color: var(--accent-gold); color: var(--button-text) !important;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        color: white;
+        padding: 3rem 2rem;
+        border-radius: 16px;
+        text-align: center;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
     }
 
-    /* --- Abas (Tabs) --- */
-    .stTabs [data-baseweb="tab-list"] button {
-        color: var(--text-secondary); padding: 1rem;
-    }
-    .stTabs [data-baseweb="tab-list"] button[aria-selected="true"] {
-        color: var(--accent-gold); border-bottom-color: var(--accent-gold);
+    .pro-header h1 {
+        font-size: 3rem;
+        font-weight: 700;
+        margin: 0;
+        position: relative;
+        z-index: 1;
     }
 
-    /* --- Estilos para o MEMORIAL HTML --- */
-    .container { font-family: 'Inter', sans-serif; color: var(--text-primary); }
-    .container .pro-header { background: var(--surface); }
-    .container h1, .container h2, .container h3, .container h4 { color: var(--text-display); font-family: 'Poppins', sans-serif; }
-    .container h2 { border-bottom: 1px solid var(--border); padding-bottom: 10px; }
-    .container h3 { color: var(--accent-gold); }
-    .container strong { color: var(--text-display); }
-    .container .info-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; }
-    .container table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-family: 'JetBrains Mono', monospace; }
-    .container th, .container td { text-align: left; padding: 0.75rem; border-bottom: 1px solid var(--border); }
-    .container th { color: var(--accent-gold); }
-    .container td.fail, .container span.fail { color: #FF6B6B !important; font-weight: bold; }
-    .container td.pass, .container span.pass { color: #63E6BE !important; font-weight: bold; }
-    .container .formula-block { background-color: var(--background); border-left: 4px solid var(--accent-amber); border-radius: 4px; padding: 1px 15px 15px; margin: 15px 0;}
+    .pro-header p {
+        font-size: 1.25rem;
+        margin: 0.5rem 0 0;
+        opacity: 0.9;
+        position: relative;
+        z-index: 1;
+    }
 
+    /* Títulos Hierárquicos */
+    h1, h2, h3, h4, h5, h6 {
+        font-family: 'Inter', sans-serif;
+        color: var(--text-primary);
+        font-weight: 600;
+        line-height: 1.3;
+    }
+
+    h1 { font-size: 2.5rem; margin: 2rem 0 1rem; }
+    h2 {
+        font-size: 2rem;
+        margin: 2.5rem 0 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 3px solid var(--primary-color);
+        position: relative;
+    }
+
+    h2::after {
+        content: '';
+        position: absolute;
+        bottom: -3px;
+        left: 0;
+        width: 60px;
+        height: 3px;
+        background: var(--accent-color);
+    }
+
+    h3 {
+        font-size: 1.5rem;
+        margin: 2rem 0 1rem;
+        color: var(--secondary-color);
+    }
+
+    h4 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 1.5rem 0 0.5rem;
+    }
+
+    h5 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        margin: 1rem 0 0.25rem;
+    }
+
+    /* Tabela de Resultados Premium */
+    .summary-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        margin: 2rem 0;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    .summary-table thead tr th {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        color: white;
+        padding: 1.25rem;
+        text-align: center;
+        font-weight: 600;
+        font-size: 0.95rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .summary-table tbody tr td {
+        padding: 1rem;
+        text-align: center;
+        vertical-align: middle;
+        border-bottom: 1px solid var(--border);
+        background: white;
+    }
+
+    .summary-table tbody tr:last-child td { border-bottom: none; }
+
+    /* Cards de Fórmulas Avançados */
+    .formula-block {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border: 1px solid var(--border);
+        border-left: 5px solid var(--accent-color);
+        padding: 2rem;
+        margin: 2rem 0;
+        border-radius: 12px;
+    }
+
+    .verification-step {
+        background-color: #e2e8f0;
+        border: 1px solid #cbd5e1;
+        padding: 1rem;
+        margin-top: 1.5rem;
+        border-radius: 8px;
+    }
+
+    /* Status Indicators */
+    .pass { color: var(--success-color); font-weight: 600; }
+    .fail { color: var(--error-color); font-weight: 600; }
+    .conclusion.pass { color: var(--success-color); font-weight: 600; }
+    .conclusion.fail { color: var(--error-color); font-weight: 600; }
+
+    .final-status.pass {
+        background: linear-gradient(135deg, var(--success-color), #059669);
+        color: white; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+        font-size: 1.4em; font-weight: 700; text-align: center;
+        padding: 1rem; border-radius: 8px; margin: 1rem 0;
+        text-transform: uppercase; letter-spacing: 1px;
+    }
+
+    .final-status.fail {
+        background: linear-gradient(135deg, var(--error-color), #dc2626);
+        color: white; box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
+        font-size: 1.4em; font-weight: 700; text-align: center;
+        padding: 1rem; border-radius: 8px; margin: 1rem 0;
+        text-transform: uppercase; letter-spacing: 1px;
+    }
+
+    .formula {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 1.1rem;
+        text-align: center;
+        margin: 1.5rem 0;
+        padding: 1.5rem;
+        background: white;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+    }
+
+    .ref-norma {
+        text-align: right;
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        margin-top: 0.5rem;
+        font-style: italic;
+    }
+
+    .info-card {
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+    }
 </style>
 """
-
-
-
-
-def create_navigation_buttons():
-    """Cria os botões de navegação para voltar ao site principal ou à página de ferramentas."""
-    
-    # URLs completas para os links
-    ferramentas_url = "https://hqengenharia.eng.br/ferramentas.html"
-    site_url = "https://hqengenharia.eng.br/index.html"
-    
-    # Estilos CSS para os botões
-    button_style = """
-        display: inline-flex;
-        align-items: center;
-        padding: 0.6rem 1.2rem;
-        border-radius: 0.375rem; /* rounded-md */
-        font-weight: bold;
-        text-decoration: none;
-        transition: all 0.2s ease-in-out;
-        margin-left: 1rem;
-        font-family: 'Poppins', sans-serif;
-        font-size: 0.9rem;
-    """
-    
-    secondary_style = "border: 2px solid #fbbd24; color: #fbbd24;"
-    secondary_hover = ":hover { background-color: #fbbd24; color: #1e2b3b; }"
-    
-    primary_style = "background-color: #fbbd24; color: #1e2b3b; border: 2px solid #fbbd24;"
-    primary_hover = ":hover { background-color: #f59e0b; border-color: #f59e0b; }"
-
-    # HTML com os botões
-    st.markdown(f"""
-        <style>
-            .nav-button-secondary {{ {button_style} {secondary_style} }}
-            .nav-button-secondary:hover {{ {secondary_hover} }}
-            .nav-button-primary {{ {button_style} {primary_style} }}
-            .nav-button-primary:hover {{ {primary_hover} }}
-        </style>
-        
-        <div style="display: flex; justify-content: flex-end; width: 100%; align-items: center;">
-            <a href="{ferramentas_url}" target="_self" class="nav-button-secondary">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="M15.5 2.5a1.5 1.5 0 0 1 2.5 0l2.5 2.5a1.5 1.5 0 0 1 0 2.5l-10 10a1.5 1.5 0 0 1-2.5 0l-2.5-2.5a1.5 1.5 0 0 1 0-2.5l2.5-2.5a1.5 1.5 0 0 1 2.5 0l2.5 2.5a1.5 1.5 0 0 1 0 2.5l-4.5 4.5"/><path d="m21.5 14.5-5-5"/></svg>
-                Ferramentas
-            </a>
-            <a href="{site_url}" target="_self" class="nav-button-primary">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                Voltar ao Site
-            </a>
-        </div>
-        <hr style="border-color: var(--border); margin-top: 1.5rem; margin-bottom: 1.5rem;">
-    """, unsafe_allow_html=True)
-
-
 
 # ==============================================================================
 # 2. FUNÇÕES DE CÁLCULO E UTILITÁRIAS
@@ -1163,17 +1118,12 @@ def create_excel_with_colors(df_list, sheet_names):
     output.seek(0)
     return output
 
-# Mantenha esta função como está:
 def create_professional_header():
-    logo_url = "https://lh3.googleusercontent.com/a/ACg8ocKplHKwLPBbUbVCvtwvTPhn0aboS42tEQxuNtiVPVZ7Xboh1pk=s96-c" # Substitua pela URL da sua logo
-    
-    st.markdown(f"""
+    st.markdown("""
     <div class="pro-header">
-        <div class="header-content">
-            <img src="{logo_url}" alt="Logo HQ Engenharia">
-            <h1 class="gradient-text">Calculadora Estrutural de Perfis</h1>
-            <p>Análise de Perfis Metálicos | {Config.NOME_NORMA}</p>
-        </div>
+        <h1>🏗️ Calculadora Estrutural</h1>
+        <p>Análise de Perfis Metálicos | NBR 8800:2008</p>
+        <p>By: Otávio Augusto</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -1211,10 +1161,7 @@ def create_metrics_dashboard(input_params):
             help="Força Cortante Solicitante de Cálculo"
         )
     
-    # --- LINHA CORRIGIDA ABAIXO ---
-    st.markdown(f"""<div class="metric-footer">
-        Fator Cb: {cb_value:.2f} | Lb: {input_params['Lb_projeto']:.2f} cm | Flecha Limite: L/{input_params['limite_flecha_divisor']:.0f}
-    </div>""", unsafe_allow_html=True)
+    st.markdown(f"**Fator Cb:** {cb_value:.2f} | **Lb:** {input_params['Lb_projeto']:.2f} cm | **Flecha Limite:** L/{input_params['limite_flecha_divisor']:.0f}")
 
 def style_classic_dataframe(df):
     """Aplica estilização clássica com cores sólidas ao DataFrame."""
@@ -1243,85 +1190,59 @@ def style_classic_dataframe(df):
     format_dict = {"Peso (kg/m)": "{:.2f}", **{col: "{:.1f}" for col in efficiency_cols}}
     return styled_df.format(format_dict)
 
-# Em create_top_profiles_chart(df_approved, top_n=10):
 def create_top_profiles_chart(df_approved, top_n=10):
     if df_approved.empty: return None
     df_top = df_approved.head(top_n).sort_values(by='Peso (kg/m)', ascending=False)
     fig = go.Figure(go.Bar(
         y=df_top['Perfil'], x=df_top['Peso (kg/m)'], orientation='h',
         text=[f'{w:.2f} kg/m' for w in df_top['Peso (kg/m)']], textposition='auto',
-        marker=dict(color=df_top['Peso (kg/m)'], colorscale='YlOrBr', colorbar=dict(title="Peso")), # Escala de cor Dourada
+        marker=dict(color=df_top['Peso (kg/m)'], colorscale='Blues_r', colorbar=dict(title="Peso")),
         hovertemplate='<b>%{y}</b><br>Peso: %{x:.2f} kg/m<extra></extra>'
     ))
     fig.update_layout(
         title={'text': f'🏆 Top {top_n} Perfis Mais Leves (Aprovados)', 'x': 0.5},
-        xaxis_title='Peso (kg/m)', yaxis_title='Perfil', 
-        template='plotly_dark', # <--- ADICIONE ESTA LINHA
-        height=500, 
-        margin=dict(l=150),
-        paper_bgcolor='rgba(0,0,0,0)', # Fundo do papel transparente
-        plot_bgcolor='rgba(0,0,0,0)'   # Fundo do gráfico transparente
+        xaxis_title='Peso (kg/m)', yaxis_title='Perfil', template='plotly_white', height=500, margin=dict(l=150)
     )
     return fig
 
-# Em create_profile_efficiency_chart(perfil_nome, eficiencias):
-# Substitua a função create_profile_efficiency_chart inteira por esta:
 def create_profile_efficiency_chart(perfil_nome, eficiencias):
     """
     Cria um gráfico de barras comparando as eficiências de um perfil.
     """
     labels = list(eficiencias.keys())
-    values = [min(v, 150) if isinstance(v, (int, float)) else 0 for v in eficiencias.values()]
+    values = [min(v, 150) for v in eficiencias.values()]
     
-    # Cores baseadas na eficiência
-    colors = ['#32CD32' if v <= 100 else '#FF4500' for v in values]
+    colors = ['#1e40af' if v < 90 else '#60a5fa' if v <= 100 else '#ef4444' for v in values]
     
     fig = go.Figure(data=[
         go.Bar(
             x=labels,
             y=values,
-            text=[f'{v:.1f}%' if isinstance(v, (int, float)) else 'N/A' for v in eficiencias.values()],
+            text=[f'{v:.1f}%' for v in eficiencias.values()],
             textposition='auto',
-            marker_color=colors,
-            textfont=dict(color='#FFFFFF', size=14, family='Poppins') # Texto dentro da barra
+            marker_color=colors
         )
     ])
     
-    fig.add_hline(y=100, line_dash="dash", line_color="#fbbd24", # Linha dourada
-                  annotation_text="Limite (100%)",
-                  annotation_position="bottom right",
-                  annotation_font=dict(color='#fbbd24'))
+    fig.add_hline(y=100, line_dash="dash", line_color="#10b981",
+                    annotation_text="Limite de Aprovação (100%)",
+                    annotation_position="bottom right")
 
-    # ATUALIZAÇÃO COMPLETA DO LAYOUT PARA O TEMA DARK
     fig.update_layout(
-        title=dict(
-            text=f'Análise de Eficiência para o Perfil: {perfil_nome}',
-            font=dict(color='#FFFFFF', size=20, family='Poppins') # Cor do título
-        ),
+        title=f'Análise de Eficiência para o Perfil: {perfil_nome}',
         yaxis_title='Eficiência (%)',
         xaxis_title='Verificação',
-        yaxis_range=[0, max(max(values), 100) + 15],
-        template='plotly_dark',
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
-        font=dict(color='#94a3b8', family='Inter'), # Cor padrão para todo o texto do gráfico
-        xaxis=dict(
-            title_font=dict(color='#e2e8f0'), # Cor do título do eixo X
-            tickfont=dict(color='#e2e8f0')     # Cor dos labels do eixo X
-        ),
-        yaxis=dict(
-            title_font=dict(color='#e2e8f0'), # Cor do título do eixo Y
-            tickfont=dict(color='#e2e8f0')     # Cor dos labels do eixo Y
-        )
+        yaxis_range=[0, max(max(values), 100) + 10],
+        template='plotly_white',
     )
     return fig
 brazilia_tz = pytz.timezone('America/Sao_Paulo')
-# Substitua a função create_professional_memorial_html por esta:
 def create_professional_memorial_html(perfil_nome, perfil_tipo, resultados, input_details, projeto_info):
-    # (O conteúdo da variável 'conteudo_memorial' continua o mesmo)
-    conteudo_memorial = f""" 
+    conteudo_memorial = f"""
     <h2>1. Resumo Executivo</h2>
     <div class="result-highlight">{resultados['resumo_html']}</div>
+    
+
     <h2>2. Dados de Entrada e Solicitações</h2>
     <div class="info-card">
         <h3>2.1. Propriedades do Perfil e Materiais</h3>
@@ -1332,8 +1253,6 @@ def create_professional_memorial_html(perfil_nome, perfil_tipo, resultados, inpu
     <h2>3. Verificações de Resistência (ELU)</h2>
     {resultados['passo_a_passo_html']}
     """
-    
-    # O template HTML agora tem o <h1> com a classe 'gradient-text'
     html_template = f"""
     <!DOCTYPE html><html lang="pt-BR"><head>
         <meta charset="UTF-8"><title>Memorial de Cálculo - {perfil_nome}</title>
@@ -1341,7 +1260,7 @@ def create_professional_memorial_html(perfil_nome, perfil_tipo, resultados, inpu
         <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML"></script>
     </head><body><div class="container">
         <div class="pro-header">
-            <h1><span class="gradient-text">Memorial de Cálculo Estrutural</span></h1>
+            <h1>Memorial de Cálculo Estrutural</h1>
             <p><strong>{perfil_nome}</strong> ({perfil_tipo})</p>
         </div>
         <div class="info-card">
@@ -1583,7 +1502,6 @@ def perform_all_checks(props, fy_aco, Lb_projeto, Cb_projeto, L_cm, Msd, Vsd, q_
 
     return res_flt, res_flm, res_fla, res_cis, res_flecha, passo_a_passo_html
 
-# Substitua a função build_summary_html por esta versão:
 def build_summary_html(Msd, Vsd, res_flt, res_flm, res_fla, res_cisalhamento, res_flecha):
     verificacoes = [
         ('Flexão (FLT)', f"{Msd/100:.2f} kNm", f"{res_flt['Mrdx']/100:.2f} kNm", res_flt['eficiencia'], "APROVADO" if res_flt['eficiencia'] <= 100.1 else "REPROVADO"),
@@ -1594,12 +1512,9 @@ def build_summary_html(Msd, Vsd, res_flt, res_flm, res_fla, res_cisalhamento, re
     ]
     rows_html = ""
     for nome, sol, res, efic, status in verificacoes:
-        # A MUDANÇA ESTÁ AQUI: adiciona a classe 'pass' ou 'fail' ao <td> do status
         status_class = "pass" if status == "APROVADO" else "fail"
-        efic_str = f"{efic:.1f}%" if isinstance(efic, (int, float)) else "N/A"
-        rows_html += f"""<tr><td>{nome}</td><td>{sol}</td><td>{res}</td><td>{efic_str}</td><td class="{status_class}">{status}</td></tr>"""
+        rows_html += f"""<tr><td>{nome}</td><td>{sol}</td><td>{res}</td><td>{efic:.1f}%</td><td class="{status_class}">{status}</td></tr>"""
 
-    # Retorna o HTML da tabela para ser usado no memorial
     return f"""<table class="summary-table">
         <thead><tr><th>Verificação</th><th>Solicitante</th><th>Resistente</th><th>Eficiência</th><th>Status</th></tr></thead>
         <tbody>{rows_html}</tbody>
@@ -1804,9 +1719,6 @@ def main():
     if not all_sheets:
         st.stop()
     
-    # ADICIONE A CHAMADA DA FUNÇÃO AQUI
-    create_navigation_buttons()
-    
     st.markdown(HTML_TEMPLATE_CSS_PRO, unsafe_allow_html=True)
     create_professional_header()
 
@@ -1926,19 +1838,15 @@ def main():
 
     create_metrics_dashboard(input_params)
 
-    # st.markdown("### 🎯 Modo de Análise") # <- Esta linha foi removida
-    st.subheader("🎯 Modo de Análise") # <- Substituída por esta
-    
+    st.markdown("### 🎯 Modo de Análise")
     col1, col2 = st.columns(2)
-    if col1.button("📊 Análise em Lote e Otimização", use_container_width=True, type="secondary"):
+    if col1.button("📊 Análise em Lote e Otimização", use_container_width=True):
         st.session_state.analysis_mode = "batch"
-    if col2.button("📋 Memorial Detalhado de Perfil", use_container_width=True, type="secondary"):
+    if col2.button("📋 Memorial Detalhado de Perfil", use_container_width=True):
         st.session_state.analysis_mode = "detailed"
 
     if st.session_state.analysis_mode == "batch":
-        # st.header("📊 Análise em Lote") # <- Esta linha foi removida
-        st.subheader("📊 Análise em Lote") # <- Substituída por esta
-        
+        st.header("📊 Análise em Lote")
         if st.button("🚀 Iniciar Análise Otimizada", type="primary", use_container_width=True):
             run_batch_analysis(all_sheets, input_params)
         
@@ -1976,9 +1884,7 @@ def main():
                             st.dataframe(style_classic_dataframe(df_reprovados_cat), use_container_width=True)
 
     elif st.session_state.analysis_mode == "detailed":
-        # st.header("📋 Memorial Detalhado") # <- Esta linha foi removida
-        st.subheader("📋 Memorial Detalhado") # <- Substituída por esta
-        
+        st.header("📋 Memorial Detalhado")
         display_names = [PROFILE_TYPE_MAP.get(name, name) for name in all_sheets.keys()]
         reverse_name_map = {v: k for k, v in PROFILE_TYPE_MAP.items()}
 
@@ -2039,7 +1945,6 @@ def run_detailed_analysis(df, perfil_nome, perfil_tipo_display, input_params):
             html_content = create_professional_memorial_html(
                 perfil_nome, perfil_tipo_display, resultados,
                 f"""
-                
                 <div style="text-align: left;">
                     <p><strong>Módulo de Elasticidade (E):</strong> {input_params['E_aco']:.2f} kN/cm²</p>
                     <p><strong>Tensão de Escoamento (fy):</strong> {input_params['fy_aco']:.2f} kN/cm²</p>
