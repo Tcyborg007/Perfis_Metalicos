@@ -47,165 +47,148 @@ PROFILE_TYPE_MAP = {
 }
 
 
-# Substitua a variável HTML_TEMPLATE_CSS_PRO inteira por esta versão final:
+# ==============================================================================
+# SUBSTITUA TODA A SUA VARIÁVEL 'HTML_TEMPLATE_CSS_PRO' POR ESTA
+# ==============================================================================
 HTML_TEMPLATE_CSS_PRO = """
 <style>
-    /* Google Fonts: Inter & Poppins & JetBrains Mono */
+    /* Google Fonts */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap');
     @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
 
-    /* --- Paleta de Cores HQ Engenharia (Refinada para Texto) --- */
+    /* --- Paleta de Cores Definitiva HQ Engenharia --- */
     :root {
         --background: #0f172a;      /* slate-900 */
         --surface: #1e293b;         /* slate-800 */
         --border: #334155;          /* slate-700 */
         
-        /* Paleta de Texto Hierárquica */
-        --text-display: #ffffff;    /* Títulos principais e valores importantes */
-        --text-primary: #cbd5e1;    /* Cor de texto principal (parágrafos) */
-        --text-secondary: #94a3b8;   /* Rótulos e textos de apoio (mais claro agora) */
+        /* Paleta de Texto com Hierarquia e Contraste */
+        --text-display: #ffffff;    /* Títulos principais, valores importantes */
+        --text-primary: #e2e8f0;    /* Texto principal, corpo, valores (slate-200) */
+        --text-secondary: #94a3b8;   /* Rótulos e textos de apoio (slate-400) */
 
         --accent-gold: #fbbd24;      /* amber-400 */
         --accent-amber: #f59e0b;     /* amber-500 */
         --button-text: #1e293b;      /* slate-800 para texto do botão */
     }
 
-    /* --- Base e Overrides do Streamlit --- */
+    /* --- Base e Overrides Globais do Streamlit --- */
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--background); /* Essencial para o HTML do memorial */
+        color: var(--text-primary);
+    }
     .stApp {
         background-color: var(--background);
     }
-    h1, h2, h3, h4, h5, h6 {
+    h1, h2, h3 {
         font-family: 'Poppins', sans-serif;
         color: var(--text-display);
+        font-weight: 700;
     }
     .block-container {
         padding: 2rem 3rem 3rem 3rem;
     }
+
+    /* --- Estilização Universal de Componentes Streamlit --- */
     
-    /* --- Barra Lateral (Sidebar) com Texto Corrigido --- */
-    [data-testid="stSidebar"] {
-        background-color: var(--surface);
-        border-right: 1px solid var(--border);
-    }
-    [data-testid="stSidebar"] h2, 
-    [data-testid="stSidebar"] h3 {
-        color: var(--accent-gold);
-    }
-    
-    /* RÓTULOS (LABELS) NA SIDEBAR */
-    [data-testid="stSidebar"] label,
-    [data-testid="stSidebar"] .st-emotion-cache-16txtl3 { /* Expander header */
-        color: var(--text-primary) !important; /* Mais claro */
+    /* LABELS (RÓTULOS) - CORREÇÃO DE VISIBILIDADE */
+    label, [data-testid="stMetricLabel"], .st-emotion-cache-16txtl3 {
+        color: var(--text-secondary) !important;
         font-weight: 600;
-        font-family: 'Poppins', sans-serif;
     }
-    .stRadio > label {
+    .stRadio label {
+        color: var(--text-secondary) !important;
+    }
+    
+    /* INPUTS, SELECTBOX, EXPANDER - TEMA DARK UNIVERSAL */
+    input, 
+    div[data-baseweb="select"] > div,
+    [data-testid="stExpander"] summary {
+        background-color: var(--surface) !important;
         color: var(--text-primary) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 8px !important;
+    }
+    [data-testid="stExpander"] summary p { /* Texto do expander */
+        color: var(--text-primary);
         font-weight: 600;
-        font-family: 'Poppins', sans-serif;
+    }
+
+    /* Foco dos Inputs */
+    input:focus, 
+    div[data-baseweb="select"] > div:focus-within {
+        border-color: var(--accent-gold) !important;
+        box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.3) !important;
     }
     
-    /* VALOR DENTRO DO RADIO BUTTON */
-    .stRadio div {
-        color: var(--text-secondary);
+    /* Corrigir texto dentro do selectbox */
+    .stSelectbox div[data-baseweb="select"] div {
+        color: var(--text-primary) !important;
     }
-
-    [data-testid="stSidebar"] input,
-    [data-testid="stSidebar"] div[data-baseweb="select"] > div {
-        background-color: var(--background);
-        color: var(--text-display); /* Cor do valor digitado */
-        border: 1px solid var(--border) !important;
-    }
-    [data-testid="stSidebar"] input:focus,
-    [data-testid="stSidebar"] div[data-baseweb="select"] > div:focus-within {
-        border-color: var(--accent-gold) !important;
-        box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.3);
-    }
-    [data-testid="stSidebar"] .stSelectbox div[data-baseweb="select"] div {
-        color: var(--text-display);
-    }
-
-    /* --- Conteúdo Principal com Texto Corrigido --- */
+    
+    /* --- Cabeçalho e Métricas --- */
     .pro-header {
-        background: var(--surface);
-        padding: 2.5rem;
-        border-radius: 12px;
-        border: 1px solid var(--border);
-        text-align: center;
-        margin-bottom: 2rem;
+        background: var(--surface); padding: 2.5rem; border-radius: 12px;
+        border: 1px solid var(--border); text-align: center; margin-bottom: 2rem;
         box-shadow: 0 8px 30px rgba(0,0,0,0.3);
     }
     .pro-header h1 { font-size: 2.8rem; }
-    .pro-header p { font-size: 1.1rem; color: var(--text-secondary); }
     .gradient-text {
         background: linear-gradient(135deg, #FBBF24 0%, #FDE68A 50%, #D4AF37 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
     }
-
-    /* MÉTRICAS (Parâmetros do Projeto) */
     [data-testid="stMetric"] {
-        background-color: var(--surface);
-        border: 1px solid var(--border);
-        border-left: 5px solid var(--accent-amber);
-        border-radius: 8px;
-        padding: 1.5rem;
+        background-color: var(--surface); border: 1px solid var(--border);
+        border-left: 5px solid var(--accent-amber); border-radius: 8px; padding: 1.5rem;
     }
-    /* RÓTULO DA MÉTRICA */
-    [data-testid="stMetricLabel"] {
-        color: var(--text-secondary);
-        font-weight: 500;
-    }
-    /* VALOR DA MÉTRICA */
-    [data-testid="stMetricValue"] {
-        color: var(--text-display);
-        font-size: 1.5rem; /* Ajuste o tamanho se necessário */
-    }
+    [data-testid="stMetricValue"] { color: var(--text-display); }
 
-    /* BOTÕES (Modo de Análise) */
-    .stButton > button[kind="secondary"] {
-        background-color: transparent;
-        color: var(--accent-gold);
+    /* --- Botões (Principal, Secundário e Download) --- */
+    .stButton > button, .stDownloadButton > button {
+        width: 100%; padding: 12px; border-radius: 8px; cursor: pointer;
+        transition: all 0.2s ease-in-out; font-weight: bold; font-size: 1rem;
+        font-family: 'Poppins', sans-serif;
+    }
+    /* Botão Primário e de Download (Dourado) */
+    .stButton > button[kind="primary"], .stDownloadButton > button {
+        background-color: var(--accent-gold); color: var(--button-text);
         border: 2px solid var(--accent-gold);
-        font-weight: 600; /* Texto mais forte */
+    }
+    .stButton > button[kind="primary"]:hover, .stDownloadButton > button:hover {
+        background-color: #ffd042; border-color: #ffd042; transform: translateY(-2px);
+    }
+    /* Botão Secundário (Contorno) */
+    .stButton > button[kind="secondary"] {
+        background-color: transparent; color: var(--accent-gold);
+        border: 2px solid var(--accent-gold);
     }
     .stButton > button[kind="secondary"]:hover {
-        background-color: var(--accent-gold);
-        color: var(--button-text);
-    }
-    .stButton > button[kind="primary"] {
-        background-color: var(--accent-gold);
-        color: var(--button-text);
-        border: 2px solid var(--accent-gold);
-    }
-    .stButton > button[kind="primary"]:hover {
-        background-color: #ffd042; /* Amarelo um pouco mais claro no hover */
-        border-color: #ffd042;
+        background-color: var(--accent-gold); color: var(--button-text);
     }
 
-    /* --- Memorial HTML Injetado (Harmonia de Texto) --- */
-    .container {
-        font-family: 'Inter', sans-serif;
-        color: var(--text-primary);
+    /* --- Abas (Tabs) --- */
+    .stTabs [data-baseweb="tab-list"] button {
+        color: var(--text-secondary); padding: 1rem;
     }
-    .container h1, .container h2, .container h3, .container h4 {
-        font-family: 'Poppins', sans-serif;
-        color: var(--text-display);
-    }
-    .container h2 {
-        border-bottom: 1px solid var(--border);
-        padding-bottom: 10px;
-    }
-    .container h3 {
+    .stTabs [data-baseweb="tab-list"] button[aria-selected="true"] {
         color: var(--accent-gold);
+        border-bottom-color: var(--accent-gold);
     }
-    .container p, .container div, .container li, .container td, .container th {
-        color: var(--text-primary); /* Garante que todo texto padrão seja claro */
-    }
-    .container strong {
-        color: var(--text-display); /* Destaca o 'strong' */
-    }
+
+    /* --- Estilos Específicos para o MEMORIAL HTML --- */
+    .container { color: var(--text-primary); }
+    .container .pro-header { background: var(--surface); }
+    .container h1, .container h2, .container h3, .container h4 { color: var(--text-display); }
+    .container h2 { border-bottom: 1px solid var(--border); }
+    .container h3 { color: var(--accent-gold); }
+    .container strong { color: var(--text-display); }
+    .container .info-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; }
+    .container table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    .container th, .container td { text-align: left; padding: 0.75rem; border-bottom: 1px solid var(--border); }
+    .container th { color: var(--accent-gold); }
+    .container .REPROVADO { color: #FF6B6B; font-weight: bold; } /* Vermelho claro */
+    .container .APROVADO { color: #63E6BE; font-weight: bold; } /* Verde claro */
 
 </style>
 """
