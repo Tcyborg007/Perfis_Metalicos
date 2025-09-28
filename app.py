@@ -46,214 +46,176 @@ PROFILE_TYPE_MAP = {
     "VS": "Perfis Soldados"
 }
 
+
 HTML_TEMPLATE_CSS_PRO = """
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+    /* Google Fonts: Inter & Poppins */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
 
     :root {
-        --primary-color: #1e40af;
-        --secondary-color: #3b82f6;
-        --accent-color: #60a5fa;
-        --success-color: #10b981;
-        --warning-color: #f59e0b;
-        --error-color: #ef4444;
-        --background: #f8fafc;
-        --surface: #ffffff;
-        --text-primary: #1f2937;
-        --text-secondary: #6b7280;
-        --border: #e5e7eb;
+        --background: #0f172a; /* slate-900 */
+        --surface: #1e293b;    /* slate-800 */
+        --border: #334155;     /* slate-700 */
+        --text-primary: #f1f5f9; /* slate-100 */
+        --text-secondary: #94a3b8;/* slate-400 */
+        --accent-gold: #fbbd24; /* amber-400 */
+        --accent-amber: #f59e0b;  /* amber-500 */
+        --success: #10b981;    /* emerald-500 */
+        --success-bg: #052e16;   /* emerald-900 */
+        --error: #ef4444;      /* red-500 */
+        --error-bg: #3f1212;     /* red-900 */
     }
 
+    /* Base Body Styling */
     body {
         font-family: 'Inter', sans-serif;
-        line-height: 1.6;
+        background-color: var(--background);
         color: var(--text-primary);
-        background: var(--background);
     }
-
+    
     .container {
-        margin: 0 auto;
-        padding: 2rem;
-        background: var(--surface);
-        border-radius: 16px;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        width: 100%;
-        max-width: 100%;
+        background: transparent; /* O container principal não precisa de fundo */
+        box-shadow: none;
     }
 
-    /* Header Profissional */
+    /* --- Header Profissional com Logo --- */
     .pro-header {
-        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        background: var(--surface);
         color: white;
-        padding: 3rem 2rem;
-        border-radius: 16px;
+        padding: 2rem;
+        border-radius: 12px;
+        border: 1px solid var(--border);
         text-align: center;
         margin-bottom: 2rem;
         position: relative;
-        overflow: hidden;
+    }
+
+    .header-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .pro-header img {
+        height: 80px; /* Tamanho da logo */
+        width: auto;
+        border-radius: 8px;
     }
 
     .pro-header h1 {
-        font-size: 3rem;
-        font-weight: 700;
+        font-size: 2.5rem;
+        font-weight: 800;
+        font-family: 'Poppins', sans-serif;
         margin: 0;
-        position: relative;
-        z-index: 1;
+        line-height: 1.2;
     }
-
+    
     .pro-header p {
-        font-size: 1.25rem;
-        margin: 0.5rem 0 0;
-        opacity: 0.9;
-        position: relative;
-        z-index: 1;
-    }
-
-    /* Títulos Hierárquicos */
-    h1, h2, h3, h4, h5, h6 {
-        font-family: 'Inter', sans-serif;
-        color: var(--text-primary);
-        font-weight: 600;
-        line-height: 1.3;
-    }
-
-    h1 { font-size: 2.5rem; margin: 2rem 0 1rem; }
-    h2 {
-        font-size: 2rem;
-        margin: 2.5rem 0 1.5rem;
-        padding-bottom: 0.75rem;
-        border-bottom: 3px solid var(--primary-color);
-        position: relative;
-    }
-
-    h2::after {
-        content: '';
-        position: absolute;
-        bottom: -3px;
-        left: 0;
-        width: 60px;
-        height: 3px;
-        background: var(--accent-color);
-    }
-
-    h3 {
-        font-size: 1.5rem;
-        margin: 2rem 0 1rem;
-        color: var(--secondary-color);
-    }
-
-    h4 {
-        font-size: 1.25rem;
-        font-weight: 600;
-        color: var(--text-primary);
-        margin: 1.5rem 0 0.5rem;
-    }
-
-    h5 {
-        font-size: 1rem;
-        font-weight: 600;
+        font-size: 1.1rem;
+        margin: 0;
         color: var(--text-secondary);
-        margin: 1rem 0 0.25rem;
+    }
+    
+    .gradient-text {
+        background: linear-gradient(135deg, #FBBF24 0%, #FDE68A 50%, #D4AF37 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
     }
 
-    /* Tabela de Resultados Premium */
+    /* --- Títulos --- */
+    h1, h2, h3, h4, h5, h6 {
+        font-family: 'Poppins', sans-serif;
+        color: var(--text-primary);
+        font-weight: 700;
+    }
+
+    h2 {
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 10px;
+    }
+    
+    h3 { color: var(--accent-gold); }
+
+    /* --- Tabelas de Resumo --- */
     .summary-table {
-        width: 100%;
         border-collapse: separate;
         border-spacing: 0;
-        margin: 2rem 0;
-        border-radius: 12px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
         overflow: hidden;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     }
 
     .summary-table thead tr th {
-        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-        color: white;
-        padding: 1.25rem;
-        text-align: center;
+        background: var(--background);
+        color: var(--accent-gold);
+        padding: 1rem;
         font-weight: 600;
-        font-size: 0.95rem;
+        font-size: 0.9rem;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        border-bottom: 2px solid var(--border);
     }
 
     .summary-table tbody tr td {
         padding: 1rem;
-        text-align: center;
-        vertical-align: middle;
+        background: var(--surface);
         border-bottom: 1px solid var(--border);
-        background: white;
     }
-
     .summary-table tbody tr:last-child td { border-bottom: none; }
 
-    /* Cards de Fórmulas Avançados */
-    .formula-block {
-        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    /* --- Blocos de Detalhes e Fórmulas --- */
+    .info-card, .formula-block {
+        background: var(--surface);
         border: 1px solid var(--border);
-        border-left: 5px solid var(--accent-color);
-        padding: 2rem;
-        margin: 2rem 0;
-        border-radius: 12px;
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+        border-radius: 8px;
     }
-
+    .formula-block {
+        background-color: var(--background);
+        border-left: 4px solid var(--accent-amber);
+    }
+    
+    .formula {
+        font-family: 'JetBrains Mono', monospace;
+        background: var(--surface);
+        padding: 1rem;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        margin: 1rem 0;
+    }
+    
     .verification-step {
-        background-color: #e2e8f0;
-        border: 1px solid #cbd5e1;
+        background-color: var(--background);
+        border: 1px solid var(--border);
         padding: 1rem;
         margin-top: 1.5rem;
         border-radius: 8px;
     }
 
-    /* Status Indicators */
-    .pass { color: var(--success-color); font-weight: 600; }
-    .fail { color: var(--error-color); font-weight: 600; }
-    .conclusion.pass { color: var(--success-color); font-weight: 600; }
-    .conclusion.fail { color: var(--error-color); font-weight: 600; }
+    /* --- Indicadores de Status --- */
+    .pass { color: var(--success); font-weight: 600; }
+    .fail { color: var(--error); font-weight: 600; }
+    .conclusion.pass { color: var(--success); }
+    .conclusion.fail { color: var(--error); }
 
     .final-status.pass {
-        background: linear-gradient(135deg, var(--success-color), #059669);
-        color: white; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
-        font-size: 1.4em; font-weight: 700; text-align: center;
-        padding: 1rem; border-radius: 8px; margin: 1rem 0;
-        text-transform: uppercase; letter-spacing: 1px;
+        background-color: var(--success-bg);
+        color: #a7f3d0;
+        border: 1px solid var(--success);
     }
-
     .final-status.fail {
-        background: linear-gradient(135deg, var(--error-color), #dc2626);
-        color: white; box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
-        font-size: 1.4em; font-weight: 700; text-align: center;
-        padding: 1rem; border-radius: 8px; margin: 1rem 0;
-        text-transform: uppercase; letter-spacing: 1px;
+        background-color: var(--error-bg);
+        color: #f87171;
+        border: 1px solid var(--error);
+    }
+    .final-status {
+        font-size: 1.2em; font-weight: bold; text-align: center;
+        padding: 0.75rem; border-radius: 6px; margin: 1rem 0;
     }
 
-    .formula {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 1.1rem;
-        text-align: center;
-        margin: 1.5rem 0;
-        padding: 1.5rem;
-        background: white;
-        border-radius: 8px;
-        border: 1px solid var(--border);
-    }
-
-    .ref-norma {
-        text-align: right;
-        font-size: 0.85rem;
-        color: var(--text-secondary);
-        margin-top: 0.5rem;
-        font-style: italic;
-    }
-
-    .info-card {
-        background: white;
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin: 1rem 0;
-    }
 </style>
 """
 
@@ -1118,12 +1080,18 @@ def create_excel_with_colors(df_list, sheet_names):
     output.seek(0)
     return output
 
+# Substitua a função create_professional_header inteira por esta:
 def create_professional_header():
-    st.markdown("""
+    # Use o mesmo link da logo que você forneceu no outro código
+    logo_url = "https://lh3.googleusercontent.com/a/ACg8ocKplHKwLPBbUbVCvtwvTPhn0aboS42tEQxuNtiVPVZ7Xboh1pk=s96-c"
+    
+    st.markdown(f"""
     <div class="pro-header">
-        <h1>🏗️ Calculadora Estrutural</h1>
-        <p>Análise de Perfis Metálicos | NBR 8800:2008</p>
-        <p>By: Otávio Augusto</p>
+        <div class="header-content">
+            <img src="{logo_url}" alt="Logo HQ Engenharia">
+            <h1 class="gradient-text">Calculadora Estrutural de Perfis</h1>
+            <p>Análise de Perfis Metálicos | {Config.NOME_NORMA}</p>
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
