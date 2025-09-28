@@ -47,20 +47,24 @@ PROFILE_TYPE_MAP = {
 }
 
 
-# Substitua a variável HTML_TEMPLATE_CSS_PRO inteira por esta:
+# Substitua a variável HTML_TEMPLATE_CSS_PRO inteira por esta versão final:
 HTML_TEMPLATE_CSS_PRO = """
 <style>
-    /* Google Fonts: Inter & Poppins */
+    /* Google Fonts: Inter & Poppins & JetBrains Mono */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap');
     @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
 
-    /* --- Paleta de Cores HQ Engenharia --- */
+    /* --- Paleta de Cores HQ Engenharia (Refinada para Texto) --- */
     :root {
         --background: #0f172a;      /* slate-900 */
         --surface: #1e293b;         /* slate-800 */
         --border: #334155;          /* slate-700 */
-        --text-primary: #f1f5f9;    /* slate-100 */
-        --text-secondary: #94a3b8;   /* slate-400 */
+        
+        /* Paleta de Texto Hierárquica */
+        --text-display: #ffffff;    /* Títulos principais e valores importantes */
+        --text-primary: #cbd5e1;    /* Cor de texto principal (parágrafos) */
+        --text-secondary: #94a3b8;   /* Rótulos e textos de apoio (mais claro agora) */
+
         --accent-gold: #fbbd24;      /* amber-400 */
         --accent-amber: #f59e0b;     /* amber-500 */
         --button-text: #1e293b;      /* slate-800 para texto do botão */
@@ -69,17 +73,16 @@ HTML_TEMPLATE_CSS_PRO = """
     /* --- Base e Overrides do Streamlit --- */
     .stApp {
         background-color: var(--background);
-        color: var(--text-primary);
     }
     h1, h2, h3, h4, h5, h6 {
         font-family: 'Poppins', sans-serif;
-        color: var(--text-primary);
+        color: var(--text-display);
     }
     .block-container {
         padding: 2rem 3rem 3rem 3rem;
     }
-
-    /* --- Barra Lateral (Sidebar) --- */
+    
+    /* --- Barra Lateral (Sidebar) com Texto Corrigido --- */
     [data-testid="stSidebar"] {
         background-color: var(--surface);
         border-right: 1px solid var(--border);
@@ -87,34 +90,42 @@ HTML_TEMPLATE_CSS_PRO = """
     [data-testid="stSidebar"] h2, 
     [data-testid="stSidebar"] h3 {
         color: var(--accent-gold);
+    }
+    
+    /* RÓTULOS (LABELS) NA SIDEBAR */
+    [data-testid="stSidebar"] label,
+    [data-testid="stSidebar"] .st-emotion-cache-16txtl3 { /* Expander header */
+        color: var(--text-primary) !important; /* Mais claro */
+        font-weight: 600;
         font-family: 'Poppins', sans-serif;
     }
-    [data-testid="stSidebar"] .st-emotion-cache-16txtl3 { /* Expander header */
-        color: var(--text-primary);
+    .stRadio > label {
+        color: var(--text-primary) !important;
+        font-weight: 600;
+        font-family: 'Poppins', sans-serif;
     }
-    [data-testid="stSidebar"] label {
+    
+    /* VALOR DENTRO DO RADIO BUTTON */
+    .stRadio div {
         color: var(--text-secondary);
-        font-weight: 500;
     }
+
     [data-testid="stSidebar"] input,
     [data-testid="stSidebar"] div[data-baseweb="select"] > div {
         background-color: var(--background);
-        color: var(--text-primary);
+        color: var(--text-display); /* Cor do valor digitado */
         border: 1px solid var(--border) !important;
-        border-radius: 6px;
     }
     [data-testid="stSidebar"] input:focus,
     [data-testid="stSidebar"] div[data-baseweb="select"] > div:focus-within {
         border-color: var(--accent-gold) !important;
         box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.3);
     }
-    
-    /* Corrigir cor do texto dentro do selectbox */
     [data-testid="stSidebar"] .stSelectbox div[data-baseweb="select"] div {
-        color: var(--text-primary);
+        color: var(--text-display);
     }
 
-    /* --- Cabeçalho Profissional --- */
+    /* --- Conteúdo Principal com Texto Corrigido --- */
     .pro-header {
         background: var(--surface);
         padding: 2.5rem;
@@ -124,22 +135,8 @@ HTML_TEMPLATE_CSS_PRO = """
         margin-bottom: 2rem;
         box-shadow: 0 8px 30px rgba(0,0,0,0.3);
     }
-    .pro-header img {
-        height: 80px;
-        width: auto;
-        border-radius: 8px;
-        margin-bottom: 1rem;
-    }
-    .pro-header h1 {
-        font-size: 2.8rem;
-        font-weight: 800;
-        margin: 0;
-    }
-    .pro-header p {
-        font-size: 1.1rem;
-        color: var(--text-secondary);
-        margin-top: 0.5rem;
-    }
+    .pro-header h1 { font-size: 2.8rem; }
+    .pro-header p { font-size: 1.1rem; color: var(--text-secondary); }
     .gradient-text {
         background: linear-gradient(135deg, #FBBF24 0%, #FDE68A 50%, #D4AF37 100%);
         -webkit-background-clip: text;
@@ -147,41 +144,7 @@ HTML_TEMPLATE_CSS_PRO = """
         background-clip: text;
     }
 
-    /* --- Botões --- */
-    .stButton > button {
-        width: 100%;
-        padding: 12px;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: all 0.2s ease-in-out;
-        font-weight: bold;
-        font-size: 1rem;
-        font-family: 'Poppins', sans-serif;
-    }
-    /* Botão Primário (Amarelo) */
-    .stButton > button[kind="primary"] {
-        background-color: var(--accent-gold);
-        color: var(--button-text);
-        border: 2px solid var(--accent-gold);
-    }
-    .stButton > button[kind="primary"]:hover {
-        background-color: var(--accent-amber);
-        border-color: var(--accent-amber);
-        transform: translateY(-2px);
-    }
-    /* Botão Secundário (Contorno) */
-    .stButton > button[kind="secondary"] {
-        background-color: transparent;
-        color: var(--accent-gold);
-        border: 2px solid var(--accent-gold);
-    }
-    .stButton > button[kind="secondary"]:hover {
-        background-color: var(--accent-gold);
-        color: var(--button-text);
-        transform: translateY(-2px);
-    }
-
-    /* --- Métricas e Títulos de Seção --- */
+    /* MÉTRICAS (Parâmetros do Projeto) */
     [data-testid="stMetric"] {
         background-color: var(--surface);
         border: 1px solid var(--border);
@@ -189,17 +152,59 @@ HTML_TEMPLATE_CSS_PRO = """
         border-radius: 8px;
         padding: 1.5rem;
     }
+    /* RÓTULO DA MÉTRICA */
     [data-testid="stMetricLabel"] {
         color: var(--text-secondary);
+        font-weight: 500;
     }
-    
-    /* --- Abas (Tabs) --- */
-    .stTabs [data-baseweb="tab-list"] button {
-        color: var(--text-secondary);
+    /* VALOR DA MÉTRICA */
+    [data-testid="stMetricValue"] {
+        color: var(--text-display);
+        font-size: 1.5rem; /* Ajuste o tamanho se necessário */
     }
-    .stTabs [data-baseweb="tab-list"] button[aria-selected="true"] {
+
+    /* BOTÕES (Modo de Análise) */
+    .stButton > button[kind="secondary"] {
+        background-color: transparent;
         color: var(--accent-gold);
-        border-bottom-color: var(--accent-gold);
+        border: 2px solid var(--accent-gold);
+        font-weight: 600; /* Texto mais forte */
+    }
+    .stButton > button[kind="secondary"]:hover {
+        background-color: var(--accent-gold);
+        color: var(--button-text);
+    }
+    .stButton > button[kind="primary"] {
+        background-color: var(--accent-gold);
+        color: var(--button-text);
+        border: 2px solid var(--accent-gold);
+    }
+    .stButton > button[kind="primary"]:hover {
+        background-color: #ffd042; /* Amarelo um pouco mais claro no hover */
+        border-color: #ffd042;
+    }
+
+    /* --- Memorial HTML Injetado (Harmonia de Texto) --- */
+    .container {
+        font-family: 'Inter', sans-serif;
+        color: var(--text-primary);
+    }
+    .container h1, .container h2, .container h3, .container h4 {
+        font-family: 'Poppins', sans-serif;
+        color: var(--text-display);
+    }
+    .container h2 {
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 10px;
+    }
+    .container h3 {
+        color: var(--accent-gold);
+    }
+    .container p, .container div, .container li, .container td, .container th {
+        color: var(--text-primary); /* Garante que todo texto padrão seja claro */
+    }
+    .container strong {
+        color: var(--text-display); /* Destaca o 'strong' */
     }
 
 </style>
@@ -1194,12 +1199,12 @@ def create_profile_efficiency_chart(perfil_nome, eficiencias):
     )
     return fig
 brazilia_tz = pytz.timezone('America/Sao_Paulo')
+# Substitua a função create_professional_memorial_html por esta:
 def create_professional_memorial_html(perfil_nome, perfil_tipo, resultados, input_details, projeto_info):
-    conteudo_memorial = f"""
+    # (O conteúdo da variável 'conteudo_memorial' continua o mesmo)
+    conteudo_memorial = f""" 
     <h2>1. Resumo Executivo</h2>
     <div class="result-highlight">{resultados['resumo_html']}</div>
-    
-
     <h2>2. Dados de Entrada e Solicitações</h2>
     <div class="info-card">
         <h3>2.1. Propriedades do Perfil e Materiais</h3>
@@ -1210,6 +1215,8 @@ def create_professional_memorial_html(perfil_nome, perfil_tipo, resultados, inpu
     <h2>3. Verificações de Resistência (ELU)</h2>
     {resultados['passo_a_passo_html']}
     """
+    
+    # O template HTML agora tem o <h1> com a classe 'gradient-text'
     html_template = f"""
     <!DOCTYPE html><html lang="pt-BR"><head>
         <meta charset="UTF-8"><title>Memorial de Cálculo - {perfil_nome}</title>
@@ -1217,7 +1224,7 @@ def create_professional_memorial_html(perfil_nome, perfil_tipo, resultados, inpu
         <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML"></script>
     </head><body><div class="container">
         <div class="pro-header">
-            <h1>Memorial de Cálculo Estrutural</h1>
+            <h1><span class="gradient-text">Memorial de Cálculo Estrutural</span></h1>
             <p><strong>{perfil_nome}</strong> ({perfil_tipo})</p>
         </div>
         <div class="info-card">
