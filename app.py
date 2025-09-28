@@ -48,7 +48,7 @@ PROFILE_TYPE_MAP = {
 
 
 # ==============================================================================
-# SUBSTITUA TODA A SUA VARIÁVEL 'HTML_TEMPLATE_CSS_PRO' POR ESTA VERSÃO ATUALIZADA
+# SUBSTITUA TODA A SUA VARIÁVEL 'HTML_TEMPLATE_CSS_PRO' POR ESTA VERSÃO COMPLETA
 # ==============================================================================
 HTML_TEMPLATE_CSS_PRO = """
 <style>
@@ -67,7 +67,6 @@ HTML_TEMPLATE_CSS_PRO = """
         --accent-gold: #fbbd24;
         --accent-amber: #f59e0b;
         --button-text: #1e293b;
-        --chart-text-color: #e2e8f0; /* Nova variável para texto de gráficos */
     }
 
     /* --- Base e Overrides Globais do Streamlit --- */
@@ -79,16 +78,26 @@ HTML_TEMPLATE_CSS_PRO = """
     .stApp {
         background-color: var(--background);
     }
+    .block-container {
+        padding: 2rem 3rem 3rem 3rem;
+    }
+
+    /* --- Títulos e Textos Genéricos --- */
     h1, h2, h3 {
         font-family: 'Poppins', sans-serif;
         color: var(--text-display);
         font-weight: 700;
     }
-    .block-container {
-        padding: 2rem 3rem 3rem 3rem;
+    /* Força a cor dos títulos de seção (H3) para dourado */
+    h3 {
+        color: var(--accent-gold) !important;
+    }
+    /* Força a cor de textos genéricos (como "Fator Cb...") para branco */
+    .st-emotion-cache-16idsys p {
+        color: var(--text-primary) !important;
     }
 
-    /* --- BARRA LATERAL (SIDEBAR) - CORREÇÃO COMPLETA --- */
+    /* --- BARRA LATERAL (SIDEBAR) --- */
     [data-testid="stSidebar"] {
         background-color: var(--surface) !important;
         border-right: 1px solid var(--border);
@@ -98,13 +107,12 @@ HTML_TEMPLATE_CSS_PRO = """
         color: var(--accent-gold);
     }
     
-    /* RÓTULOS (LABELS) - CORREÇÃO DE VISIBILIDADE */
-    label, [data-testid="stMetricLabel"], .st-emotion-cache-16txtl3 > summary p {
+    /* RÓTULOS (LABELS) */
+    label, [data-testid="stMetricLabel"] {
         color: var(--text-secondary) !important;
         font-weight: 600;
         font-family: 'Inter', sans-serif;
     }
-    /* Rótulos de radio/checkbox específicos */
     .stRadio > label, .stCheckbox > label {
         color: var(--text-secondary) !important;
         font-weight: 600;
@@ -114,7 +122,7 @@ HTML_TEMPLATE_CSS_PRO = """
         color: var(--text-primary); /* Texto das opções */
     }
 
-    /* INPUTS, SELECTBOX, TEXTAREA - TEMA DARK UNIVERSAL */
+    /* INPUTS, SELECTBOX, TEXTAREA */
     input, 
     div[data-baseweb="select"] > div,
     textarea {
@@ -123,7 +131,6 @@ HTML_TEMPLATE_CSS_PRO = """
         border: 1px solid var(--border) !important;
         border-radius: 8px !important;
     }
-    /* stDateInput específico */
     .stDateInput input {
         color: var(--text-primary) !important;
     }
@@ -136,32 +143,40 @@ HTML_TEMPLATE_CSS_PRO = """
         box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.3) !important;
     }
     
-    /* Cores do texto dentro do Selectbox */
     .stSelectbox div[data-baseweb="select"] div,
     .stSelectbox div[data-baseweb="select"] span {
         color: var(--text-primary) !important;
     }
     
-    /* --- ST.EXPANDER (RESUMO VISUAL, MEMORIAL DETALHADO, etc.) --- */
-    [data-testid="stExpander"] > div:first-child { /* O cabeçalho do expander */
-        background-color: var(--surface) !important; /* Cor de fundo do cabeçalho */
+    /* --- ST.EXPANDER --- */
+    [data-testid="stExpander"] {
+        border: none !important;
+        box-shadow: none !important;
+        background: none !important;
+    }
+    [data-testid="stExpander"] summary {
+        background-color: var(--surface) !important;
+        color: var(--text-primary) !important;
         border: 1px solid var(--border) !important;
         border-radius: 8px !important;
-        padding: 0.5rem 1rem !important; /* Ajuste de padding */
-        margin-bottom: 0.5rem; /* Espaço entre expanders */
+        margin-bottom: 0.5rem;
+        padding: 0.75rem 1rem !important;
     }
-    [data-testid="stExpander"] > div:first-child summary p {
-        color: var(--text-primary) !important; /* Texto do título do expander */
+    [data-testid="stExpander"] summary p {
+        color: var(--text-primary) !important;
         font-weight: 600;
-        font-size: 1.1rem; /* Tamanho da fonte para os títulos */
+        font-size: 1.1rem;
     }
-    /* Ícone de seta do expander */
-    [data-testid="stExpander"] > div:first-child svg {
+    [data-testid="stExpander"] summary svg {
         fill: var(--text-primary) !important;
     }
-    /* Conteúdo do expander */
     [data-testid="stExpander"] .st-emotion-cache-16txtl3 {
-        padding-top: 1rem; /* Espaço entre o cabeçalho e o conteúdo */
+        background-color: var(--surface) !important;
+        border: 1px solid var(--border) !important;
+        border-top: none !important;
+        border-radius: 0 0 8px 8px !important;
+        padding: 1rem !important;
+        margin-top: -0.5rem;
     }
 
     /* --- Cabeçalho e Métricas --- */
@@ -182,37 +197,24 @@ HTML_TEMPLATE_CSS_PRO = """
     }
     [data-testid="stMetricValue"] { color: var(--text-display); }
 
-    /* --- Botões (Principal, Secundário e Download) --- */
+    /* --- Botões --- */
     .stButton > button, .stDownloadButton > button {
         padding: 12px; border-radius: 8px; font-weight: bold; font-size: 1rem;
         font-family: 'Poppins', sans-serif; border: 2px solid var(--accent-gold);
         transition: all 0.2s ease-in-out;
     }
-    /* Botão Primário e de Download (Dourado Sólido) */
     .stButton > button[kind="primary"], .stDownloadButton > button {
         background-color: var(--accent-gold); color: var(--button-text) !important;
     }
     .stButton > button[kind="primary"]:hover, .stDownloadButton > button:hover {
         background-color: #ffd042; border-color: #ffd042; transform: translateY(-2px);
     }
-    /* Botão Secundário (Contorno Dourado) - para "Resumo Visual" e "Memorial" */
     .stButton > button[kind="secondary"] {
         background-color: transparent; color: var(--accent-gold) !important;
     }
     .stButton > button[kind="secondary"]:hover {
         background-color: var(--accent-gold); color: var(--button-text) !important;
     }
-    /* Botões específicos para "Resumo Visual da Análise" e "Visualização do Memorial" */
-    /* Se você quiser que eles sejam primários, use a classe "primary" no st.button */
-    /* Caso contrário, a regra "secondary" acima já os deixará com contorno dourado */
-    /* Para forçar eles a serem dourados sólidos: */
-    /*
-    .st-emotion-cache-1r6dm1b button { # Este é um seletor genérico, pode precisar de ajuste específico
-        background-color: var(--accent-gold) !important;
-        color: var(--button-text) !important;
-        border-color: var(--accent-gold) !important;
-    }
-    */
 
     /* --- Abas (Tabs) --- */
     .stTabs [data-baseweb="tab-list"] button {
@@ -222,7 +224,7 @@ HTML_TEMPLATE_CSS_PRO = """
         color: var(--accent-gold); border-bottom-color: var(--accent-gold);
     }
 
-    /* --- Estilos Específicos para o MEMORIAL HTML --- */
+    /* --- Estilos para o MEMORIAL HTML --- */
     .container { font-family: 'Inter', sans-serif; color: var(--text-primary); }
     .container .pro-header { background: var(--surface); }
     .container h1, .container h2, .container h3, .container h4 { color: var(--text-display); font-family: 'Poppins', sans-serif; }
@@ -1200,32 +1202,54 @@ def create_top_profiles_chart(df_approved, top_n=10):
     return fig
 
 # Em create_profile_efficiency_chart(perfil_nome, eficiencias):
+# Substitua a função create_profile_efficiency_chart inteira por esta:
 def create_profile_efficiency_chart(perfil_nome, eficiencias):
+    """
+    Cria um gráfico de barras comparando as eficiências de um perfil.
+    """
     labels = list(eficiencias.keys())
-    values = [min(v, 150) for v in eficiencias.values()]
-    colors = ['#32CD32' if v <= 100 else '#FF4500' for v in values] # Verde e Laranja/Vermelho
+    values = [min(v, 150) if isinstance(v, (int, float)) else 0 for v in eficiencias.values()]
+    
+    # Cores baseadas na eficiência
+    colors = ['#32CD32' if v <= 100 else '#FF4500' for v in values]
     
     fig = go.Figure(data=[
         go.Bar(
-            x=labels, y=values,
-            text=[f'{v:.1f}%' for v in eficiencias.values()],
+            x=labels,
+            y=values,
+            text=[f'{v:.1f}%' if isinstance(v, (int, float)) else 'N/A' for v in eficiencias.values()],
             textposition='auto',
-            marker_color=colors
+            marker_color=colors,
+            textfont=dict(color='#FFFFFF', size=14, family='Poppins') # Texto dentro da barra
         )
     ])
     
-    fig.add_hline(y=100, line_dash="dash", line_color="#FFD700", # Linha dourada
-                  annotation_text="Limite de Aprovação (100%)",
-                  annotation_position="bottom right")
+    fig.add_hline(y=100, line_dash="dash", line_color="#fbbd24", # Linha dourada
+                  annotation_text="Limite (100%)",
+                  annotation_position="bottom right",
+                  annotation_font=dict(color='#fbbd24'))
 
+    # ATUALIZAÇÃO COMPLETA DO LAYOUT PARA O TEMA DARK
     fig.update_layout(
-        title=f'Análise de Eficiência para o Perfil: {perfil_nome}',
+        title=dict(
+            text=f'Análise de Eficiência para o Perfil: {perfil_nome}',
+            font=dict(color='#FFFFFF', size=20, family='Poppins') # Cor do título
+        ),
         yaxis_title='Eficiência (%)',
         xaxis_title='Verificação',
-        yaxis_range=[0, max(max(values), 100) + 10],
-        template='plotly_dark', # <--- ADICIONE ESTA LINHA
-        paper_bgcolor='rgba(0,0,0,0)', # Fundo do papel transparente
-        plot_bgcolor='rgba(0,0,0,0)'   # Fundo do gráfico transparente
+        yaxis_range=[0, max(max(values), 100) + 15],
+        template='plotly_dark',
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='#94a3b8', family='Inter'), # Cor padrão para todo o texto do gráfico
+        xaxis=dict(
+            title_font=dict(color='#e2e8f0'), # Cor do título do eixo X
+            tickfont=dict(color='#e2e8f0')     # Cor dos labels do eixo X
+        ),
+        yaxis=dict(
+            title_font=dict(color='#e2e8f0'), # Cor do título do eixo Y
+            tickfont=dict(color='#e2e8f0')     # Cor dos labels do eixo Y
+        )
     )
     return fig
 brazilia_tz = pytz.timezone('America/Sao_Paulo')
@@ -1838,10 +1862,10 @@ def main():
 
     st.markdown("### 🎯 Modo de Análise")
     col1, col2 = st.columns(2)
-    if col1.button("📊 Análise em Lote e Otimização", use_container_width=True):
-        st.session_state.analysis_mode = "batch"
-    if col2.button("📋 Memorial Detalhado de Perfil", use_container_width=True):
-        st.session_state.analysis_mode = "detailed"
+    if col1.button("📊 Análise em Lote e Otimização", use_container_width=True, type="secondary"):
+    st.session_state.analysis_mode = "batch"
+    if col2.button("📋 Memorial Detalhado de Perfil", use_container_width=True, type="secondary"):
+    st.session_state.analysis_mode = "detailed"
 
     if st.session_state.analysis_mode == "batch":
         st.header("📊 Análise em Lote")
