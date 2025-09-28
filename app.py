@@ -47,6 +47,10 @@ PROFILE_TYPE_MAP = {
 }
 
 
+# ==============================================================================
+# SUBSTITUA TODA A SUA VARIÁVEL 'HTML_TEMPLATE_CSS_PRO' POR ESTA VERSÃO COMPLETA
+# (Inclui a correção para o título do expander)
+# ==============================================================================
 HTML_TEMPLATE_CSS_PRO = """
 <style>
     /* Google Fonts */
@@ -85,7 +89,7 @@ HTML_TEMPLATE_CSS_PRO = """
         color: var(--text-display);
         font-weight: 700;
     }
-    /* Força a cor dos títulos de seção (H3) para dourado */
+    /* Força a cor dos títulos H3 */
     h3 {
         font-family: 'Poppins', sans-serif;
         color: var(--accent-gold) !important;
@@ -160,16 +164,17 @@ HTML_TEMPLATE_CSS_PRO = """
         box-shadow: none !important;
         background: none !important;
     }
+    /* CORREÇÃO AQUI para o título do expander */
     [data-testid="stExpander"] summary {
         background-color: var(--surface) !important;
-        color: var(--text-primary) !important;
+        color: var(--text-primary) !important; /* Cor do texto do título */
         border: 1px solid var(--border) !important;
         border-radius: 8px !important;
         margin-bottom: 0.5rem;
         padding: 0.75rem 1rem !important;
     }
     [data-testid="stExpander"] summary p {
-        color: var(--text-primary) !important;
+        color: var(--text-primary) !important; /* Mais uma vez para garantir */
         font-weight: 600;
         font-size: 1.1rem;
     }
