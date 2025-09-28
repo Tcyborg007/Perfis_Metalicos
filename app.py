@@ -47,9 +47,6 @@ PROFILE_TYPE_MAP = {
 }
 
 
-# ==============================================================================
-# SUBSTITUA TODA A SUA VARIÁVEL 'HTML_TEMPLATE_CSS_PRO' POR ESTA VERSÃO COMPLETA
-# ==============================================================================
 HTML_TEMPLATE_CSS_PRO = """
 <style>
     /* Google Fonts */
@@ -83,18 +80,29 @@ HTML_TEMPLATE_CSS_PRO = """
     }
 
     /* --- Títulos e Textos Genéricos --- */
-    h1, h2, h3 {
+    h1, h2 {
         font-family: 'Poppins', sans-serif;
         color: var(--text-display);
         font-weight: 700;
     }
     /* Força a cor dos títulos de seção (H3) para dourado */
     h3 {
+        font-family: 'Poppins', sans-serif;
+        color: var(--accent-gold) !important;
+        font-weight: 700;
+    }
+    /* Garante que os títulos H3 dentro do markdown também sejam dourados */
+    [data-testid="stMarkdownContainer"] h3 {
         color: var(--accent-gold) !important;
     }
-    /* Força a cor de textos genéricos (como "Fator Cb...") para branco */
-    .st-emotion-cache-16idsys p {
+    /* Estiliza o texto "Fator Cb..." para ser branco e legível */
+    .metric-footer {
         color: var(--text-primary) !important;
+        font-family: 'Inter', sans-serif;
+        font-size: 0.9rem;
+        text-align: center;
+        margin-top: -0.5rem;
+        margin-bottom: 2rem;
     }
 
     /* --- BARRA LATERAL (SIDEBAR) --- */
@@ -119,7 +127,7 @@ HTML_TEMPLATE_CSS_PRO = """
         margin-bottom: 0.5rem;
     }
     .stRadio [data-testid="stMarkdownContainer"] p, .stCheckbox [data-testid="stMarkdownContainer"] p {
-        color: var(--text-primary); /* Texto das opções */
+        color: var(--text-primary);
     }
 
     /* INPUTS, SELECTBOX, TEXTAREA */
@@ -134,8 +142,6 @@ HTML_TEMPLATE_CSS_PRO = """
     .stDateInput input {
         color: var(--text-primary) !important;
     }
-
-    /* Foco dos Inputs */
     input:focus, 
     div[data-baseweb="select"] > div:focus-within,
     textarea:focus {
@@ -1151,7 +1157,10 @@ def create_metrics_dashboard(input_params):
             help="Força Cortante Solicitante de Cálculo"
         )
     
-    st.markdown(f"**Fator Cb:** {cb_value:.2f} | **Lb:** {input_params['Lb_projeto']:.2f} cm | **Flecha Limite:** L/{input_params['limite_flecha_divisor']:.0f}")
+    # --- LINHA CORRIGIDA ABAIXO ---
+    st.markdown(f"""<div class="metric-footer">
+        Fator Cb: {cb_value:.2f} | Lb: {input_params['Lb_projeto']:.2f} cm | Flecha Limite: L/{input_params['limite_flecha_divisor']:.0f}
+    </div>""", unsafe_allow_html=True)
 
 def style_classic_dataframe(df):
     """Aplica estilização clássica com cores sólidas ao DataFrame."""
