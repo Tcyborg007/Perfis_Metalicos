@@ -47,10 +47,6 @@ PROFILE_TYPE_MAP = {
 }
 
 
-# ==============================================================================
-# SUBSTITUA TODA A SUA VARIÁVEL 'HTML_TEMPLATE_CSS_PRO' POR ESTA VERSÃO COMPLETA
-# (Inclui a correção para o título do expander)
-# ==============================================================================
 HTML_TEMPLATE_CSS_PRO = """
 <style>
     /* Google Fonts */
@@ -89,7 +85,7 @@ HTML_TEMPLATE_CSS_PRO = """
         color: var(--text-display);
         font-weight: 700;
     }
-    /* Força a cor dos títulos H3 */
+    /* Força a cor dos títulos de seção (H3) para dourado */
     h3 {
         font-family: 'Poppins', sans-serif;
         color: var(--accent-gold) !important;
@@ -164,17 +160,16 @@ HTML_TEMPLATE_CSS_PRO = """
         box-shadow: none !important;
         background: none !important;
     }
-    /* CORREÇÃO AQUI para o título do expander */
     [data-testid="stExpander"] summary {
         background-color: var(--surface) !important;
-        color: var(--text-primary) !important; /* Cor do texto do título */
+        color: var(--text-primary) !important;
         border: 1px solid var(--border) !important;
         border-radius: 8px !important;
         margin-bottom: 0.5rem;
         padding: 0.75rem 1rem !important;
     }
     [data-testid="stExpander"] summary p {
-        color: var(--text-primary) !important; /* Mais uma vez para garantir */
+        color: var(--text-primary) !important;
         font-weight: 600;
         font-size: 1.1rem;
     }
@@ -1872,9 +1867,9 @@ def main():
     else:
         input_params.update({'q_ult_kn_cm': 0, 'p_load_ult': None})
 
-    create_metrics_dashboard(input_params)
+create_metrics_dashboard(input_params)
 
-    st.markdown("### 🎯 Modo de Análise")
+    st.subheader("🎯 Modo de Análise")
     col1, col2 = st.columns(2)
     if col1.button("📊 Análise em Lote e Otimização", use_container_width=True, type="secondary"):
         st.session_state.analysis_mode = "batch"
@@ -1882,7 +1877,7 @@ def main():
         st.session_state.analysis_mode = "detailed"
 
     if st.session_state.analysis_mode == "batch":
-        st.header("📊 Análise em Lote")
+        st.subheader("📊 Análise em Lote")
         if st.button("🚀 Iniciar Análise Otimizada", type="primary", use_container_width=True):
             run_batch_analysis(all_sheets, input_params)
         
@@ -1920,7 +1915,7 @@ def main():
                             st.dataframe(style_classic_dataframe(df_reprovados_cat), use_container_width=True)
 
     elif st.session_state.analysis_mode == "detailed":
-        st.header("📋 Memorial Detalhado")
+        st.subheader("📋 Memorial Detalhado")
         display_names = [PROFILE_TYPE_MAP.get(name, name) for name in all_sheets.keys()]
         reverse_name_map = {v: k for k, v in PROFILE_TYPE_MAP.items()}
 
@@ -1947,6 +1942,7 @@ def main():
                 mime="text/html",
                 use_container_width=True
             )
+            
 
 def run_detailed_analysis(df, perfil_nome, perfil_tipo_display, input_params):
     with st.spinner(f"Gerando análise completa para {perfil_nome}..."):
@@ -1981,6 +1977,8 @@ def run_detailed_analysis(df, perfil_nome, perfil_tipo_display, input_params):
             html_content = create_professional_memorial_html(
                 perfil_nome, perfil_tipo_display, resultados,
                 f"""
+
+
                 <div style="text-align: left;">
                     <p><strong>Módulo de Elasticidade (E):</strong> {input_params['E_aco']:.2f} kN/cm²</p>
                     <p><strong>Tensão de Escoamento (fy):</strong> {input_params['fy_aco']:.2f} kN/cm²</p>
