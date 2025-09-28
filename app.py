@@ -50,417 +50,156 @@ PROFILE_TYPE_MAP = {
 # Substitua a variável HTML_TEMPLATE_CSS_PRO inteira por esta:
 HTML_TEMPLATE_CSS_PRO = """
 <style>
-    /* Google Fonts: Inter & Poppins & JetBrains Mono */
+    /* Google Fonts: Inter & Poppins */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap');
-    @import url('https://fonts.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
 
+    /* --- Paleta de Cores HQ Engenharia --- */
     :root {
-        --background-dark: #0A0A0F; /* Mais escuro */
-        --surface-medium: #15151F; /* Fundo principal */
-        --surface-light: #20202A;  /* Cards e elementos */
-        --border-color: #30303A;   /* Linhas de borda */
-        --text-primary: #F0F0F0;   /* Texto claro */
-        --text-secondary: #AAAAAA; /* Texto secundário */
-        --accent-gold: #FFD700;    /* Ouro puro */
-        --accent-amber: #FFBF00;   /* Âmbar mais vibrante */
-        --button-primary: #FFBF00; /* Botão principal */
-        --button-hover: #FFD700;   /* Hover do botão */
-        --button-text: #0A0A0F;    /* Texto escuro no botão */
-        --success: #32CD32;        /* Verde para sucesso */
-        --error: #FF4500;          /* Laranja avermelhado para erro */
-        --shadow-color: rgba(0, 0, 0, 0.4); /* Sombra mais escura */
+        --background: #0f172a;      /* slate-900 */
+        --surface: #1e293b;         /* slate-800 */
+        --border: #334155;          /* slate-700 */
+        --text-primary: #f1f5f9;    /* slate-100 */
+        --text-secondary: #94a3b8;   /* slate-400 */
+        --accent-gold: #fbbd24;      /* amber-400 */
+        --accent-amber: #f59e0b;     /* amber-500 */
+        --button-text: #1e293b;      /* slate-800 para texto do botão */
     }
 
-    /* --- Base Body & Streamlit Overrides --- */
-    html, body {
-        font-family: 'Inter', sans-serif;
-        background-color: var(--background-dark);
-        color: var(--text-primary);
-        line-height: 1.6;
-    }
-
+    /* --- Base e Overrides do Streamlit --- */
     .stApp {
-        background-color: var(--background-dark);
+        background-color: var(--background);
         color: var(--text-primary);
     }
-
-    /* Remove Streamlit default padding and margin */
+    h1, h2, h3, h4, h5, h6 {
+        font-family: 'Poppins', sans-serif;
+        color: var(--text-primary);
+    }
     .block-container {
-        padding-top: 2rem;
-        padding-bottom: 2rem;
-        padding-left: 3rem;
-        padding-right: 3rem;
+        padding: 2rem 3rem 3rem 3rem;
     }
 
-    /* Streamlit Sidebar */
-    .css-1d391kg, .css-1dp5vir { /* Targets sidebar content and overall sidebar */
-        background-color: var(--surface-medium);
-        color: var(--text-primary);
+    /* --- Barra Lateral (Sidebar) --- */
+    [data-testid="stSidebar"] {
+        background-color: var(--surface);
+        border-right: 1px solid var(--border);
     }
-    .css-1dp5vir .css-1v3fvcr { /* Sidebar header */
+    [data-testid="stSidebar"] h2, 
+    [data-testid="stSidebar"] h3 {
         color: var(--accent-gold);
         font-family: 'Poppins', sans-serif;
-        font-weight: 700;
-        border-bottom: 1px solid var(--border-color);
-        padding-bottom: 1rem;
-        margin-bottom: 1rem;
     }
-    .css-1dp5vir .stSelectbox > label, 
-    .css-1dp5vir .stNumberInput > label,
-    .css-1dp5vir .stDateInput > label,
-    .css-1dp5vir .stTextInput > label,
-    .css-1dp5vir .stRadio > label,
-    .css-1dp5vir .stCheckbox > label {
+    [data-testid="stSidebar"] .st-emotion-cache-16txtl3 { /* Expander header */
         color: var(--text-primary);
-        font-weight: 600;
     }
-    .css-1dp5vir .stSelectbox div[data-baseweb="select"] button,
-    .css-1dp5vir .stNumberInput input,
-    .css-1dp5vir .stTextInput input,
-    .css-1dp5vir .stDateInput input {
-        background-color: var(--surface-light);
+    [data-testid="stSidebar"] label {
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+    [data-testid="stSidebar"] input,
+    [data-testid="stSidebar"] div[data-baseweb="select"] > div {
+        background-color: var(--background);
         color: var(--text-primary);
-        border: 1px solid var(--border-color);
+        border: 1px solid var(--border) !important;
         border-radius: 6px;
     }
-    .css-1dp5vir .stSelectbox div[data-baseweb="select"] button:hover,
-    .css-1dp5vir .stNumberInput input:hover,
-    .css-1dp5vir .stTextInput input:hover,
-    .css-1dp5vir .stDateInput input:hover {
-        border-color: var(--accent-gold);
-    }
-    .css-1dp5vir .stSelectbox [data-baseweb="menu"] {
-        background-color: var(--surface-light);
-        color: var(--text-primary);
-        border: 1px solid var(--border-color);
-    }
-    .css-1dp5vir .stSelectbox [data-baseweb="menu"] li {
-        color: var(--text-primary);
-    }
-    .css-1dp5vir .stSelectbox [data-baseweb="menu"] li:hover {
-        background-color: var(--background-dark);
-        color: var(--accent-gold);
+    [data-testid="stSidebar"] input:focus,
+    [data-testid="stSidebar"] div[data-baseweb="select"] > div:focus-within {
+        border-color: var(--accent-gold) !important;
+        box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.3);
     }
     
-    /* --- Header Profissional com Logo --- */
+    /* Corrigir cor do texto dentro do selectbox */
+    [data-testid="stSidebar"] .stSelectbox div[data-baseweb="select"] div {
+        color: var(--text-primary);
+    }
+
+    /* --- Cabeçalho Profissional --- */
     .pro-header {
-        background: var(--surface-light);
-        color: var(--text-primary);
-        padding: 3rem 2rem; /* Mais padding */
+        background: var(--surface);
+        padding: 2.5rem;
         border-radius: 12px;
-        border: 1px solid var(--border-color);
+        border: 1px solid var(--border);
         text-align: center;
-        margin-bottom: 2.5rem;
-        box-shadow: 0 8px 25px var(--shadow-color); /* Sombra proeminente */
-        position: relative;
-        overflow: hidden; /* Para o efeito de borda */
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.3);
     }
-
-    /* Efeito de borda dourada para o cabeçalho */
-    .pro-header::before {
-        content: '';
-        position: absolute;
-        top: 0; left: 0; right: 0; bottom: 0;
-        border-radius: 12px;
-        padding: 2px; /* Espessura da borda */
-        background: linear-gradient(45deg, var(--accent-amber), var(--accent-gold), var(--accent-amber));
-        -webkit-mask: 
-            linear-gradient(#fff 0 0) content-box, 
-            linear-gradient(#fff 0 0);
-        -webkit-mask-composite: xor;
-        mask-composite: exclude;
-    }
-
-    .header-content {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 1.5rem; /* Mais espaçamento */
-        position: relative; /* Para ficar acima do ::before */
-        z-index: 1;
-    }
-
     .pro-header img {
-        height: 100px; /* Logo maior */
+        height: 80px;
         width: auto;
-        border-radius: 10px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); /* Sombra na logo */
+        border-radius: 8px;
+        margin-bottom: 1rem;
     }
-
     .pro-header h1 {
-        font-size: 3rem; /* Título maior */
+        font-size: 2.8rem;
         font-weight: 800;
-        font-family: 'Poppins', sans-serif;
         margin: 0;
-        line-height: 1.2;
     }
-    
     .pro-header p {
-        font-size: 1.2rem; /* Subtítulo maior */
-        margin: 0;
+        font-size: 1.1rem;
         color: var(--text-secondary);
+        margin-top: 0.5rem;
     }
-    
     .gradient-text {
-        background: linear-gradient(135deg, var(--accent-amber) 0%, var(--accent-gold) 50%, #FFD700 100%);
+        background: linear-gradient(135deg, #FBBF24 0%, #FDE68A 50%, #D4AF37 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
     }
 
-    /* --- Títulos --- */
-    h1, h2, h3, h4, h5, h6 {
-        font-family: 'Poppins', sans-serif;
-        color: var(--text-primary);
-        font-weight: 700;
-        margin-top: 2rem;
-        margin-bottom: 1rem;
-    }
-
-    h2 {
-        border-bottom: 2px solid var(--border-color);
-        padding-bottom: 15px;
-        color: var(--accent-gold); /* H2 em dourado */
-        font-size: 1.8rem;
-    }
-    
-    h3 { 
-        color: var(--accent-amber); 
-        font-size: 1.5rem;
-        margin-top: 1.5rem;
-    }
-
-    /* --- Seções de Parâmetros e Modos --- */
-    .stColumns > div > div {
-        background: var(--surface-light);
-        border: 1px solid var(--border-color);
-        border-radius: 10px;
-        padding: 1.5rem;
-        box-shadow: 0 4px 15px var(--shadow-color); /* Sombra nos cards */
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        gap: 0.5rem;
-    }
-    .stColumns > div > div h3 {
-        margin-top: 0;
-        font-size: 1.3rem;
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        color: var(--text-primary); /* Título do card */
-    }
-    .stColumns > div > div h3 .icon {
-        color: var(--accent-gold); /* Ícone dourado */
-        font-size: 1.5rem;
-    }
-    .stColumns > div > div p {
-        margin: 0;
-        font-size: 1.1rem;
-        color: var(--text-secondary);
-    }
-    .stColumns > div > div p strong {
-        color: var(--text-primary);
-        font-weight: 600;
-    }
-
-    /* --- Icones --- */
-    .icon {
-        font-size: 1.2rem;
-        margin-right: 0.5rem;
-        color: var(--accent-gold); /* Ícones com a cor dourada */
-    }
-    
     /* --- Botões --- */
-    .stButton button {
-        background-color: var(--button-primary);
-        color: var(--button-text);
-        font-weight: bold;
-        padding: 0.75rem 1.5rem;
+    .stButton > button {
+        width: 100%;
+        padding: 12px;
         border-radius: 8px;
-        border: none;
         cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        transition: all 0.2s ease-in-out;
+        font-weight: bold;
+        font-size: 1rem;
+        font-family: 'Poppins', sans-serif;
     }
-    .stButton button:hover {
-        background-color: var(--button-hover);
-        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
-        transform: translateY(-2px);
-    }
-    .stButton button:active {
-        transform: translateY(0);
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-    }
-    .stButton button.secondary-button { /* Para botões secundários */
-        background-color: var(--surface-light);
-        color: var(--accent-gold);
-        border: 1px solid var(--accent-gold);
-    }
-    .stButton button.secondary-button:hover {
+    /* Botão Primário (Amarelo) */
+    .stButton > button[kind="primary"] {
         background-color: var(--accent-gold);
         color: var(--button-text);
+        border: 2px solid var(--accent-gold);
     }
-    
-    /* --- Entradas de Texto/Número e Seletores --- */
-    .stNumberInput label, .stSelectbox label, .stTextInput label, .stDateInput label {
-        color: var(--text-primary);
-        font-weight: 600;
-        font-size: 1rem;
-        margin-bottom: 0.5rem;
+    .stButton > button[kind="primary"]:hover {
+        background-color: var(--accent-amber);
+        border-color: var(--accent-amber);
+        transform: translateY(-2px);
     }
-    .stNumberInput input, .stTextInput input {
-        background-color: var(--surface-medium);
-        color: var(--text-primary);
-        border: 1px solid var(--border-color);
-        border-radius: 6px;
-        padding: 0.75rem;
-        font-size: 1rem;
-        transition: border-color 0.2s ease;
-    }
-    .stNumberInput input:focus, .stTextInput input:focus {
-        border-color: var(--accent-gold);
-        box-shadow: 0 0 0 2px rgba(255, 191, 0, 0.3); /* Dourado suave */
-        outline: none;
-    }
-    .stSelectbox div[data-baseweb="select"] button {
-        background-color: var(--surface-medium);
-        color: var(--text-primary);
-        border: 1px solid var(--border-color);
-        border-radius: 6px;
-        padding: 0.75rem;
-        font-size: 1rem;
-        transition: border-color 0.2s ease;
-    }
-    .stSelectbox div[data-baseweb="select"] button:hover {
-        border-color: var(--accent-gold);
-    }
-    .stSelectbox [data-baseweb="menu"] {
-        background-color: var(--surface-medium);
-        color: var(--text-primary);
-        border: 1px solid var(--border-color);
-        border-radius: 6px;
-    }
-    .stSelectbox [data-baseweb="menu"] li {
-        color: var(--text-primary);
-        padding: 0.75rem 1rem;
-    }
-    .stSelectbox [data-baseweb="menu"] li:hover {
-        background-color: var(--surface-light);
+    /* Botão Secundário (Contorno) */
+    .stButton > button[kind="secondary"] {
+        background-color: transparent;
         color: var(--accent-gold);
+        border: 2px solid var(--accent-gold);
+    }
+    .stButton > button[kind="secondary"]:hover {
+        background-color: var(--accent-gold);
+        color: var(--button-text);
+        transform: translateY(-2px);
     }
 
-
-    /* --- Tabelas de Resumo (se houver) --- */
-    .summary-table {
-        border-collapse: separate;
-        border-spacing: 0;
-        border: 1px solid var(--border-color);
+    /* --- Métricas e Títulos de Seção --- */
+    [data-testid="stMetric"] {
+        background-color: var(--surface);
+        border: 1px solid var(--border);
+        border-left: 5px solid var(--accent-amber);
         border-radius: 8px;
-        overflow: hidden;
-        margin-top: 1.5rem;
-        box-shadow: 0 4px 15px var(--shadow-color);
-    }
-
-    .summary-table thead tr th {
-        background: var(--surface-light);
-        color: var(--accent-gold);
-        padding: 1rem;
-        font-weight: 600;
-        font-size: 0.95rem;
-        text-transform: uppercase;
-        border-bottom: 2px solid var(--border-color);
-        text-align: left;
-    }
-
-    .summary-table tbody tr td {
-        padding: 1rem;
-        background: var(--surface-medium);
-        border-bottom: 1px solid var(--border-color);
-        color: var(--text-primary);
-    }
-    .summary-table tbody tr:last-child td { border-bottom: none; }
-    .summary-table tbody tr:nth-child(even) td { background: var(--surface-light); } /* Linhas alternadas */
-
-    /* --- Blocos de Detalhes e Fórmulas --- */
-    .info-card, .formula-block {
-        background: var(--surface-light);
-        border: 1px solid var(--border-color);
         padding: 1.5rem;
-        margin: 1.5rem 0;
-        border-radius: 10px;
-        box-shadow: 0 4px 15px var(--shadow-color);
     }
-    .formula-block {
-        background-color: var(--background-dark);
-        border-left: 5px solid var(--accent-amber); /* Borda mais grossa */
-    }
-    
-    .formula {
-        font-family: 'JetBrains Mono', monospace;
-        background: var(--surface-medium);
-        padding: 1rem;
-        border-radius: 6px;
-        border: 1px solid var(--border-color);
-        margin: 1rem 0;
-        color: var(--text-primary);
-        font-size: 0.95rem;
-    }
-    
-    .verification-step {
-        background-color: var(--surface-medium);
-        border: 1px solid var(--border-color);
-        padding: 1.5rem;
-        margin-top: 1.5rem;
-        border-radius: 10px;
-        box-shadow: 0 2px 10px var(--shadow-color);
-    }
-
-    /* --- Indicadores de Status --- */
-    .pass { color: var(--success); font-weight: 700; }
-    .fail { color: var(--error); font-weight: 700; }
-    .conclusion.pass { color: var(--success); }
-    .conclusion.fail { color: var(--error); }
-
-    .final-status.pass {
-        background-color: rgba(50, 205, 50, 0.15); /* Fundo verde translúcido */
-        color: var(--success);
-        border: 1px solid var(--success);
-    }
-    .final-status.fail {
-        background-color: rgba(255, 69, 0, 0.15); /* Fundo vermelho translúcido */
-        color: var(--error);
-        border: 1px solid var(--error);
-    }
-    .final-status {
-        font-size: 1.3em; font-weight: bold; text-align: center;
-        padding: 1rem; border-radius: 8px; margin: 1.5rem 0;
-        box-shadow: 0 4px 15px var(--shadow-color);
-    }
-
-    /* --- Rodapé (Opcional, se você tiver um) --- */
-    .footer {
-        text-align: center;
-        margin-top: 3rem;
-        padding-top: 1.5rem;
-        border-top: 1px solid var(--border-color);
+    [data-testid="stMetricLabel"] {
         color: var(--text-secondary);
-        font-size: 0.9rem;
-    }
-
-    /* Remove padding default de colunas para melhor controle do card */
-    .st-emotion-cache-1uj3h0e { /* Target column content */
-        padding: 0px !important;
     }
     
-    /* Small adjustments to column gaps if needed */
-    .st-emotion-cache-1sdc03s { /* Parent of columns */
-        gap: 20px; /* Adjust gap between cards */
+    /* --- Abas (Tabs) --- */
+    .stTabs [data-baseweb="tab-list"] button {
+        color: var(--text-secondary);
     }
-
-    /* Icones dentro dos titulos h3 nos cards */
-    h3 > span:first-child {
+    .stTabs [data-baseweb="tab-list"] button[aria-selected="true"] {
         color: var(--accent-gold);
+        border-bottom-color: var(--accent-gold);
     }
 
 </style>
@@ -1404,50 +1143,54 @@ def style_classic_dataframe(df):
     format_dict = {"Peso (kg/m)": "{:.2f}", **{col: "{:.1f}" for col in efficiency_cols}}
     return styled_df.format(format_dict)
 
+# Em create_top_profiles_chart(df_approved, top_n=10):
 def create_top_profiles_chart(df_approved, top_n=10):
     if df_approved.empty: return None
     df_top = df_approved.head(top_n).sort_values(by='Peso (kg/m)', ascending=False)
     fig = go.Figure(go.Bar(
         y=df_top['Perfil'], x=df_top['Peso (kg/m)'], orientation='h',
         text=[f'{w:.2f} kg/m' for w in df_top['Peso (kg/m)']], textposition='auto',
-        marker=dict(color=df_top['Peso (kg/m)'], colorscale='Blues_r', colorbar=dict(title="Peso")),
+        marker=dict(color=df_top['Peso (kg/m)'], colorscale='YlOrBr', colorbar=dict(title="Peso")), # Escala de cor Dourada
         hovertemplate='<b>%{y}</b><br>Peso: %{x:.2f} kg/m<extra></extra>'
     ))
     fig.update_layout(
         title={'text': f'🏆 Top {top_n} Perfis Mais Leves (Aprovados)', 'x': 0.5},
-        xaxis_title='Peso (kg/m)', yaxis_title='Perfil', template='plotly_white', height=500, margin=dict(l=150)
+        xaxis_title='Peso (kg/m)', yaxis_title='Perfil', 
+        template='plotly_dark', # <--- ADICIONE ESTA LINHA
+        height=500, 
+        margin=dict(l=150),
+        paper_bgcolor='rgba(0,0,0,0)', # Fundo do papel transparente
+        plot_bgcolor='rgba(0,0,0,0)'   # Fundo do gráfico transparente
     )
     return fig
 
+# Em create_profile_efficiency_chart(perfil_nome, eficiencias):
 def create_profile_efficiency_chart(perfil_nome, eficiencias):
-    """
-    Cria um gráfico de barras comparando as eficiências de um perfil.
-    """
     labels = list(eficiencias.keys())
     values = [min(v, 150) for v in eficiencias.values()]
-    
-    colors = ['#1e40af' if v < 90 else '#60a5fa' if v <= 100 else '#ef4444' for v in values]
+    colors = ['#32CD32' if v <= 100 else '#FF4500' for v in values] # Verde e Laranja/Vermelho
     
     fig = go.Figure(data=[
         go.Bar(
-            x=labels,
-            y=values,
+            x=labels, y=values,
             text=[f'{v:.1f}%' for v in eficiencias.values()],
             textposition='auto',
             marker_color=colors
         )
     ])
     
-    fig.add_hline(y=100, line_dash="dash", line_color="#10b981",
-                    annotation_text="Limite de Aprovação (100%)",
-                    annotation_position="bottom right")
+    fig.add_hline(y=100, line_dash="dash", line_color="#FFD700", # Linha dourada
+                  annotation_text="Limite de Aprovação (100%)",
+                  annotation_position="bottom right")
 
     fig.update_layout(
         title=f'Análise de Eficiência para o Perfil: {perfil_nome}',
         yaxis_title='Eficiência (%)',
         xaxis_title='Verificação',
         yaxis_range=[0, max(max(values), 100) + 10],
-        template='plotly_white',
+        template='plotly_dark', # <--- ADICIONE ESTA LINHA
+        paper_bgcolor='rgba(0,0,0,0)', # Fundo do papel transparente
+        plot_bgcolor='rgba(0,0,0,0)'   # Fundo do gráfico transparente
     )
     return fig
 brazilia_tz = pytz.timezone('America/Sao_Paulo')
