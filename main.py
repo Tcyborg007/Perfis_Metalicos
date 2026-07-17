@@ -31,7 +31,7 @@ from memorial_nbr8800_2024 import build_memorial_details
 st.set_page_config(
     page_title="🏗️ Calculadora Estrutural - Perfis Metálicos",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="auto",
     menu_items={
         'Get Help': 'https://www.abnt.org.br',
         'Report a bug': None,
@@ -99,7 +99,9 @@ HTML_TEMPLATE_CSS_PRO = """
         background-color: var(--background);
     }
     .block-container {
-        padding: 2rem 3rem 3rem 3rem;
+        width: 100%;
+        max-width: 1600px;
+        padding: clamp(1rem, 2.5vw, 2rem) clamp(.85rem, 3.5vw, 3rem) 3rem;
     }
 
     /* --- Títulos e Textos Genéricos --- */
@@ -216,6 +218,7 @@ HTML_TEMPLATE_CSS_PRO = """
     }
     .pro-header h1 { font-size: 2.8rem; }
     .pro-header p { color: var(--text-secondary); }
+    .pro-header img { max-width: min(96px, 24vw); height: auto; }
     .gradient-text {
         background: linear-gradient(135deg, #FBBF24 0%, #FDE68A 50%, #D4AF37 100%);
         -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
@@ -298,7 +301,56 @@ HTML_TEMPLATE_CSS_PRO = """
     }
     @container (max-width: 390px) {
         .project-metrics-grid { grid-template-columns: 1fr; }
+        .project-metric-card,
+        .project-metric-card:nth-child(n + 5),
+        .project-metric-card:last-child { grid-column: 1; }
         .project-metrics-context span { flex-basis: 100%; }
+    }
+
+    /* --- Adaptação global para tablet e smartphone --- */
+    @media (max-width: 768px) {
+        .block-container {
+            max-width: 100%;
+            padding: .75rem .75rem 2rem;
+        }
+        [data-testid="stSidebar"] {
+            width: min(88vw, 21rem) !important;
+            min-width: min(88vw, 21rem) !important;
+        }
+        [data-testid="stHorizontalBlock"] {
+            flex-direction: column !important;
+            gap: .75rem !important;
+        }
+        [data-testid="column"] {
+            width: 100% !important;
+            min-width: 100% !important;
+            flex: 1 1 100% !important;
+        }
+        .pro-header {
+            padding: 1.25rem .9rem;
+            margin-bottom: 1.25rem;
+            border-radius: 10px;
+        }
+        .pro-header h1 {
+            font-size: clamp(1.45rem, 7vw, 2rem);
+            line-height: 1.18;
+            overflow-wrap: anywhere;
+        }
+        .pro-header p { font-size: .88rem; line-height: 1.45; }
+        h3, [data-testid="stMarkdownContainer"] h3 {
+            font-size: clamp(1.15rem, 5.5vw, 1.5rem) !important;
+        }
+        .stButton > button, .stDownloadButton > button {
+            min-height: 2.8rem;
+            white-space: normal;
+        }
+        .stTabs [data-baseweb="tab-list"] {
+            overflow-x: auto;
+        }
+        .stTabs [data-baseweb="tab-list"] button {
+            flex: 0 0 auto;
+            padding: .75rem;
+        }
     }
 
     /* --- Botões --- */
@@ -329,7 +381,10 @@ HTML_TEMPLATE_CSS_PRO = """
     }
 
     /* --- Estilos para o MEMORIAL HTML --- */
-    .container { font-family: 'Inter', sans-serif; color: var(--text-primary); }
+    .container {
+        width: 100%; max-width: 1180px; margin: 0 auto; padding: clamp(.7rem, 3vw, 2rem);
+        box-sizing: border-box; font-family: 'Inter', sans-serif; color: var(--text-primary);
+    }
     .container .pro-header { background: var(--surface); }
     .container h1, .container h2, .container h3, .container h4 { color: var(--text-display); font-family: 'Poppins', sans-serif; }
     .container h2 { border-bottom: 1px solid var(--border); padding-bottom: 10px; }
@@ -344,7 +399,7 @@ HTML_TEMPLATE_CSS_PRO = """
     .container .formula-block { background-color: var(--background); border-left: 4px solid var(--accent-amber); border-radius: 4px; padding: 1px 15px 15px; margin: 15px 0;}
 
     /* Memorial auditável — hierarquia visual para fórmula, substituição e decisão */
-    .container { max-width: 1180px; margin: 0 auto; line-height: 1.62; }
+    .container { line-height: 1.62; }
     .container .chapter-intro { color: var(--text-secondary); margin: -0.45rem 0 1.35rem; font-size: 0.98rem; }
     .container .audit-banner {
         display: flex; align-items: center; justify-content: space-between; gap: 1rem;
@@ -465,6 +520,19 @@ HTML_TEMPLATE_CSS_PRO = """
     .container .global-status.pending strong { color: #fbbf24; }
     .container .notice { background: #162236; border: 1px solid var(--border); border-radius: 8px; padding: .9rem 1rem; margin: 1rem 0; color: var(--text-secondary); }
     @media (max-width: 780px) {
+        .container { padding: .65rem; }
+        .container .pro-header { padding: 1.1rem .7rem; }
+        .container .pro-header h1 { font-size: clamp(1.35rem, 7vw, 1.9rem); }
+        .container .info-card, .container .calc-step, .container .verification-card {
+            padding: .9rem;
+        }
+        .container .formula-block { padding: 1px .7rem .7rem; }
+        .container .formula-chain, .container .verification-chain,
+        .container .formula-symbolic, .container .formula-numeric {
+            padding: .7rem;
+            max-width: 100%;
+        }
+        .container table { display: block; overflow-x: auto; white-space: nowrap; }
         .container .scope-grid, .container .theory-grid { grid-template-columns: 1fr; }
         .container .audit-banner, .container .verification-metrics { align-items: flex-start; flex-direction: column; }
         .container .theory-panel summary { align-items: flex-start; flex-wrap: wrap; }
@@ -502,16 +570,15 @@ def create_navigation_buttons():
         font-weight: bold;
         text-decoration: none;
         transition: all 0.2s ease-in-out;
-        margin-left: 1rem;
         font-family: 'Poppins', sans-serif;
         font-size: 0.9rem;
     """
     
     secondary_style = "border: 2px solid #fbbd24; color: #fbbd24;"
-    secondary_hover = ":hover { background-color: #fbbd24; color: #1e2b3b; }"
+    secondary_hover = "background-color: #fbbd24; color: #1e2b3b;"
     
     primary_style = "background-color: #fbbd24; color: #1e2b3b; border: 2px solid #fbbd24;"
-    primary_hover = ":hover { background-color: #f59e0b; border-color: #f59e0b; }"
+    primary_hover = "background-color: #f59e0b; border-color: #f59e0b;"
 
     # HTML com os botões
     st.markdown(f"""
@@ -522,7 +589,7 @@ def create_navigation_buttons():
             .nav-button-primary:hover {{ {primary_hover} }}
         </style>
         
-        <div style="display: flex; justify-content: flex-end; width: 100%; align-items: center;">
+        <div class="nav-actions" style="display: flex; justify-content: flex-end; width: 100%; align-items: center; flex-wrap: wrap; gap: .75rem;">
             <a href="{ferramentas_url}" target="_self" class="nav-button-secondary">
                 Ferramentas
             </a>
@@ -530,6 +597,12 @@ def create_navigation_buttons():
                 Voltar ao Site
             </a>
         </div>
+        <style>
+            @media (max-width: 520px) {{
+                .nav-actions {{ justify-content: stretch !important; }}
+                .nav-actions a {{ flex: 1 1 100%; justify-content: center; text-align: center; }}
+            }}
+        </style>
         <hr style="border-color: var(--border); margin-top: 1.5rem; margin-bottom: 1.5rem;">
     """, unsafe_allow_html=True)
 
@@ -1550,7 +1623,7 @@ def create_top_profiles_chart(df_approved, top_n=10):
         xaxis_title='Peso (kg/m)', yaxis_title='Perfil', 
         template='plotly_dark', # <--- ADICIONE ESTA LINHA
         height=500, 
-        margin=dict(l=150),
+        margin=dict(l=80, r=20, t=70, b=55),
         paper_bgcolor='rgba(0,0,0,0)', # Fundo do papel transparente
         plot_bgcolor='rgba(0,0,0,0)'   # Fundo do gráfico transparente
     )
@@ -1627,7 +1700,9 @@ def create_professional_memorial_html(perfil_nome, perfil_tipo, resultados, inpu
     # O template HTML agora tem o <h1> com a classe 'gradient-text'
     html_template = f"""
     <!DOCTYPE html><html lang="pt-BR"><head>
-        <meta charset="UTF-8"><title>Memorial de Cálculo - {perfil_nome}</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Memorial de Cálculo - {perfil_nome}</title>
         {HTML_TEMPLATE_CSS_PRO}
         <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML"></script>
     </head><body><div class="container">
@@ -1720,7 +1795,7 @@ def _render_esforcos_viga_section(params):
         <div class="info-card">
             <div style="display: flex; justify-content: space-around; align-items: stretch; flex-wrap: wrap; gap: 1rem; padding: 1rem 0;">
 
-                <div style="text-align: center; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.5rem; width: 45%; min-width: 200px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                <div style="text-align: center; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.5rem; flex: 1 1 240px; max-width: 100%; min-width: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
                     <span style="font-size: 2em; line-height: 1;">🔄</span>
                     <h5 style="margin: 0.5rem 0; color: var(--text-secondary); font-weight: 500;">Momento Fletor ($M_{{sd}}$)</h5>
                     <p style="font-size: 2.2em; font-weight: 700; color: var(--primary-color); margin: 0; line-height: 1.2;">
@@ -1729,7 +1804,7 @@ def _render_esforcos_viga_section(params):
                     </p>
                 </div>
 
-                <div style="text-align: center; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.5rem; width: 45%; min-width: 200px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                <div style="text-align: center; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.5rem; flex: 1 1 240px; max-width: 100%; min-width: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
                     <span style="font-size: 2em; line-height: 1;">✂️</span>
                     <h5 style="margin: 0.5rem 0; color: var(--text-secondary); font-weight: 500;">Força Cortante ($V_{{sd}}$)</h5>
                     <p style="font-size: 2.2em; font-weight: 700; color: var(--primary-color); margin: 0; line-height: 1.2;">
@@ -2740,7 +2815,7 @@ def main():
             with st.expander("📄 Visualização do Memorial", expanded=True):
                 # O memorial é deliberadamente extenso; a altura maior evita que
                 # o leitor precise alternar entre duas barras de rolagem a cada etapa.
-                st.components.v1.html(st.session_state.detailed_analysis_html, height=9000, width=2500, scrolling=True)
+                st.components.v1.html(st.session_state.detailed_analysis_html, height=9000, scrolling=True)
             
             st.download_button(
                 label="📥 Baixar Memorial em HTML",
