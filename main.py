@@ -220,11 +220,86 @@ HTML_TEMPLATE_CSS_PRO = """
         background: linear-gradient(135deg, #FBBF24 0%, #FDE68A 50%, #D4AF37 100%);
         -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
     }
-    [data-testid="stMetric"] {
-        background-color: var(--surface); border: 1px solid var(--border);
-        border-left: 5px solid var(--accent-amber); border-radius: 8px; padding: 1.5rem;
+    /* --- Painel responsivo de parâmetros do projeto --- */
+    .project-metrics-shell {
+        container-type: inline-size;
+        margin: .4rem 0 1.8rem;
     }
-    [data-testid="stMetricValue"] { color: var(--text-display); }
+    .project-metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        gap: .85rem;
+    }
+    .project-metric-card {
+        grid-column: span 3;
+        min-width: 0;
+        min-height: 108px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        background: linear-gradient(145deg, #1e2b3b 0%, #172438 100%);
+        border: 1px solid var(--border);
+        border-top: 3px solid var(--accent-amber);
+        border-radius: 10px;
+        padding: .9rem 1rem;
+        box-shadow: 0 8px 20px rgba(2, 6, 23, .18);
+    }
+    .project-metric-label {
+        color: var(--text-secondary);
+        font-family: 'Inter', sans-serif;
+        font-size: .72rem;
+        font-weight: 700;
+        letter-spacing: .075em;
+        line-height: 1.25;
+        text-transform: uppercase;
+    }
+    .project-metric-value {
+        color: var(--text-display);
+        font-family: 'Poppins', sans-serif;
+        font-size: clamp(1.2rem, 2vw, 1.6rem);
+        font-weight: 700;
+        line-height: 1.15;
+        overflow-wrap: anywhere;
+        font-variant-numeric: tabular-nums;
+    }
+    .project-metric-card:nth-child(n + 5) { grid-column: span 4; }
+    .project-metric-unit {
+        min-height: 1.15em;
+        color: var(--text-secondary);
+        font-size: .76rem;
+        line-height: 1.2;
+    }
+    .project-metrics-context {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .55rem;
+        margin-top: .85rem;
+    }
+    .project-metrics-context span {
+        flex: 1 1 180px;
+        color: var(--text-primary);
+        background: rgba(30, 43, 59, .72);
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        padding: .48rem .8rem;
+        font-size: .78rem;
+        line-height: 1.25;
+        text-align: center;
+    }
+    .project-metrics-context strong {
+        color: var(--accent-gold);
+        margin-right: .3rem;
+    }
+    @container (max-width: 760px) {
+        .project-metrics-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .project-metric-card,
+        .project-metric-card:nth-child(n + 5) { grid-column: span 1; }
+        .project-metric-card:last-child { grid-column: 1 / -1; }
+    }
+    @container (max-width: 390px) {
+        .project-metrics-grid { grid-template-columns: 1fr; }
+        .project-metrics-context span { flex-basis: 100%; }
+    }
 
     /* --- Botões --- */
     .stButton > button, .stDownloadButton > button {
@@ -1366,37 +1441,65 @@ def create_metrics_dashboard(input_params):
     msd_value = input_params.get('Msd', 0)
     vsd_value = input_params.get('Vsd', 0)
     cb_value = input_params.get('Cb_projeto', 1.0)
-    
-    col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
-    
-    with col1:
-        st.metric(label="📐 Norma", value="NBR 8800:2024")
-    with col2:
-        st.metric(label="⚡ Módulo E", value=f"{input_params['E_aco']:.0f} kN/cm²")
-    with col3:
-        st.metric(label="🛡️ γa1", value="1,10")
-    with col4:
-        st.metric(label="📏 Vão", value=f"{input_params['L_cm']/100:.2f} m")
-    with col5:
-        st.metric(label="🔥 fy", value=f"{input_params['fy_aco']:.1f} kN/cm²")
-    
-    with col6:
-        st.metric(
-            label=" Msd (Momento)",
-            value=f"{msd_value/100:.2f} kNm" if msd_value > 0 else "-",
-            help="Momento Fletor Solicitante de Cálculo"
-        )
-    with col7:
-        st.metric(
-            label=" Vsd (Cortante)",
-            value=f"{vsd_value:.2f} kN" if vsd_value > 0 else "-",
-            help="Força Cortante Solicitante de Cálculo"
-        )
-    
-    # --- LINHA CORRIGIDA ABAIXO ---
-    st.markdown(f"""<div class="metric-footer">
-        Cb: {'automático por perfil' if input_params.get('cb_modo_auto') else f'{cb_value:.2f}'} | Lb: {input_params['Lb_projeto']:.2f} cm | Flecha: L/{input_params['limite_flecha_divisor']:.0f}
-    </div>""", unsafe_allow_html=True)
+
+    def br_number(value, decimals):
+        formatted = f"{value:,.{decimals}f}"
+        return formatted.replace(",", "_").replace(".", ",").replace("_", ".")
+
+    msd_display = br_number(msd_value / 100, 2) if msd_value > 0 else "—"
+    vsd_display = br_number(vsd_value, 2) if vsd_value > 0 else "—"
+    cb_display = (
+        "automático por perfil"
+        if input_params.get('cb_modo_auto')
+        else br_number(cb_value, 2)
+    )
+
+    st.markdown(f"""
+    <section class="project-metrics-shell" aria-label="Parâmetros principais do projeto">
+        <div class="project-metrics-grid">
+            <article class="project-metric-card">
+                <div class="project-metric-label">Norma</div>
+                <div class="project-metric-value">NBR 8800:2024</div>
+                <div class="project-metric-unit">Errata 1:2025</div>
+            </article>
+            <article class="project-metric-card">
+                <div class="project-metric-label">Módulo de elasticidade</div>
+                <div class="project-metric-value">{br_number(input_params['E_aco'], 0)}</div>
+                <div class="project-metric-unit">kN/cm²</div>
+            </article>
+            <article class="project-metric-card">
+                <div class="project-metric-label">Coeficiente γa1</div>
+                <div class="project-metric-value">1,10</div>
+                <div class="project-metric-unit">resistência</div>
+            </article>
+            <article class="project-metric-card">
+                <div class="project-metric-label">Vão da viga</div>
+                <div class="project-metric-value">{br_number(input_params['L_cm'] / 100, 2)}</div>
+                <div class="project-metric-unit">m</div>
+            </article>
+            <article class="project-metric-card">
+                <div class="project-metric-label">Resistência ao escoamento fy</div>
+                <div class="project-metric-value">{br_number(input_params['fy_aco'], 1)}</div>
+                <div class="project-metric-unit">kN/cm²</div>
+            </article>
+            <article class="project-metric-card" title="Momento fletor solicitante de cálculo">
+                <div class="project-metric-label">Momento solicitante Msd</div>
+                <div class="project-metric-value">{msd_display}</div>
+                <div class="project-metric-unit">kN·m</div>
+            </article>
+            <article class="project-metric-card" title="Força cortante solicitante de cálculo">
+                <div class="project-metric-label">Cortante solicitante Vsd</div>
+                <div class="project-metric-value">{vsd_display}</div>
+                <div class="project-metric-unit">kN</div>
+            </article>
+        </div>
+        <div class="project-metrics-context">
+            <span><strong>Cb</strong>{cb_display}</span>
+            <span><strong>Lb</strong>{br_number(input_params['Lb_projeto'], 2)} cm</span>
+            <span><strong>Limite de flecha</strong>L/{input_params['limite_flecha_divisor']:.0f}</span>
+        </div>
+    </section>
+    """, unsafe_allow_html=True)
 
 def style_classic_dataframe(df):
     """Aplica estilização clássica com cores sólidas ao DataFrame."""
