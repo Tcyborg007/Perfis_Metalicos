@@ -8,6 +8,7 @@ import openpyxl
 from openpyxl.styles import PatternFill
 import base64
 import pytz
+from pathlib import Path
 from calculos_nbr8800_2024 import (
     ERRATA,
     NORMA,
@@ -467,7 +468,7 @@ def create_navigation_buttons():
 def load_data_from_local_file():
     """Carrega os dados da planilha de perfis."""
     try:
-        caminho_arquivo_excel = 'perfis.xlsx'
+        caminho_arquivo_excel = Path(__file__).resolve().with_name('perfis.xlsx')
         return pd.read_excel(caminho_arquivo_excel, sheet_name=None)
     except FileNotFoundError:
         st.error(f"Erro: Arquivo '{caminho_arquivo_excel}' não foi encontrado. Verifique se ele está na mesma pasta que o seu script Python.")
