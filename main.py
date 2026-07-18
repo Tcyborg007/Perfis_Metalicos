@@ -429,15 +429,25 @@ HTML_TEMPLATE_CSS_PRO = """
     .container .formula-numeric { background: #0d1828; border-left: 3px solid #60a5fa; }
     .container .equation-heading { display: flex; align-items: center; margin: 1rem 0 .25rem; }
     .container .equation-heading h5 { margin: 0; color: #f8fafc; font-size: .94rem; }
-    .container .equation-caption { color: #8fa4bf; font-size: .76rem; margin: 0 0 .45rem; }
-    .container .equation-caption strong { color: var(--accent-gold); padding: 0 .18rem; }
     .container .formula-chain {
-        overflow-x: auto; background: #0b1322; border: 1px solid #31445e;
-        border-left: 4px solid #60a5fa; border-radius: 8px; padding: 1rem 1.15rem;
-        margin: .25rem 0; color: #f8fafc;
+        display: grid; gap: .9rem; margin: .35rem 0; color: #f8fafc;
+    }
+    .container .equation-pair {
+        display: grid; gap: .45rem; min-width: 0; padding: .8rem;
+        background: #0b1322; border: 1px solid #31445e;
+        border-left: 4px solid #60a5fa; border-radius: 8px;
+    }
+    .container .equation-line {
+        min-width: 0; max-width: 100%; overflow-x: auto; padding: .55rem .7rem;
+        border-radius: 6px; scrollbar-width: thin;
+    }
+    .container .equation-symbolic { background: #101b2d; }
+    .container .equation-numeric { background: #0d1828; border-top: 1px solid #26384f; }
+    .container .equation-line mjx-container[display="true"] {
+        margin: .25rem 0 !important; min-width: max-content;
     }
     .container .verification-chain {
-        overflow-x: auto; background: #0b1322; border: 1px solid #31445e;
+        display: grid; gap: .45rem; overflow-x: hidden; background: #0b1322; border: 1px solid #31445e;
         border-left: 4px solid #94a3b8; border-radius: 8px; padding: .8rem 1rem;
         margin: .45rem 0 0; color: #f8fafc;
     }
@@ -527,11 +537,12 @@ HTML_TEMPLATE_CSS_PRO = """
             padding: .9rem;
         }
         .container .formula-block { padding: 1px .7rem .7rem; }
-        .container .formula-chain, .container .verification-chain,
+        .container .equation-pair, .container .verification-chain,
         .container .formula-symbolic, .container .formula-numeric {
             padding: .7rem;
             max-width: 100%;
         }
+        .container .equation-line { padding: .45rem .25rem; }
         .container table { display: block; overflow-x: auto; white-space: nowrap; }
         .container .scope-grid, .container .theory-grid { grid-template-columns: 1fr; }
         .container .audit-banner, .container .verification-metrics { align-items: flex-start; flex-direction: column; }
@@ -544,7 +555,7 @@ HTML_TEMPLATE_CSS_PRO = """
         body { background: white !important; color: #172033 !important; }
         .container { color: #172033 !important; }
         .container .calc-step, .container .verification-card, .container .info-card, .container .notice, .container .theory-panel, .container .theory-panel summary, .container .theory-concept, .container .step-theory-panel, .container .step-theory-panel summary { background: white !important; color: #172033 !important; box-shadow: none; border-color: #cbd5e1; }
-        .container .formula-symbolic, .container .formula-numeric, .container .formula-chain, .container .verification-chain { background: #f8fafc !important; color: #0f172a !important; border-color: #cbd5e1; }
+        .container .formula-symbolic, .container .formula-numeric, .container .equation-pair, .container .equation-line, .container .verification-chain { background: #f8fafc !important; color: #0f172a !important; border-color: #cbd5e1; }
         .container .calc-explanation, .container .chapter-intro, .container .norm-ref { color: #475569 !important; }
     }
 
@@ -2388,9 +2399,8 @@ def _render_verification_step(step_dict):
 
 def _render_calculation_step(step_dict):
     """
-    Renderiza um passo de cálculo de forma padronizada e explícita:
-    1. Fórmula Simbólica
-    2. Fórmula Numérica com substituições = Resultado
+    Renderiza um passo de cálculo com a equação e sua aplicação numérica
+    em blocos sucessivos.
     """
     desc = step_dict.get('desc', 'Cálculo')
     formula_simbolica = step_dict.get('formula', '')

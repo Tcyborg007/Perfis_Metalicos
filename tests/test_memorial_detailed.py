@@ -45,7 +45,7 @@ class DetailedMemorialTests(unittest.TestCase):
     def test_standard_memorial_exposes_formulas_substitution_and_decisions(self):
         memorial = self._run()
         for expected in (
-            "MEMORIAL AUDITÁVEL", "Simbólica", "substituição numérica",
+            "MEMORIAL AUDITÁVEL", "Equações, verificações e decisões normativas",
             "Funções de cortante e momento", "Flambagem lateral com torção",
             "Resistência da alma ao cisalhamento", "Linha elástica",
             "Leitura técnica", "STATUS GLOBAL", "Fundamentação e variáveis",
@@ -56,9 +56,10 @@ class DetailedMemorialTests(unittest.TestCase):
         self.assertGreater(memorial.count("calc-step"), 12)
         self.assertGreaterEqual(memorial.count('class="theory-panel"'), 6)
         self.assertEqual(memorial.count('class="step-theory-panel"'), memorial.count('class="calc-step"'))
-        self.assertGreater(memorial.count(r"\begin{aligned}"), 12)
+        self.assertNotIn(r"\begin{aligned}", memorial)
         self.assertEqual(memorial.count('class="formula-chain"'), memorial.count('class="calc-step"'))
-        self.assertGreater(memorial.count(r"\Rightarrow"), memorial.count('class="calc-step"'))
+        self.assertGreater(memorial.count('class="equation-pair"'), memorial.count('class="calc-step"'))
+        self.assertGreaterEqual(memorial.count('class="equation-line '), 2 * memorial.count('class="equation-pair"'))
         self.assertIn(r"\cdot", memorial)
         self.assertIn(r"\frac{q\cdot L}{2}", memorial)
         self.assertNotIn(r"qL/2", memorial)
@@ -67,8 +68,13 @@ class DetailedMemorialTests(unittest.TestCase):
         self.assertNotIn("∞", memorial)
         self.assertNotIn("Equação simbólica", memorial)
         self.assertNotIn("Substituição numérica</div>", memorial)
+        self.assertNotIn("Simbólica", memorial)
+        self.assertNotIn("substituição numérica", memorial)
+        self.assertNotIn("Desenvolvimento do cálculo", memorial)
+        self.assertNotIn("equation-caption", memorial)
+        self.assertNotIn(r"\Rightarrow", memorial)
         self.assertNotIn("S" + "NR", memorial.upper())
-        chain_math = "".join(re.findall(r'class="formula-chain">\$\$(.*?)\$\$', memorial, re.S))
+        chain_math = "".join(re.findall(r'class="equation-line[^"]*">\$\$(.*?)\$\$', memorial, re.S))
         self.assertNotIn(r"\quad;\quad", chain_math)
         for notation in (r"kN/m", r"\mathrm{N/A}", "FLA/mesa"):
             chain_math = chain_math.replace(notation, "")
@@ -92,7 +98,11 @@ class DetailedMemorialTests(unittest.TestCase):
         self.assertIn("Anexo E — alma esbelta e FLT", memorial)
         self.assertIn("k_{pg}", memorial)
         self.assertIn("I_{yc}", memorial)
-        chain_math = "".join(re.findall(r'class="formula-chain">\$\$(.*?)\$\$', memorial, re.S))
+        self.assertIn(r"k_{c,0}=\frac{4}", memorial)
+        self.assertIn(r"k_{c,sup}=\min", memorial)
+        self.assertIn(r"k_c=\max", memorial)
+        self.assertNotIn(r"k_c=\max\left[", memorial)
+        chain_math = "".join(re.findall(r'class="equation-line[^"]*">\$\$(.*?)\$\$', memorial, re.S))
         self.assertNotIn(r"\quad;\quad", chain_math)
 
     def test_optional_branches_keep_one_to_one_equation_chains(self):
@@ -111,7 +121,7 @@ class DetailedMemorialTests(unittest.TestCase):
         self.assertIn(r"\delta_{lim}=\min", memorial)
         self.assertEqual(memorial.count('class="formula-chain"'), memorial.count('class="calc-step"'))
         self.assertEqual(memorial.count('class="step-theory-panel"'), memorial.count('class="calc-step"'))
-        chain_math = "".join(re.findall(r'class="formula-chain">\$\$(.*?)\$\$', memorial, re.S))
+        chain_math = "".join(re.findall(r'class="equation-line[^"]*">\$\$(.*?)\$\$', memorial, re.S))
         self.assertNotIn(r"\quad;\quad", chain_math)
         for notation in (r"kN/m", r"\mathrm{N/A}", "FLA/mesa"):
             chain_math = chain_math.replace(notation, "")
