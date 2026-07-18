@@ -217,7 +217,6 @@ HTML_TEMPLATE_CSS_PRO = """
     }
     .pro-header h1 { font-size: 2.8rem; }
     .pro-header p { color: var(--text-secondary); }
-    .pro-header img { max-width: min(96px, 24vw); height: auto; }
     .gradient-text {
         background: linear-gradient(135deg, #FBBF24 0%, #FDE68A 50%, #D4AF37 100%);
         -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
@@ -564,60 +563,6 @@ HTML_TEMPLATE_CSS_PRO = """
 </style>
 """
 
-
-
-
-def create_navigation_buttons():
-    """Cria os botões de navegação para voltar ao site principal ou à página de ferramentas."""
-    
-    # URLs completas para os links
-    ferramentas_url = "https://hqengenharia.eng.br/ferramentas.html"
-    site_url = "https://hqengenharia.eng.br/index.html"
-    
-    # Estilos CSS para os botões
-    button_style = """
-        display: inline-flex;
-        align-items: center;
-        padding: 0.6rem 1.2rem;
-        border-radius: 0.375rem; /* rounded-md */
-        font-weight: bold;
-        text-decoration: none;
-        transition: all 0.2s ease-in-out;
-        font-family: 'Poppins', sans-serif;
-        font-size: 0.9rem;
-    """
-    
-    secondary_style = "border: 2px solid #fbbd24; color: #fbbd24;"
-    secondary_hover = "background-color: #fbbd24; color: #1e2b3b;"
-    
-    primary_style = "background-color: #fbbd24; color: #1e2b3b; border: 2px solid #fbbd24;"
-    primary_hover = "background-color: #f59e0b; border-color: #f59e0b;"
-
-    # HTML com os botões
-    st.markdown(f"""
-        <style>
-            .nav-button-secondary {{ {button_style} {secondary_style} }}
-            .nav-button-secondary:hover {{ {secondary_hover} }}
-            .nav-button-primary {{ {button_style} {primary_style} }}
-            .nav-button-primary:hover {{ {primary_hover} }}
-        </style>
-        
-        <div class="nav-actions" style="display: flex; justify-content: flex-end; width: 100%; align-items: center; flex-wrap: wrap; gap: .75rem;">
-            <a href="{ferramentas_url}" target="_self" class="nav-button-secondary">
-                Ferramentas
-            </a>
-            <a href="{site_url}" target="_self" class="nav-button-primary">
-                Voltar ao Site
-            </a>
-        </div>
-        <style>
-            @media (max-width: 520px) {{
-                .nav-actions {{ justify-content: stretch !important; }}
-                .nav-actions a {{ flex: 1 1 100%; justify-content: center; text-align: center; }}
-            }}
-        </style>
-        <hr style="border-color: var(--border); margin-top: 1.5rem; margin-bottom: 1.5rem;">
-    """, unsafe_allow_html=True)
 
 
 
@@ -1508,12 +1453,9 @@ def create_excel_with_colors(df_list, sheet_names):
 
 # Mantenha esta função como está:
 def create_professional_header():
-    logo_url = "https://lh3.googleusercontent.com/a/ACg8ocKplHKwLPBbUbVCvtwvTPhn0aboS42tEQxuNtiVPVZ7Xboh1pk=s96-c" # Substitua pela URL da sua logo
-    
     st.markdown(f"""
     <div class="pro-header">
         <div class="header-content">
-            <img src="{logo_url}" alt="Logo HQ Engenharia">
             <h1 class="gradient-text">Calculadora Estrutural de Perfis</h1>
             <p>Análise de Perfis Metálicos | {Config.NOME_NORMA}</p>
         </div>
@@ -2484,9 +2426,6 @@ def main():
     all_sheets = load_data_from_local_file()
     if not all_sheets:
         st.stop()
-    
-    # ADICIONE A CHAMADA DA FUNÇÃO AQUI
-    create_navigation_buttons()
     
     st.markdown(HTML_TEMPLATE_CSS_PRO, unsafe_allow_html=True)
     create_professional_header()
