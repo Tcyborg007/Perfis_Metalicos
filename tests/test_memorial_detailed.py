@@ -56,10 +56,10 @@ class DetailedMemorialTests(unittest.TestCase):
         self.assertGreater(memorial.count("calc-step"), 12)
         self.assertGreaterEqual(memorial.count('class="theory-panel"'), 6)
         self.assertEqual(memorial.count('class="step-theory-panel"'), memorial.count('class="calc-step"'))
-        self.assertNotIn(r"\begin{aligned}", memorial)
+        self.assertGreater(memorial.count(r"\begin{aligned}"), 12)
         self.assertEqual(memorial.count('class="formula-chain"'), memorial.count('class="calc-step"'))
-        self.assertGreater(memorial.count('class="equation-pair"'), memorial.count('class="calc-step"'))
-        self.assertGreaterEqual(memorial.count('class="equation-line '), 2 * memorial.count('class="equation-pair"'))
+        self.assertNotIn('class="equation-pair"', memorial)
+        self.assertGreater(memorial.count(r"\Rightarrow"), memorial.count('class="calc-step"'))
         self.assertIn(r"\cdot", memorial)
         self.assertIn(r"\frac{q\cdot L}{2}", memorial)
         self.assertNotIn(r"qL/2", memorial)
@@ -72,7 +72,6 @@ class DetailedMemorialTests(unittest.TestCase):
         self.assertNotIn("substituição numérica", memorial)
         self.assertNotIn("Desenvolvimento do cálculo", memorial)
         self.assertNotIn("equation-caption", memorial)
-        self.assertNotIn(r"\Rightarrow", memorial)
         self.assertNotIn("S" + "NR", memorial.upper())
         self.assertIn(r"F_{Rd}=\min\left\{\begin{gathered}", memorial)
         self.assertIn(r"\text{escoamento local}", memorial)
@@ -80,7 +79,7 @@ class DetailedMemorialTests(unittest.TestCase):
         self.assertIn(r"\Phi_t=1+0{,}039", memorial)
         self.assertIn(r"\Phi_{cr}", memorial)
         self.assertIn(r"S_1=T_C+T_M+T_R", memorial)
-        chain_math = "".join(re.findall(r'class="equation-line[^"]*">\$\$(.*?)\$\$', memorial, re.S))
+        chain_math = "".join(re.findall(r'class="formula-chain">\$\$(.*?)\$\$', memorial, re.S))
         self.assertNotIn(r"\quad;\quad", chain_math)
         for notation in (r"kN/m", r"\mathrm{N/A}", "FLA/mesa"):
             chain_math = chain_math.replace(notation, "")
@@ -108,7 +107,7 @@ class DetailedMemorialTests(unittest.TestCase):
         self.assertIn(r"k_{c,sup}=\min", memorial)
         self.assertIn(r"k_c=\max", memorial)
         self.assertNotIn(r"k_c=\max\left[", memorial)
-        chain_math = "".join(re.findall(r'class="equation-line[^"]*">\$\$(.*?)\$\$', memorial, re.S))
+        chain_math = "".join(re.findall(r'class="formula-chain">\$\$(.*?)\$\$', memorial, re.S))
         self.assertNotIn(r"\quad;\quad", chain_math)
 
     def test_optional_branches_keep_one_to_one_equation_chains(self):
@@ -127,7 +126,7 @@ class DetailedMemorialTests(unittest.TestCase):
         self.assertIn(r"\delta_{lim}=\min", memorial)
         self.assertEqual(memorial.count('class="formula-chain"'), memorial.count('class="calc-step"'))
         self.assertEqual(memorial.count('class="step-theory-panel"'), memorial.count('class="calc-step"'))
-        chain_math = "".join(re.findall(r'class="equation-line[^"]*">\$\$(.*?)\$\$', memorial, re.S))
+        chain_math = "".join(re.findall(r'class="formula-chain">\$\$(.*?)\$\$', memorial, re.S))
         self.assertNotIn(r"\quad;\quad", chain_math)
         for notation in (r"kN/m", r"\mathrm{N/A}", "FLA/mesa"):
             chain_math = chain_math.replace(notation, "")
