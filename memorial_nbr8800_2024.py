@@ -51,7 +51,7 @@ def _eq_lines(block):
 
 
 def _equation_chain(symbolic, numeric):
-    """Apresenta cada equação e sua aplicação numérica em linhas separadas."""
+    """Monta uma linha completa por equação: simbólica, numérica e resultado."""
     symbolic_lines = _eq_lines(symbolic)
     numeric_lines = _eq_lines(numeric)
     if len(symbolic_lines) != len(numeric_lines):
@@ -59,14 +59,12 @@ def _equation_chain(symbolic, numeric):
             "Etapa com encadeamento incompleto: quantidade de equações simbólicas "
             f"({len(symbolic_lines)}) diferente das substituições ({len(numeric_lines)})."
         )
-    return "".join(
-        f"""
-        <div class="equation-pair">
-          <div class="equation-line equation-symbolic">$${symbol}$$</div>
-          <div class="equation-line equation-numeric">$${number}$$</div>
-        </div>"""
+    rows = [
+        rf"{symbol}\;&\Rightarrow\;{number}"
         for symbol, number in zip(symbolic_lines, numeric_lines)
-    )
+    ]
+    aligned = r"\begin{aligned}" + r"\\[14pt]".join(rows) + r"\end{aligned}"
+    return f"$${aligned}$$"
 
 
 def _equation_heading(step_title, decision, explicit=None):
@@ -473,10 +471,7 @@ def _verification(title, demand, resistance, unit, status, efficiency, demand_sy
     return f"""
     <div class="verification-card {cls}">
       <div><span class="verification-kicker">VERIFICAÇÃO</span><h4>{_esc(title)}</h4></div>
-      <div class="verification-chain">
-        <div class="equation-line equation-symbolic">$${demand_symbol} {comparison} {resistance_symbol}$$</div>
-        <div class="equation-line equation-numeric">$${_n(demand)}\\;{unit}\\; {comparison}\\; {_n(resistance)}\\;{unit}$$</div>
-      </div>
+      <div class="verification-chain">$${demand_symbol} {comparison} {resistance_symbol}\\;\\Rightarrow\\;{_n(demand)}\\;{unit}\\; {comparison}\\; {_n(resistance)}\\;{unit}$$</div>
       <div class="verification-metrics"><span>Utilização: <strong>{_n(efficiency, 1)}%</strong></span><span class="{cls}">{_esc(status)}</span></div>
       {f'<div class="norm-ref">Referência: {_esc(reference)}</div>' if reference else ''}
     </div>"""
