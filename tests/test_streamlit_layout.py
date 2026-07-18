@@ -38,6 +38,13 @@ class StreamlitLayoutTests(unittest.TestCase):
         self.assertIn("max-width: 1600px !important", source)
         self.assertIn("width: 100% !important", source)
 
+    def test_header_has_no_external_navigation_or_centered_logo(self):
+        source = (ROOT / "main.py").read_text(encoding="utf-8")
+        self.assertNotIn("create_navigation_buttons", source)
+        self.assertNotIn("nav-button-secondary", source)
+        self.assertNotIn("Logo HQ Engenharia", source)
+        self.assertNotIn("lh3.googleusercontent.com", source)
+
 
 if __name__ == "__main__":
     unittest.main()
