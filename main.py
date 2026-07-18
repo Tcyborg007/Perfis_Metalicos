@@ -28,17 +28,6 @@ from memorial_nbr8800_2024 import build_memorial_details
 # 1. CONFIGURAÇÕES E CONSTANTES GLOBAIS APRIMORADAS
 # ==============================================================================
 
-st.set_page_config(
-    page_title="🏗️ Calculadora Estrutural - Perfis Metálicos",
-    layout="wide",
-    initial_sidebar_state="expanded",
-    menu_items={
-        'Get Help': 'https://www.abnt.org.br',
-        'Report a bug': None,
-        'About': f"# Calculadora Estrutural\nCálculos baseados na {NORMA} + Errata 1:2025"
-    }
-)
-
 class Config:
     NOME_NORMA = f'{NORMA} + Errata 1:2025'
     GAMMA_A1 = 1.10
@@ -98,8 +87,20 @@ HTML_TEMPLATE_CSS_PRO = """
     .stApp {
         background-color: var(--background);
     }
+    [data-testid="stMain"] {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+    [data-testid="stMainBlockContainer"],
+    [data-testid="stMain"] .block-container,
+    section.main .block-container,
     .block-container {
-        padding: 2rem 3rem 3rem 3rem;
+        box-sizing: border-box !important;
+        width: 100% !important;
+        max-width: 1600px !important;
+        margin-right: auto !important;
+        margin-left: auto !important;
+        padding: clamp(1rem, 2.5vw, 2rem) clamp(.85rem, 3.5vw, 3rem) 3rem !important;
     }
 
     /* --- Títulos e Textos Genéricos --- */
@@ -216,15 +217,143 @@ HTML_TEMPLATE_CSS_PRO = """
     }
     .pro-header h1 { font-size: 2.8rem; }
     .pro-header p { color: var(--text-secondary); }
+    .pro-header img { max-width: min(96px, 24vw); height: auto; }
     .gradient-text {
         background: linear-gradient(135deg, #FBBF24 0%, #FDE68A 50%, #D4AF37 100%);
         -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
     }
-    [data-testid="stMetric"] {
-        background-color: var(--surface); border: 1px solid var(--border);
-        border-left: 5px solid var(--accent-amber); border-radius: 8px; padding: 1.5rem;
+    /* --- Painel responsivo de parâmetros do projeto --- */
+    .project-metrics-shell {
+        container-type: inline-size;
+        margin: .4rem 0 1.8rem;
     }
-    [data-testid="stMetricValue"] { color: var(--text-display); }
+    .project-metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        gap: .85rem;
+    }
+    .project-metric-card {
+        grid-column: span 3;
+        min-width: 0;
+        min-height: 108px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        background: linear-gradient(145deg, #1e2b3b 0%, #172438 100%);
+        border: 1px solid var(--border);
+        border-top: 3px solid var(--accent-amber);
+        border-radius: 10px;
+        padding: .9rem 1rem;
+        box-shadow: 0 8px 20px rgba(2, 6, 23, .18);
+    }
+    .project-metric-label {
+        color: var(--text-secondary);
+        font-family: 'Inter', sans-serif;
+        font-size: .72rem;
+        font-weight: 700;
+        letter-spacing: .075em;
+        line-height: 1.25;
+        text-transform: uppercase;
+    }
+    .project-metric-value {
+        color: var(--text-display);
+        font-family: 'Poppins', sans-serif;
+        font-size: clamp(1.2rem, 2vw, 1.6rem);
+        font-weight: 700;
+        line-height: 1.15;
+        overflow-wrap: anywhere;
+        font-variant-numeric: tabular-nums;
+    }
+    .project-metric-card:nth-child(n + 5) { grid-column: span 4; }
+    .project-metric-unit {
+        min-height: 1.15em;
+        color: var(--text-secondary);
+        font-size: .76rem;
+        line-height: 1.2;
+    }
+    .project-metrics-context {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .55rem;
+        margin-top: .85rem;
+    }
+    .project-metrics-context span {
+        flex: 1 1 180px;
+        color: var(--text-primary);
+        background: rgba(30, 43, 59, .72);
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        padding: .48rem .8rem;
+        font-size: .78rem;
+        line-height: 1.25;
+        text-align: center;
+    }
+    .project-metrics-context strong {
+        color: var(--accent-gold);
+        margin-right: .3rem;
+    }
+    @container (max-width: 760px) {
+        .project-metrics-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .project-metric-card,
+        .project-metric-card:nth-child(n + 5) { grid-column: span 1; }
+        .project-metric-card:last-child { grid-column: 1 / -1; }
+    }
+    @container (max-width: 390px) {
+        .project-metrics-grid { grid-template-columns: 1fr; }
+        .project-metric-card,
+        .project-metric-card:nth-child(n + 5),
+        .project-metric-card:last-child { grid-column: 1; }
+        .project-metrics-context span { flex-basis: 100%; }
+    }
+
+    /* --- Adaptação global para tablet e smartphone --- */
+    @media (max-width: 768px) {
+        [data-testid="stMainBlockContainer"],
+        [data-testid="stMain"] .block-container,
+        section.main .block-container,
+        .block-container {
+            max-width: 100% !important;
+            padding: .75rem .75rem 2rem !important;
+        }
+        [data-testid="stSidebar"] {
+            width: min(88vw, 21rem) !important;
+            min-width: min(88vw, 21rem) !important;
+        }
+        [data-testid="stHorizontalBlock"] {
+            flex-direction: column !important;
+            gap: .75rem !important;
+        }
+        [data-testid="column"] {
+            width: 100% !important;
+            min-width: 100% !important;
+            flex: 1 1 100% !important;
+        }
+        .pro-header {
+            padding: 1.25rem .9rem;
+            margin-bottom: 1.25rem;
+            border-radius: 10px;
+        }
+        .pro-header h1 {
+            font-size: clamp(1.45rem, 7vw, 2rem);
+            line-height: 1.18;
+            overflow-wrap: anywhere;
+        }
+        .pro-header p { font-size: .88rem; line-height: 1.45; }
+        h3, [data-testid="stMarkdownContainer"] h3 {
+            font-size: clamp(1.15rem, 5.5vw, 1.5rem) !important;
+        }
+        .stButton > button, .stDownloadButton > button {
+            min-height: 2.8rem;
+            white-space: normal;
+        }
+        .stTabs [data-baseweb="tab-list"] {
+            overflow-x: auto;
+        }
+        .stTabs [data-baseweb="tab-list"] button {
+            flex: 0 0 auto;
+            padding: .75rem;
+        }
+    }
 
     /* --- Botões --- */
     .stButton > button, .stDownloadButton > button {
@@ -254,7 +383,10 @@ HTML_TEMPLATE_CSS_PRO = """
     }
 
     /* --- Estilos para o MEMORIAL HTML --- */
-    .container { font-family: 'Inter', sans-serif; color: var(--text-primary); }
+    .container {
+        width: 100%; max-width: 1180px; margin: 0 auto; padding: clamp(.7rem, 3vw, 2rem);
+        box-sizing: border-box; font-family: 'Inter', sans-serif; color: var(--text-primary);
+    }
     .container .pro-header { background: var(--surface); }
     .container h1, .container h2, .container h3, .container h4 { color: var(--text-display); font-family: 'Poppins', sans-serif; }
     .container h2 { border-bottom: 1px solid var(--border); padding-bottom: 10px; }
@@ -269,7 +401,7 @@ HTML_TEMPLATE_CSS_PRO = """
     .container .formula-block { background-color: var(--background); border-left: 4px solid var(--accent-amber); border-radius: 4px; padding: 1px 15px 15px; margin: 15px 0;}
 
     /* Memorial auditável — hierarquia visual para fórmula, substituição e decisão */
-    .container { max-width: 1180px; margin: 0 auto; line-height: 1.62; }
+    .container { line-height: 1.62; }
     .container .chapter-intro { color: var(--text-secondary); margin: -0.45rem 0 1.35rem; font-size: 0.98rem; }
     .container .audit-banner {
         display: flex; align-items: center; justify-content: space-between; gap: 1rem;
@@ -299,15 +431,25 @@ HTML_TEMPLATE_CSS_PRO = """
     .container .formula-numeric { background: #0d1828; border-left: 3px solid #60a5fa; }
     .container .equation-heading { display: flex; align-items: center; margin: 1rem 0 .25rem; }
     .container .equation-heading h5 { margin: 0; color: #f8fafc; font-size: .94rem; }
-    .container .equation-caption { color: #8fa4bf; font-size: .76rem; margin: 0 0 .45rem; }
-    .container .equation-caption strong { color: var(--accent-gold); padding: 0 .18rem; }
     .container .formula-chain {
-        overflow-x: auto; background: #0b1322; border: 1px solid #31445e;
-        border-left: 4px solid #60a5fa; border-radius: 8px; padding: 1rem 1.15rem;
-        margin: .25rem 0; color: #f8fafc;
+        display: grid; gap: .9rem; margin: .35rem 0; color: #f8fafc;
+    }
+    .container .equation-pair {
+        display: grid; gap: .45rem; min-width: 0; padding: .8rem;
+        background: #0b1322; border: 1px solid #31445e;
+        border-left: 4px solid #60a5fa; border-radius: 8px;
+    }
+    .container .equation-line {
+        min-width: 0; max-width: 100%; overflow-x: auto; padding: .55rem .7rem;
+        border-radius: 6px; scrollbar-width: thin;
+    }
+    .container .equation-symbolic { background: #101b2d; }
+    .container .equation-numeric { background: #0d1828; border-top: 1px solid #26384f; }
+    .container .equation-line mjx-container[display="true"] {
+        margin: .25rem 0 !important; min-width: max-content;
     }
     .container .verification-chain {
-        overflow-x: auto; background: #0b1322; border: 1px solid #31445e;
+        display: grid; gap: .45rem; overflow-x: hidden; background: #0b1322; border: 1px solid #31445e;
         border-left: 4px solid #94a3b8; border-radius: 8px; padding: .8rem 1rem;
         margin: .45rem 0 0; color: #f8fafc;
     }
@@ -390,6 +532,20 @@ HTML_TEMPLATE_CSS_PRO = """
     .container .global-status.pending strong { color: #fbbf24; }
     .container .notice { background: #162236; border: 1px solid var(--border); border-radius: 8px; padding: .9rem 1rem; margin: 1rem 0; color: var(--text-secondary); }
     @media (max-width: 780px) {
+        .container { padding: .65rem; }
+        .container .pro-header { padding: 1.1rem .7rem; }
+        .container .pro-header h1 { font-size: clamp(1.35rem, 7vw, 1.9rem); }
+        .container .info-card, .container .calc-step, .container .verification-card {
+            padding: .9rem;
+        }
+        .container .formula-block { padding: 1px .7rem .7rem; }
+        .container .equation-pair, .container .verification-chain,
+        .container .formula-symbolic, .container .formula-numeric {
+            padding: .7rem;
+            max-width: 100%;
+        }
+        .container .equation-line { padding: .45rem .25rem; }
+        .container table { display: block; overflow-x: auto; white-space: nowrap; }
         .container .scope-grid, .container .theory-grid { grid-template-columns: 1fr; }
         .container .audit-banner, .container .verification-metrics { align-items: flex-start; flex-direction: column; }
         .container .theory-panel summary { align-items: flex-start; flex-wrap: wrap; }
@@ -401,7 +557,7 @@ HTML_TEMPLATE_CSS_PRO = """
         body { background: white !important; color: #172033 !important; }
         .container { color: #172033 !important; }
         .container .calc-step, .container .verification-card, .container .info-card, .container .notice, .container .theory-panel, .container .theory-panel summary, .container .theory-concept, .container .step-theory-panel, .container .step-theory-panel summary { background: white !important; color: #172033 !important; box-shadow: none; border-color: #cbd5e1; }
-        .container .formula-symbolic, .container .formula-numeric, .container .formula-chain, .container .verification-chain { background: #f8fafc !important; color: #0f172a !important; border-color: #cbd5e1; }
+        .container .formula-symbolic, .container .formula-numeric, .container .equation-pair, .container .equation-line, .container .verification-chain { background: #f8fafc !important; color: #0f172a !important; border-color: #cbd5e1; }
         .container .calc-explanation, .container .chapter-intro, .container .norm-ref { color: #475569 !important; }
     }
 
@@ -427,16 +583,15 @@ def create_navigation_buttons():
         font-weight: bold;
         text-decoration: none;
         transition: all 0.2s ease-in-out;
-        margin-left: 1rem;
         font-family: 'Poppins', sans-serif;
         font-size: 0.9rem;
     """
     
     secondary_style = "border: 2px solid #fbbd24; color: #fbbd24;"
-    secondary_hover = ":hover { background-color: #fbbd24; color: #1e2b3b; }"
+    secondary_hover = "background-color: #fbbd24; color: #1e2b3b;"
     
     primary_style = "background-color: #fbbd24; color: #1e2b3b; border: 2px solid #fbbd24;"
-    primary_hover = ":hover { background-color: #f59e0b; border-color: #f59e0b; }"
+    primary_hover = "background-color: #f59e0b; border-color: #f59e0b;"
 
     # HTML com os botões
     st.markdown(f"""
@@ -447,7 +602,7 @@ def create_navigation_buttons():
             .nav-button-primary:hover {{ {primary_hover} }}
         </style>
         
-        <div style="display: flex; justify-content: flex-end; width: 100%; align-items: center;">
+        <div class="nav-actions" style="display: flex; justify-content: flex-end; width: 100%; align-items: center; flex-wrap: wrap; gap: .75rem;">
             <a href="{ferramentas_url}" target="_self" class="nav-button-secondary">
                 Ferramentas
             </a>
@@ -455,6 +610,12 @@ def create_navigation_buttons():
                 Voltar ao Site
             </a>
         </div>
+        <style>
+            @media (max-width: 520px) {{
+                .nav-actions {{ justify-content: stretch !important; }}
+                .nav-actions a {{ flex: 1 1 100%; justify-content: center; text-align: center; }}
+            }}
+        </style>
         <hr style="border-color: var(--border); margin-top: 1.5rem; margin-bottom: 1.5rem;">
     """, unsafe_allow_html=True)
 
@@ -1366,37 +1527,65 @@ def create_metrics_dashboard(input_params):
     msd_value = input_params.get('Msd', 0)
     vsd_value = input_params.get('Vsd', 0)
     cb_value = input_params.get('Cb_projeto', 1.0)
-    
-    col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
-    
-    with col1:
-        st.metric(label="📐 Norma", value="NBR 8800:2024")
-    with col2:
-        st.metric(label="⚡ Módulo E", value=f"{input_params['E_aco']:.0f} kN/cm²")
-    with col3:
-        st.metric(label="🛡️ γa1", value="1,10")
-    with col4:
-        st.metric(label="📏 Vão", value=f"{input_params['L_cm']/100:.2f} m")
-    with col5:
-        st.metric(label="🔥 fy", value=f"{input_params['fy_aco']:.1f} kN/cm²")
-    
-    with col6:
-        st.metric(
-            label=" Msd (Momento)",
-            value=f"{msd_value/100:.2f} kNm" if msd_value > 0 else "-",
-            help="Momento Fletor Solicitante de Cálculo"
-        )
-    with col7:
-        st.metric(
-            label=" Vsd (Cortante)",
-            value=f"{vsd_value:.2f} kN" if vsd_value > 0 else "-",
-            help="Força Cortante Solicitante de Cálculo"
-        )
-    
-    # --- LINHA CORRIGIDA ABAIXO ---
-    st.markdown(f"""<div class="metric-footer">
-        Cb: {'automático por perfil' if input_params.get('cb_modo_auto') else f'{cb_value:.2f}'} | Lb: {input_params['Lb_projeto']:.2f} cm | Flecha: L/{input_params['limite_flecha_divisor']:.0f}
-    </div>""", unsafe_allow_html=True)
+
+    def br_number(value, decimals):
+        formatted = f"{value:,.{decimals}f}"
+        return formatted.replace(",", "_").replace(".", ",").replace("_", ".")
+
+    msd_display = br_number(msd_value / 100, 2) if msd_value > 0 else "—"
+    vsd_display = br_number(vsd_value, 2) if vsd_value > 0 else "—"
+    cb_display = (
+        "automático por perfil"
+        if input_params.get('cb_modo_auto')
+        else br_number(cb_value, 2)
+    )
+
+    st.markdown(f"""
+    <section class="project-metrics-shell" aria-label="Parâmetros principais do projeto">
+        <div class="project-metrics-grid">
+            <article class="project-metric-card">
+                <div class="project-metric-label">Norma</div>
+                <div class="project-metric-value">NBR 8800:2024</div>
+                <div class="project-metric-unit">Errata 1:2025</div>
+            </article>
+            <article class="project-metric-card">
+                <div class="project-metric-label">Módulo de elasticidade</div>
+                <div class="project-metric-value">{br_number(input_params['E_aco'], 0)}</div>
+                <div class="project-metric-unit">kN/cm²</div>
+            </article>
+            <article class="project-metric-card">
+                <div class="project-metric-label">Coeficiente γa1</div>
+                <div class="project-metric-value">1,10</div>
+                <div class="project-metric-unit">resistência</div>
+            </article>
+            <article class="project-metric-card">
+                <div class="project-metric-label">Vão da viga</div>
+                <div class="project-metric-value">{br_number(input_params['L_cm'] / 100, 2)}</div>
+                <div class="project-metric-unit">m</div>
+            </article>
+            <article class="project-metric-card">
+                <div class="project-metric-label">Resistência ao escoamento fy</div>
+                <div class="project-metric-value">{br_number(input_params['fy_aco'], 1)}</div>
+                <div class="project-metric-unit">kN/cm²</div>
+            </article>
+            <article class="project-metric-card" title="Momento fletor solicitante de cálculo">
+                <div class="project-metric-label">Momento solicitante Msd</div>
+                <div class="project-metric-value">{msd_display}</div>
+                <div class="project-metric-unit">kN·m</div>
+            </article>
+            <article class="project-metric-card" title="Força cortante solicitante de cálculo">
+                <div class="project-metric-label">Cortante solicitante Vsd</div>
+                <div class="project-metric-value">{vsd_display}</div>
+                <div class="project-metric-unit">kN</div>
+            </article>
+        </div>
+        <div class="project-metrics-context">
+            <span><strong>Cb</strong>{cb_display}</span>
+            <span><strong>Lb</strong>{br_number(input_params['Lb_projeto'], 2)} cm</span>
+            <span><strong>Limite de flecha</strong>L/{input_params['limite_flecha_divisor']:.0f}</span>
+        </div>
+    </section>
+    """, unsafe_allow_html=True)
 
 def style_classic_dataframe(df):
     """Aplica estilização clássica com cores sólidas ao DataFrame."""
@@ -1447,7 +1636,7 @@ def create_top_profiles_chart(df_approved, top_n=10):
         xaxis_title='Peso (kg/m)', yaxis_title='Perfil', 
         template='plotly_dark', # <--- ADICIONE ESTA LINHA
         height=500, 
-        margin=dict(l=150),
+        margin=dict(l=80, r=20, t=70, b=55),
         paper_bgcolor='rgba(0,0,0,0)', # Fundo do papel transparente
         plot_bgcolor='rgba(0,0,0,0)'   # Fundo do gráfico transparente
     )
@@ -1524,7 +1713,9 @@ def create_professional_memorial_html(perfil_nome, perfil_tipo, resultados, inpu
     # O template HTML agora tem o <h1> com a classe 'gradient-text'
     html_template = f"""
     <!DOCTYPE html><html lang="pt-BR"><head>
-        <meta charset="UTF-8"><title>Memorial de Cálculo - {perfil_nome}</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Memorial de Cálculo - {perfil_nome}</title>
         {HTML_TEMPLATE_CSS_PRO}
         <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML"></script>
     </head><body><div class="container">
@@ -1617,7 +1808,7 @@ def _render_esforcos_viga_section(params):
         <div class="info-card">
             <div style="display: flex; justify-content: space-around; align-items: stretch; flex-wrap: wrap; gap: 1rem; padding: 1rem 0;">
 
-                <div style="text-align: center; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.5rem; width: 45%; min-width: 200px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                <div style="text-align: center; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.5rem; flex: 1 1 240px; max-width: 100%; min-width: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
                     <span style="font-size: 2em; line-height: 1;">🔄</span>
                     <h5 style="margin: 0.5rem 0; color: var(--text-secondary); font-weight: 500;">Momento Fletor ($M_{{sd}}$)</h5>
                     <p style="font-size: 2.2em; font-weight: 700; color: var(--primary-color); margin: 0; line-height: 1.2;">
@@ -1626,7 +1817,7 @@ def _render_esforcos_viga_section(params):
                     </p>
                 </div>
 
-                <div style="text-align: center; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.5rem; width: 45%; min-width: 200px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                <div style="text-align: center; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.5rem; flex: 1 1 240px; max-width: 100%; min-width: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
                     <span style="font-size: 2em; line-height: 1;">✂️</span>
                     <h5 style="margin: 0.5rem 0; color: var(--text-secondary); font-weight: 500;">Força Cortante ($V_{{sd}}$)</h5>
                     <p style="font-size: 2.2em; font-weight: 700; color: var(--primary-color); margin: 0; line-height: 1.2;">
@@ -2210,9 +2401,8 @@ def _render_verification_step(step_dict):
 
 def _render_calculation_step(step_dict):
     """
-    Renderiza um passo de cálculo de forma padronizada e explícita:
-    1. Fórmula Simbólica
-    2. Fórmula Numérica com substituições = Resultado
+    Renderiza um passo de cálculo com a equação e sua aplicação numérica
+    em blocos sucessivos.
     """
     desc = step_dict.get('desc', 'Cálculo')
     formula_simbolica = step_dict.get('formula', '')
@@ -2268,6 +2458,20 @@ def _render_calculation_step(step_dict):
 # ==============================================================================
 
 def main():
+    # Esta chamada precisa ocorrer em toda execução do script. Quando ficava no
+    # escopo do módulo, o cache de importação podia omiti-la após um refresh e o
+    # Streamlit retornava ao contêiner central estreito do layout padrão.
+    st.set_page_config(
+        page_title="🏗️ Calculadora Estrutural - Perfis Metálicos",
+        layout="wide",
+        initial_sidebar_state="auto",
+        menu_items={
+            'Get Help': 'https://www.abnt.org.br',
+            'Report a bug': None,
+            'About': f"# Calculadora Estrutural\nCálculos baseados na {NORMA} + Errata 1:2025"
+        }
+    )
+
     if 'analysis_results' not in st.session_state:
         st.session_state.analysis_results = None
     if 'detailed_analysis_html' not in st.session_state:
@@ -2637,7 +2841,7 @@ def main():
             with st.expander("📄 Visualização do Memorial", expanded=True):
                 # O memorial é deliberadamente extenso; a altura maior evita que
                 # o leitor precise alternar entre duas barras de rolagem a cada etapa.
-                st.components.v1.html(st.session_state.detailed_analysis_html, height=9000, width=2500, scrolling=True)
+                st.components.v1.html(st.session_state.detailed_analysis_html, height=9000, scrolling=True)
             
             st.download_button(
                 label="📥 Baixar Memorial em HTML",

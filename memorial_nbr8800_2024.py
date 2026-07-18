@@ -51,7 +51,7 @@ def _eq_lines(block):
 
 
 def _equation_chain(symbolic, numeric):
-    """Monta a cadeia auditável Simbólica → Numérica = Resultado."""
+    """Apresenta cada equação e sua aplicação numérica em linhas separadas."""
     symbolic_lines = _eq_lines(symbolic)
     numeric_lines = _eq_lines(numeric)
     if len(symbolic_lines) != len(numeric_lines):
@@ -59,11 +59,14 @@ def _equation_chain(symbolic, numeric):
             "Etapa com encadeamento incompleto: quantidade de equações simbólicas "
             f"({len(symbolic_lines)}) diferente das substituições ({len(numeric_lines)})."
         )
-    rows = [
-        rf"{symbol}\;&\Rightarrow\;{number}"
+    return "".join(
+        f"""
+        <div class="equation-pair">
+          <div class="equation-line equation-symbolic">$${symbol}$$</div>
+          <div class="equation-line equation-numeric">$${number}$$</div>
+        </div>"""
         for symbol, number in zip(symbolic_lines, numeric_lines)
-    ]
-    return r"\begin{aligned}" + r"\\[14pt]".join(rows) + r"\end{aligned}"
+    )
 
 
 def _equation_heading(step_title, decision, explicit=None):
@@ -76,7 +79,7 @@ def _equation_heading(step_title, decision, explicit=None):
         return f"Equação elástica — {step_title}"
     if "plást" in regime or "escoamento" in regime:
         return f"Equação plástica — {step_title}"
-    return f"Desenvolvimento do cálculo — {step_title}"
+    return None
 
 
 def _theory_panel(title, objective, variables, concepts, reference):
@@ -331,8 +334,8 @@ _STEP_THEORY = {
     "Flambagem local da mesa comprimida — FLM": (
         "Comportamento da mesa",
         "Cada metade da mesa comprimida funciona como uma placa em balanço ligada à alma. A esbeltez bf/(2·tf) expressa a relação entre largura livre e espessura. Quanto maior essa razão, menor a tensão necessária para ocorrer ondulação local da mesa antes que toda a seção desenvolva sua resistência.",
-        "Transição entre regimes",
-        "Até λp, a mesa é compacta e o momento de referência pode ser desenvolvido. Entre λp e λr, a resistência é interpolada entre M0 e Mr para representar escoamento parcial seguido de flambagem inelástica. Acima de λr governa Mcr. Em perfis soldados, kc inclui a interação com a esbeltez da alma e as tensões residuais.",
+        "Coeficiente kc e transição entre regimes",
+        "Nos perfis soldados, calcula-se primeiro kc,0 = 4/√(h/tw). O limite superior impede kc de ultrapassar 0,76; em seguida, o limite inferior impede valor menor que 0,35. Portanto: se kc,0 > 0,76, adota-se 0,76; se 0,35 ≤ kc,0 ≤ 0,76, conserva-se kc,0; e se kc,0 < 0,35, adota-se 0,35. Até λp, a mesa é compacta; entre λp e λr, a resistência é interpolada; acima de λr governa Mcr.",
     ),
     "Alma à flexão ou escoamento da mesa tracionada": (
         "Alma não esbelta",
@@ -448,6 +451,7 @@ def _step(number, title, explanation, symbolic, numeric, result, reference, deci
     if decision:
         decision_html = f'<div class="calc-decision"><strong>Leitura técnica:</strong> {_esc(decision)}</div>'
     heading = _equation_heading(title, decision, equation_title)
+    heading_html = f'<div class="equation-heading"><h5>{_esc(heading)}</h5></div>' if heading else ""
     equation_chain = _equation_chain(symbolic, numeric)
     theory_panel = _step_theory_panel(title, reference)
     return f"""
@@ -455,9 +459,8 @@ def _step(number, title, explanation, symbolic, numeric, result, reference, deci
       <div class="calc-step-head"><span class="calc-step-number">{number}</span><h4>{_esc(title)}</h4></div>
       <p class="calc-explanation">{_esc(explanation)}</p>
       {theory_panel}
-      <div class="equation-heading"><h5>{_esc(heading)}</h5></div>
-      <div class="equation-caption">Simbólica <strong>→</strong> substituição numérica <strong>=</strong> resultado</div>
-      <div class="formula-chain">$${equation_chain}$$</div>
+      {heading_html}
+      <div class="formula-chain">{equation_chain}</div>
       <div class="calc-result">{result}</div>
       {decision_html}
       <div class="norm-ref">Referência: {_esc(reference)}</div>
@@ -470,7 +473,10 @@ def _verification(title, demand, resistance, unit, status, efficiency, demand_sy
     return f"""
     <div class="verification-card {cls}">
       <div><span class="verification-kicker">VERIFICAÇÃO</span><h4>{_esc(title)}</h4></div>
-      <div class="verification-chain">$${demand_symbol} {comparison} {resistance_symbol}\\;\\Rightarrow\\;{_n(demand)}\\;{unit}\\; {comparison}\\; {_n(resistance)}\\;{unit}$$</div>
+      <div class="verification-chain">
+        <div class="equation-line equation-symbolic">$${demand_symbol} {comparison} {resistance_symbol}$$</div>
+        <div class="equation-line equation-numeric">$${_n(demand)}\\;{unit}\\; {comparison}\\; {_n(resistance)}\\;{unit}$$</div>
+      </div>
       <div class="verification-metrics"><span>Utilização: <strong>{_n(efficiency, 1)}%</strong></span><span class="{cls}">{_esc(status)}</span></div>
       {f'<div class="norm-ref">Referência: {_esc(reference)}</div>' if reference else ''}
     </div>"""
@@ -598,16 +604,35 @@ def _beam_actions(bundle):
     x_m_plot, x_v_plot = x_m / 100.0, x_v / 100.0
     m_point_term = max(x_m_plot - a_m, 0.0)
     h_v = 1.0 if x_v >= a and P > 0 else 0.0
+    m_reaction_term = response.reaction_left * x_m_plot
+    m_udl_term = q_m * x_m_plot**2 / 2.0
+    m_point_value = P * m_point_term
+    v_udl_term = q_m * x_v_plot
+    v_point_term = P * h_v
     step_diagrams = _step(
         "3.4", "Funções de cortante e momento",
         "A carga distribuída e a força pontual são analisadas simultaneamente por funções de singularidade. Os extremos de momento são pesquisados nas extremidades, em x = a e nas raízes V(x) = 0; não se somam máximos que ocorram em seções diferentes.",
         _eq(
-            r"M(x)=M_A+R_A\cdot x-\frac{q_d\cdot x^2}{2}-P_d\cdot\langle x-a\rangle",
-            r"V(x)=R_A-q_d\cdot x-P_d\cdot H(x-a)",
+            r"M_R=R_A\cdot x",
+            r"M_q=\frac{q_d\cdot x^2}{2}",
+            r"M_P=P_d\cdot\langle x-a\rangle",
+            r"M(x)=M_A+M_R-M_q-M_P",
+            r"M_{Sd,max}=\max_x\left|M(x)\right|",
+            r"V_q=q_d\cdot x",
+            r"V_P=P_d\cdot H(x-a)",
+            r"V(x)=R_A-V_q-V_P",
+            r"V_{Sd,max}=\max_x\left|V(x)\right|",
         ),
         _eq(
-            rf"M({_n(x_m_plot)})={_n(response.moment_left/100)}+{_n(response.reaction_left)}\cdot{_n(x_m_plot)}-\frac{{{_n(q_m,6)}\cdot{_n(x_m_plot)}^2}}{{2}}-{_n(P)}\cdot{_n(m_point_term)}={_n(m_signed/100)}\;kN\!\cdot\!m\;\Rightarrow\;M_{{Sd,max}}={_n(response.max_moment/100)}\;kN\!\cdot\!m",
-            rf"V({_n(x_v_plot)})={_n(response.reaction_left)}-{_n(q_m,6)}\cdot{_n(x_v_plot)}-{_n(P)}\cdot{_n(h_v,0)}={_n(v_signed)}\;kN\;\Rightarrow\;V_{{Sd,max}}={_n(response.max_shear)}\;kN",
+            rf"M_R={_n(response.reaction_left)}\cdot{_n(x_m_plot)}={_n(m_reaction_term)}\;kN\!\cdot\!m",
+            rf"M_q=\frac{{{_n(q_m,6)}\cdot{_n(x_m_plot)}^2}}{{2}}={_n(m_udl_term)}\;kN\!\cdot\!m",
+            rf"M_P={_n(P)}\cdot{_n(m_point_term)}={_n(m_point_value)}\;kN\!\cdot\!m",
+            rf"M({_n(x_m_plot)})={_n(response.moment_left/100)}+{_n(m_reaction_term)}-{_n(m_udl_term)}-{_n(m_point_value)}={_n(m_signed/100)}\;kN\!\cdot\!m",
+            rf"M_{{Sd,max}}={_n(response.max_moment/100)}\;kN\!\cdot\!m",
+            rf"V_q={_n(q_m,6)}\cdot{_n(x_v_plot)}={_n(v_udl_term)}\;kN",
+            rf"V_P={_n(P)}\cdot{_n(h_v,0)}={_n(v_point_term)}\;kN",
+            rf"V({_n(x_v_plot)})={_n(response.reaction_left)}-{_n(v_udl_term)}-{_n(v_point_term)}={_n(v_signed)}\;kN",
+            rf"V_{{Sd,max}}={_n(response.max_shear)}\;kN",
         ),
         f"Solicitações adotadas: <strong>MSd = {_n(response.max_moment/100)} kN·m</strong> e <strong>VSd = {_n(response.max_shear)} kN</strong>.",
         "Modelo de análise do aplicativo; sinais internos em kN e cm.",
@@ -678,6 +703,8 @@ def _flexure_section(bundle):
         "ABNT NBR 8800:2024, Anexo D e Anexo E.", web_decision,
     )
     if not f["slender_web"]:
+        torsion_term = 1.0 + 0.039 * p["J"] * bundle["Lb"]**2 / p["Cw"]
+        warping_term = p["Cw"] / p["Iy"] * torsion_term
         chi_formula = r"\chi_{LT}=1" if f["lambda_LT"] <= .4 else (r"\chi_{LT}=1-0{,}49\cdot(\lambda_{LT}-0{,}4)" if f["lambda_LT"] <= 1.4 else r"\chi_{LT}=\frac{1}{\lambda_{LT}^2}")
         chi_numeric = (
             rf"\chi_{{LT}}=1={_n(f['chi_LT'],4)}"
@@ -690,12 +717,16 @@ def _flexure_section(bundle):
             "5.3", "Flambagem lateral com torção — FLT",
             "Calcula-se o momento crítico elástico do trecho destravado, a esbeltez reduzida e o fator χLT correspondente ao intervalo identificado.",
             _eq(
-                r"M_{cr}=\frac{C_b\cdot\pi^2\cdot E\cdot I_y}{L_b^2}\cdot\sqrt{\frac{C_w}{I_y}\cdot\left(1+0{,}039\cdot\frac{J\cdot L_b^2}{C_w}\right)}",
+                r"\Phi_t=1+0{,}039\cdot\frac{J\cdot L_b^2}{C_w}",
+                r"\Phi_w=\frac{C_w}{I_y}\cdot\Phi_t",
+                r"M_{cr}=\frac{C_b\cdot\pi^2\cdot E\cdot I_y}{L_b^2}\cdot\sqrt{\Phi_w}",
                 r"\lambda_{LT}=\sqrt{\frac{M_{pl}}{M_{cr}}}", chi_formula,
                 r"M_{Rd,FLT}=\min\left(\frac{\chi_{LT}\cdot M_{pl}}{\gamma_{a1}};\;M_{Rd,lim}\right)",
             ),
             _eq(
-                rf"M_{{cr}}=\frac{{1}}{{100}}\cdot\frac{{{_n(bundle['Cb'],4)}\cdot\pi^2\cdot{_n(E)}\cdot{_n(p['Iy'])}}}{{{_n(bundle['Lb'])}^2}}\cdot\sqrt{{\frac{{{_n(p['Cw'])}}}{{{_n(p['Iy'])}}}\cdot\left(1+0.039\cdot\frac{{{_n(p['J'])}\cdot{_n(bundle['Lb'])}^2}}{{{_n(p['Cw'])}}}\right)}}={_n(f['Mcr_FLT']/100)}\;kN\!\cdot\!m",
+                rf"\Phi_t=1+0.039\cdot\frac{{{_n(p['J'])}\cdot{_n(bundle['Lb'])}^2}}{{{_n(p['Cw'])}}}={_n(torsion_term,4)}",
+                rf"\Phi_w=\frac{{{_n(p['Cw'])}}}{{{_n(p['Iy'])}}}\cdot{_n(torsion_term,4)}={_n(warping_term,4)}",
+                rf"M_{{cr}}=\frac{{1}}{{100}}\cdot\frac{{{_n(bundle['Cb'],4)}\cdot\pi^2\cdot{_n(E)}\cdot{_n(p['Iy'])}}}{{{_n(bundle['Lb'])}^2}}\cdot\sqrt{{{_n(warping_term,4)}}}={_n(f['Mcr_FLT']/100)}\;kN\!\cdot\!m",
                 rf"\lambda_{{LT}}=\sqrt{{\frac{{{_n(f['Mpl']/100)}}}{{{_n(f['Mcr_FLT']/100)}}}}}={_n(f['lambda_LT'])}",
                 chi_numeric,
                 rf"M_{{Rd,FLT}}=\min\left(\frac{{{_n(f['chi_LT'],4)}\cdot{_n(f['Mpl']/100)}}}{{{_n(gamma1,2)}}};\;{_n(f['cap_5_4_2_2']/100)}\right)={_n((f['Mrd_FLT'] or 0)/100)}\;kN\!\cdot\!m",
@@ -730,60 +761,96 @@ def _flexure_section(bundle):
             flm_mcr_numeric = rf"M_{{cr}}=\frac{{0.90\cdot{_n(E)}\cdot{_n(f['kc'])}\cdot{_n(p['Wx'])}}}{{{_n(f['lambda_FLM'])}^2\cdot100}}={_n(f['Mcr_FLM']/100)}\;kN\!\cdot\!m"
         else:
             flm_mcr_numeric = rf"M_{{cr}}=\frac{{0.69\cdot{_n(E)}\cdot{_n(p['Wx'])}}}{{{_n(f['lambda_FLM'])}^2\cdot100}}={_n(f['Mcr_FLM']/100)}\;kN\!\cdot\!m"
+    kc_symbolic_lines = []
+    kc_numeric_lines = []
+    if welded:
+        web_slenderness = p["h_clear"] / p["tw"]
+        kc_unbounded = 4.0 / math.sqrt(web_slenderness)
+        kc_upper_limited = min(kc_unbounded, 0.76)
+        kc_symbolic_lines = [
+            r"k_{c,0}=\frac{4}{\sqrt{\dfrac{h}{t_w}}}",
+            r"k_{c,sup}=\min\left(k_{c,0};0{,}76\right)",
+            r"k_c=\max\left(0{,}35;k_{c,sup}\right)",
+        ]
+        kc_numeric_lines = [
+            rf"k_{{c,0}}=\frac{{4}}{{\sqrt{{\dfrac{{{_n(p['h_clear'])}}}{{{_n(p['tw'])}}}}}}}={_n(kc_unbounded,4)}",
+            rf"k_{{c,sup}}=\min\left({_n(kc_unbounded,4)};0.7600\right)={_n(kc_upper_limited,4)}",
+            rf"k_c=\max\left(0.3500;{_n(kc_upper_limited,4)}\right)={_n(f['kc'],4)}",
+        ]
     if f["regime_FLM"] == "plástico":
-        flm_active = rf"M_{{Rd,FLM}}=\min\left(\frac{{{flm_base_symbol}}}{{\gamma_{{a1}}}};M_{{Rd,lim}}\right)"
-        flm_active_numeric = rf"M_{{Rd,FLM}}=\min\left(\frac{{{_n(flm_base/100)}}}{{{_n(gamma1,2)}}};{_n(f['cap_5_4_2_2']/100)}\right)={_n(f['Mrd_FLM']/100)}\;kN\!\cdot\!m"
+        flm_active_lines = [rf"M_{{Rd,FLM}}=\min\left(\frac{{{flm_base_symbol}}}{{\gamma_{{a1}}}};M_{{Rd,lim}}\right)"]
+        flm_active_numeric_lines = [rf"M_{{Rd,FLM}}=\min\left(\frac{{{_n(flm_base/100)}}}{{{_n(gamma1,2)}}};{_n(f['cap_5_4_2_2']/100)}\right)={_n(f['Mrd_FLM']/100)}\;kN\!\cdot\!m"]
     elif f["regime_FLM"] == "inelástico":
-        flm_active = rf"M_{{Rd,FLM}}=\min\left(\frac{{{flm_base_symbol}-({flm_base_symbol}-M_r)\cdot\dfrac{{\lambda_f-\lambda_p}}{{\lambda_r-\lambda_p}}}}{{\gamma_{{a1}}}};M_{{Rd,lim}}\right)"
-        flm_active_numeric = rf"M_{{Rd,FLM}}=\min\left(\frac{{{_n(flm_base/100)}-({_n(flm_base/100)}-{_n(flm_residual/100)})\cdot\dfrac{{{_n(f['lambda_FLM'])}-{_n(f['lambda_p_FLM'])}}}{{{_n(f['lambda_r_FLM'])}-{_n(f['lambda_p_FLM'])}}}}}{{{_n(gamma1,2)}}};{_n(f['cap_5_4_2_2']/100)}\right)={_n(f['Mrd_FLM']/100)}\;kN\!\cdot\!m"
+        flm_alpha = (f["lambda_FLM"] - f["lambda_p_FLM"]) / (f["lambda_r_FLM"] - f["lambda_p_FLM"])
+        flm_nominal = flm_base - (flm_base - flm_residual) * flm_alpha
+        flm_active_lines = [
+            r"\alpha_f=\frac{\lambda_f-\lambda_p}{\lambda_r-\lambda_p}",
+            rf"M_{{n,FLM}}={flm_base_symbol}-({flm_base_symbol}-M_r)\cdot\alpha_f",
+            r"M_{Rd,FLM}=\min\left(\frac{M_{n,FLM}}{\gamma_{a1}};M_{Rd,lim}\right)",
+        ]
+        flm_active_numeric_lines = [
+            rf"\alpha_f=\frac{{{_n(f['lambda_FLM'])}-{_n(f['lambda_p_FLM'])}}}{{{_n(f['lambda_r_FLM'])}-{_n(f['lambda_p_FLM'])}}}={_n(flm_alpha,4)}",
+            rf"M_{{n,FLM}}={_n(flm_base/100)}-({_n(flm_base/100)}-{_n(flm_residual/100)})\cdot{_n(flm_alpha,4)}={_n(flm_nominal/100)}\;kN\!\cdot\!m",
+            rf"M_{{Rd,FLM}}=\min\left(\frac{{{_n(flm_nominal/100)}}}{{{_n(gamma1,2)}}};{_n(f['cap_5_4_2_2']/100)}\right)={_n(f['Mrd_FLM']/100)}\;kN\!\cdot\!m",
+        ]
     else:
-        flm_active = r"M_{Rd,FLM}=\min\left(\frac{M_{cr}}{\gamma_{a1}};M_{Rd,lim}\right)"
-        flm_active_numeric = rf"M_{{Rd,FLM}}=\min\left(\frac{{{_n(f['Mcr_FLM']/100)}}}{{{_n(gamma1,2)}}};{_n(f['cap_5_4_2_2']/100)}\right)={_n(f['Mrd_FLM']/100)}\;kN\!\cdot\!m"
+        flm_active_lines = [r"M_{Rd,FLM}=\min\left(\frac{M_{cr}}{\gamma_{a1}};M_{Rd,lim}\right)"]
+        flm_active_numeric_lines = [rf"M_{{Rd,FLM}}=\min\left(\frac{{{_n(f['Mcr_FLM']/100)}}}{{{_n(gamma1,2)}}};{_n(f['cap_5_4_2_2']/100)}\right)={_n(f['Mrd_FLM']/100)}\;kN\!\cdot\!m"]
     out += _step(
         "5.4", "Flambagem local da mesa comprimida — FLM",
         "A esbeltez da meia mesa é comparada com λp e λr. O núcleo seleciona automaticamente a expressão plástica, interpolada inelástica ou crítica elástica.",
         _eq(
             r"\lambda_f=\frac{b_f}{2\cdot t_f}",
-            r"k_c=\max\left[0{,}35;\min\left(\frac{4}{\sqrt{\dfrac{h}{t_w}}};0{,}76\right)\right]",
+            *kc_symbolic_lines,
             r"\lambda_p=0{,}38\cdot\sqrt{\frac{E}{f_y}}",
             rf"\lambda_r={lr_formula}",
             flm_base_formula,
             flm_residual_formula,
-            rf"M_{{cr}}={mcr_formula}", flm_active,
+            rf"M_{{cr}}={mcr_formula}", *flm_active_lines,
         ),
         _eq(
             rf"\lambda_f=\frac{{{_n(p['bf'])}}}{{2\cdot{_n(p['tf'])}}}={_n(f['lambda_FLM'])}",
-            rf"k_c=\max\left[0.35;\min\left(\frac{{4}}{{\sqrt{{\dfrac{{{_n(p['h_clear'])}}}{{{_n(p['tw'])}}}}}}};0.76\right)\right]={_n(f['kc'])}",
+            *kc_numeric_lines,
             rf"\lambda_p=0.38\cdot\sqrt{{\frac{{{_n(E)}}}{{{_n(fy)}}}}}={_n(f['lambda_p_FLM'])}",
             flm_lr_numeric,
             flm_base_numeric,
             flm_residual_numeric,
             flm_mcr_numeric,
-            flm_active_numeric,
+            *flm_active_numeric_lines,
         ),
         f"MRd,FLM = <strong>{_n(f['Mrd_FLM']/100)} kN·m</strong>; regime {f['regime_FLM']}.",
         "ABNT NBR 8800:2024, 5.4.2, Anexo D ou Anexo E.", f["regime_FLM"],
     )
     if f["slender_web"]:
-        fla_active = r"M_{Rd,t}=\min\left(\frac{f_y\cdot W_x}{\gamma_{a1}};M_{Rd,lim}\right)"
-        fla_numeric = rf"M_{{Rd,t}}=\min\left(\frac{{{_n(fy)}\cdot{_n(p['Wx'])}}}{{100\cdot{_n(gamma1,2)}}};{_n(f['cap_5_4_2_2']/100)}\right)={_n(f['Mrd_FLA_or_tension']/100)}\;kN\!\cdot\!m"
+        fla_active_lines = [r"M_{Rd,t}=\min\left(\frac{f_y\cdot W_x}{\gamma_{a1}};M_{Rd,lim}\right)"]
+        fla_numeric_lines = [rf"M_{{Rd,t}}=\min\left(\frac{{{_n(fy)}\cdot{_n(p['Wx'])}}}{{100\cdot{_n(gamma1,2)}}};{_n(f['cap_5_4_2_2']/100)}\right)={_n(f['Mrd_FLA_or_tension']/100)}\;kN\!\cdot\!m"]
         fla_title = "Equação de escoamento da mesa tracionada — Anexo E"
     elif f["regime_FLA"] == "plástico":
-        fla_active = r"M_{Rd,FLA}=\min\left(\frac{M_{pl}}{\gamma_{a1}};M_{Rd,lim}\right)"
-        fla_numeric = rf"M_{{Rd,FLA}}=\min\left(\frac{{{_n(f['Mpl']/100)}}}{{{_n(gamma1,2)}}};{_n(f['cap_5_4_2_2']/100)}\right)={_n(f['Mrd_FLA_or_tension']/100)}\;kN\!\cdot\!m"
+        fla_active_lines = [r"M_{Rd,FLA}=\min\left(\frac{M_{pl}}{\gamma_{a1}};M_{Rd,lim}\right)"]
+        fla_numeric_lines = [rf"M_{{Rd,FLA}}=\min\left(\frac{{{_n(f['Mpl']/100)}}}{{{_n(gamma1,2)}}};{_n(f['cap_5_4_2_2']/100)}\right)={_n(f['Mrd_FLA_or_tension']/100)}\;kN\!\cdot\!m"]
         fla_title = None
     else:
-        fla_active = r"M_{Rd,FLA}=\min\left(\frac{M_{pl}-(M_{pl}-M_r)\cdot\dfrac{\lambda_w-\lambda_p}{\lambda_r-\lambda_p}}{\gamma_{a1}};M_{Rd,lim}\right)"
-        fla_numeric = rf"M_{{Rd,FLA}}=\min\left(\frac{{{_n(f['Mpl']/100)}-({_n(f['Mpl']/100)}-{_n(f['Mr_FLA']/100)})\cdot\dfrac{{{_n(f['lambda_FLA'])}-{_n(f['lambda_p_FLA'])}}}{{{_n(f['lambda_r_FLA'])}-{_n(f['lambda_p_FLA'])}}}}}{{{_n(gamma1,2)}}};{_n(f['cap_5_4_2_2']/100)}\right)={_n(f['Mrd_FLA_or_tension']/100)}\;kN\!\cdot\!m"
+        fla_alpha = (f["lambda_FLA"] - f["lambda_p_FLA"]) / (f["lambda_r_FLA"] - f["lambda_p_FLA"])
+        fla_nominal = f["Mpl"] - (f["Mpl"] - f["Mr_FLA"]) * fla_alpha
+        fla_active_lines = [
+            r"\alpha_w=\frac{\lambda_w-\lambda_p}{\lambda_r-\lambda_p}",
+            r"M_{n,FLA}=M_{pl}-(M_{pl}-M_r)\cdot\alpha_w",
+            r"M_{Rd,FLA}=\min\left(\frac{M_{n,FLA}}{\gamma_{a1}};M_{Rd,lim}\right)",
+        ]
+        fla_numeric_lines = [
+            rf"\alpha_w=\frac{{{_n(f['lambda_FLA'])}-{_n(f['lambda_p_FLA'])}}}{{{_n(f['lambda_r_FLA'])}-{_n(f['lambda_p_FLA'])}}}={_n(fla_alpha,4)}",
+            rf"M_{{n,FLA}}={_n(f['Mpl']/100)}-({_n(f['Mpl']/100)}-{_n(f['Mr_FLA']/100)})\cdot{_n(fla_alpha,4)}={_n(fla_nominal/100)}\;kN\!\cdot\!m",
+            rf"M_{{Rd,FLA}}=\min\left(\frac{{{_n(fla_nominal/100)}}}{{{_n(gamma1,2)}}};{_n(f['cap_5_4_2_2']/100)}\right)={_n(f['Mrd_FLA_or_tension']/100)}\;kN\!\cdot\!m",
+        ]
         fla_title = None
     out += _step(
         "5.5", "Alma à flexão ou escoamento da mesa tracionada",
         "Para alma não esbelta aplica-se o ramo plástico ou a interpolação até Mr = fyWx. No Anexo E verifica-se o escoamento da mesa tracionada.",
-        _eq(r"\lambda_w=\frac{h}{t_w}", r"M_r=f_y\cdot W_x", fla_active),
+        _eq(r"\lambda_w=\frac{h}{t_w}", r"M_r=f_y\cdot W_x", *fla_active_lines),
         _eq(
             rf"\lambda_w=\frac{{{_n(p['h_clear'])}}}{{{_n(p['tw'])}}}={_n(f['lambda_FLA'])}",
             rf"M_r=\frac{{{_n(fy)}\cdot{_n(p['Wx'])}}}{{100}}={_n(fy*p['Wx']/100)}\;kN\!\cdot\!m",
-            fla_numeric,
+            *fla_numeric_lines,
         ),
         f"Resistência = <strong>{_n(f['Mrd_FLA_or_tension']/100)} kN·m</strong>; {f['regime_FLA']}.",
         "ABNT NBR 8800:2024, Anexo D ou Anexo E.", f["regime_FLA"], fla_title,
@@ -813,19 +880,46 @@ def _flexure_section(bundle):
                 rf"\frac{{A_{{fn}}}}{{A_{{fg}}}}=\frac{{{_n(Afn)}}}{{{_n(Afg)}}}={_n(Afn_over_Afg,4)}",
                 rf"f_u\cdot A_{{fn}}={_n(fu)}\cdot{_n(Afn)}={_n(fu*Afn)}\;kN",
                 rf"Y_t\cdot f_y\cdot A_{{fg}}={_n(f['Yt'])}\cdot{_n(fy)}\cdot{_n(Afg)}={_n(f['Yt']*fy*Afg)}\;kN",
-                (rf"M_{{Rd,rupt}}=\frac{{{_n(fu)}\cdot{_n(Afn)}\cdot{_n(p['Wx'])}}}{{{_n(Afg)}\cdot100\cdot{_n(gamma2,2)}}}={rupture_display}" if f["Mrd_rupture"] is not None else rf"{_n(fu*Afn)}\ge{_n(f['Yt']*fy*Afg)}\;\Rightarrow\;M_{{Rd,rupt}}={rupture_display}"),
+                (rf"M_{{Rd,rupt}}=\frac{{{_n(fu)}\cdot{_n(Afn)}\cdot{_n(p['Wx'])}}}{{{_n(Afg)}\cdot100\cdot{_n(gamma2,2)}}}={rupture_display}" if f["Mrd_rupture"] is not None else rf"M_{{Rd,rupt}}={rupture_display}\quad\left({_n(fu*Afn)}\ge{_n(f['Yt']*fy*Afg)}\right)"),
             ),
             f"Condição da área líquida: <strong>{'atendida — a ruptura não limita' if f['rupture_condition_ok'] else 'não atendida — aplicar o limite por ruptura'}</strong>.",
             "ABNT NBR 8800:2024, 5.4.2.6.",
         )
-    candidates = [f"FLT = {_n(f['Mrd_FLT']/100)}" if f["Mrd_FLT"] is not None else "FLT = N/A", f"FLM = {_n(f['Mrd_FLM']/100)}", f"FLA/mesa tracionada = {_n(f['Mrd_FLA_or_tension']/100)}", f"limite geral = {_n(f['cap_5_4_2_2']/100)}"]
+    candidate_symbols = []
+    candidate_values = []
+    if f["Mrd_FLT"] is not None:
+        candidate_symbols.append(r"M_{Rd,FLT}")
+        candidate_values.append(rf"M_{{Rd,FLT}}={_n(f['Mrd_FLT']/100)}\;kN\!\cdot\!m")
+    candidate_symbols.extend([
+        r"M_{Rd,FLM}",
+        r"M_{Rd,alma\;ou\;mesa\;t}",
+        r"M_{Rd,lim}",
+    ])
+    candidate_values.extend([
+        rf"M_{{Rd,FLM}}={_n(f['Mrd_FLM']/100)}\;kN\!\cdot\!m",
+        rf"M_{{Rd,alma\;ou\;mesa\;t}}={_n(f['Mrd_FLA_or_tension']/100)}\;kN\!\cdot\!m",
+        rf"M_{{Rd,lim}}={_n(f['cap_5_4_2_2']/100)}\;kN\!\cdot\!m",
+    ])
     if f.get("Mrd_rupture") is not None:
-        candidates.append(f"ruptura = {_n(f['Mrd_rupture']/100)}")
+        candidate_symbols.append(r"M_{Rd,rupt}")
+        candidate_values.append(rf"M_{{Rd,rupt}}={_n(f['Mrd_rupture']/100)}\;kN\!\cdot\!m")
+    governing_symbolic = (
+        r"M_{Rd}=\min\left\{\begin{gathered}"
+        + r"\\[5pt]".join(candidate_symbols)
+        + r"\end{gathered}\right\}"
+    )
+    governing_numeric = (
+        r"M_{Rd}=\min\left\{\begin{gathered}"
+        + r"\\[5pt]".join(candidate_values)
+        + r"\end{gathered}\right\}="
+        + _n(f["Mrd"] / 100)
+        + r"\;kN\!\cdot\!m"
+    )
     out += _step(
         "5.7", "Resistência governante à flexão",
         "A resistência de cálculo é o menor valor entre todos os estados-limites aplicáveis e o limite geral. Pendências de aplicabilidade forçam resistência global nula no núcleo.",
-        r"M_{Rd}=\min(M_{Rd,FLT},M_{Rd,FLM},M_{Rd,alma\;ou\;mesa\;t},M_{Rd,rupt},M_{Rd,lim})",
-        r"M_{Rd}=\min(" + r";\;".join(_esc(x) for x in candidates) + rf")={_n(f['Mrd']/100)}\;kN\!\cdot\!m",
+        governing_symbolic,
+        governing_numeric,
         f"Resistência governante: <strong>{_n(f['Mrd']/100)} kN·m</strong>.", f["reference"],
     )
     eff = Msd / f["Mrd"] * 100 if f["Mrd"] > 0 else math.inf
@@ -838,14 +932,24 @@ def _annex_e_step(bundle):
     f, p = bundle["flexure"], bundle["props"]
     fy, E, gamma1 = bundle["fy"], bundle["E"], bundle["gamma_a1"]
     if f["regime_FLT"] == "plástico":
-        active = r"M_{Rd,FLT}=\min\left(\frac{M_y}{\gamma_{a1}};M_{Rd,lim}\right)"
-        active_numeric = rf"M_{{Rd,FLT}}=\min\left(\frac{{{_n(f['M_y_annex_e']/100)}}}{{{_n(gamma1,2)}}};{_n(f['cap_5_4_2_2']/100)}\right)={_n((f['Mrd_FLT'] or 0)/100)}\;kN\!\cdot\!m"
+        active_lines = [r"M_{Rd,FLT}=\min\left(\frac{M_y}{\gamma_{a1}};M_{Rd,lim}\right)"]
+        active_numeric_lines = [rf"M_{{Rd,FLT}}=\min\left(\frac{{{_n(f['M_y_annex_e']/100)}}}{{{_n(gamma1,2)}}};{_n(f['cap_5_4_2_2']/100)}\right)={_n((f['Mrd_FLT'] or 0)/100)}\;kN\!\cdot\!m"]
     elif f["regime_FLT"] == "inelástico":
-        active = r"M_{Rd,FLT}=\min\left(\frac{M_y-(M_y-M_r)\cdot\dfrac{\lambda_{LT}-\lambda_p}{\lambda_r-\lambda_p}}{\gamma_{a1}};M_{Rd,lim}\right)"
-        active_numeric = rf"M_{{Rd,FLT}}=\min\left(\frac{{{_n(f['M_y_annex_e']/100)}-({_n(f['M_y_annex_e']/100)}-{_n(f['M_r_annex_e']/100)})\cdot\dfrac{{{_n(f['lambda_LT'])}-{_n(f['lambda_p_LT_annex_e'])}}}{{{_n(f['lambda_r_LT_annex_e'])}-{_n(f['lambda_p_LT_annex_e'])}}}}}{{{_n(gamma1,2)}}};{_n(f['cap_5_4_2_2']/100)}\right)={_n((f['Mrd_FLT'] or 0)/100)}\;kN\!\cdot\!m"
+        annex_alpha = (f["lambda_LT"] - f["lambda_p_LT_annex_e"]) / (f["lambda_r_LT_annex_e"] - f["lambda_p_LT_annex_e"])
+        annex_nominal = f["M_y_annex_e"] - (f["M_y_annex_e"] - f["M_r_annex_e"]) * annex_alpha
+        active_lines = [
+            r"\alpha_{LT}=\frac{\lambda_{LT}-\lambda_p}{\lambda_r-\lambda_p}",
+            r"M_{n,FLT}=M_y-(M_y-M_r)\cdot\alpha_{LT}",
+            r"M_{Rd,FLT}=\min\left(\frac{M_{n,FLT}}{\gamma_{a1}};M_{Rd,lim}\right)",
+        ]
+        active_numeric_lines = [
+            rf"\alpha_{{LT}}=\frac{{{_n(f['lambda_LT'])}-{_n(f['lambda_p_LT_annex_e'])}}}{{{_n(f['lambda_r_LT_annex_e'])}-{_n(f['lambda_p_LT_annex_e'])}}}={_n(annex_alpha,4)}",
+            rf"M_{{n,FLT}}={_n(f['M_y_annex_e']/100)}-({_n(f['M_y_annex_e']/100)}-{_n(f['M_r_annex_e']/100)})\cdot{_n(annex_alpha,4)}={_n(annex_nominal/100)}\;kN\!\cdot\!m",
+            rf"M_{{Rd,FLT}}=\min\left(\frac{{{_n(annex_nominal/100)}}}{{{_n(gamma1,2)}}};{_n(f['cap_5_4_2_2']/100)}\right)={_n((f['Mrd_FLT'] or 0)/100)}\;kN\!\cdot\!m",
+        ]
     else:
-        active = r"M_{Rd,FLT}=\min\left(\frac{M_{cr}}{\gamma_{a1}};M_{Rd,lim}\right)"
-        active_numeric = rf"M_{{Rd,FLT}}=\min\left(\frac{{{_n(f['Mcr_FLT']/100)}}}{{{_n(gamma1,2)}}};{_n(f['cap_5_4_2_2']/100)}\right)={_n((f['Mrd_FLT'] or 0)/100)}\;kN\!\cdot\!m"
+        active_lines = [r"M_{Rd,FLT}=\min\left(\frac{M_{cr}}{\gamma_{a1}};M_{Rd,lim}\right)"]
+        active_numeric_lines = [rf"M_{{Rd,FLT}}=\min\left(\frac{{{_n(f['Mcr_FLT']/100)}}}{{{_n(gamma1,2)}}};{_n(f['cap_5_4_2_2']/100)}\right)={_n((f['Mrd_FLT'] or 0)/100)}\;kN\!\cdot\!m"]
     return _step(
         "5.3", "Anexo E — alma esbelta e FLT",
         "Para perfil soldado com alma esbelta verificam-se o limite geométrico, ar e o fator de redução kpg. A FLT é calculada com as propriedades da mesa comprimida associada a 1/6 da alma.",
@@ -860,7 +964,7 @@ def _annex_e_step(bundle):
             r"\lambda_r=\pi\cdot\sqrt{\frac{E}{f_y-\sigma_r}}",
             r"M_y=k_{pg}\cdot f_y\cdot W_{xc}",
             r"M_r=k_{pg}\cdot(f_y-\sigma_r)\cdot W_{xc}",
-            r"M_{cr}=\frac{C_b\cdot k_{pg}\cdot\pi^2\cdot E\cdot W_{xc}}{\lambda_{LT}^2}", active,
+            r"M_{cr}=\frac{C_b\cdot k_{pg}\cdot\pi^2\cdot E\cdot W_{xc}}{\lambda_{LT}^2}", *active_lines,
         ),
         _eq(
             rf"a_r=\frac{{{_n(f['hc'])}\cdot{_n(p['tw'])}}}{{{_n(p['bf'])}\cdot{_n(p['tf'])}}}={_n(f['ar'])}",
@@ -874,7 +978,7 @@ def _annex_e_step(bundle):
             rf"M_y=\frac{{{_n(f['kpg'],4)}\cdot{_n(fy)}\cdot{_n(f['Wxc'])}}}{{100}}={_n(f['M_y_annex_e']/100)}\;kN\!\cdot\!m",
             rf"M_r=\frac{{{_n(f['kpg'],4)}\cdot({_n(fy)}-{_n(f['sigma_r'])})\cdot{_n(f['Wxc'])}}}{{100}}={_n(f['M_r_annex_e']/100)}\;kN\!\cdot\!m",
             rf"M_{{cr}}=\frac{{{_n(bundle['Cb'],4)}\cdot{_n(f['kpg'],4)}\cdot\pi^2\cdot{_n(E)}\cdot{_n(f['Wxc'])}}}{{{_n(f['lambda_LT'])}^2\cdot100}}={_n(f['Mcr_FLT']/100)}\;kN\!\cdot\!m",
-            active_numeric,
+            *active_numeric_lines,
         ),
         f"kpg = <strong>{_n(f['kpg'],4)}</strong>; MRd,FLT = <strong>{_n((f['Mrd_FLT'] or 0)/100)} kN·m</strong>; limite da razão entre h e tw no Anexo E = {_n(f['annex_e_limit'])}.",
         "ABNT NBR 8800:2024, Anexo E.", f["regime_FLT"],
@@ -988,11 +1092,25 @@ def _local_section(bundle):
         else:
             coeff, bracket = .33, r"1+\left(4\cdot\frac{\ell_n}{d}-0{,}2\right)\cdot\left(\frac{t_w}{t_f}\right)^{1{,}5}"
             bracket_numeric = rf"1+\left(4\cdot\frac{{{_n(d['bearing_length'])}}}{{{_n(p['d'])}}}-0.2\right)\cdot\left(\frac{{{_n(p['tw'])}}}{{{_n(p['tf'])}}}\right)^{{1.5}}"
+        crippling_ratio = (p["tw"] / p["tf"]) ** 1.5
+        if d["crippling_case"] == "seção interna" or "≤" in d["crippling_case"]:
+            crippling_phi = 1.0 + 3.0 * d["bearing_length"] / p["d"] * crippling_ratio
+        else:
+            crippling_phi = 1.0 + (4.0 * d["bearing_length"] / p["d"] - 0.2) * crippling_ratio
+        crippling_psi = math.sqrt(E * fy * p["tf"] / p["tw"])
         out += _step(
             f"7.{index}.2", "Enrugamento da alma",
             "A rotina seleciona o coeficiente e o termo de amplificação conforme a distância à extremidade e a razão entre ℓn e d.",
-            rf"F_{{Rd,cr}}=\frac{{{_n(coeff,2)}\cdot t_w^2}}{{\gamma_{{a1}}}}\cdot\left[{bracket}\right]\cdot\sqrt{{\frac{{E\cdot f_y\cdot t_f}}{{t_w}}}}",
-            rf"F_{{Rd,cr}}=\frac{{{_n(coeff,2)}\cdot{_n(p['tw'])}^2}}{{{_n(gamma1,2)}}}\cdot\left[{bracket_numeric}\right]\cdot\sqrt{{\frac{{{_n(E)}\cdot{_n(fy)}\cdot{_n(p['tf'])}}}{{{_n(p['tw'])}}}}}={_n(d['crippling_FRd'])}\;kN",
+            _eq(
+                rf"\Phi_{{cr}}={bracket}",
+                r"\Psi_{cr}=\sqrt{\frac{E\cdot f_y\cdot t_f}{t_w}}",
+                rf"F_{{Rd,cr}}=\frac{{{_n(coeff,2)}\cdot t_w^2}}{{\gamma_{{a1}}}}\cdot\Phi_{{cr}}\cdot\Psi_{{cr}}",
+            ),
+            _eq(
+                rf"\Phi_{{cr}}={bracket_numeric}={_n(crippling_phi,4)}",
+                rf"\Psi_{{cr}}=\sqrt{{\frac{{{_n(E)}\cdot{_n(fy)}\cdot{_n(p['tf'])}}}{{{_n(p['tw'])}}}}}={_n(crippling_psi,4)}",
+                rf"F_{{Rd,cr}}=\frac{{{_n(coeff,2)}\cdot{_n(p['tw'])}^2}}{{{_n(gamma1,2)}}}\cdot{_n(crippling_phi,4)}\cdot{_n(crippling_psi,4)}={_n(d['crippling_FRd'])}\;kN",
+            ),
             f"FRd,cr = <strong>{_n(d['crippling_FRd'])} kN</strong>; {d['crippling_case']}.", d["reference"], d["crippling_case"],
         )
         if d.get("sidesway_FRd") is not None:
@@ -1031,26 +1149,45 @@ def _local_section(bundle):
             out += _step(
                 f"7.{index}.3", "Flambagem lateral da alma — critério geométrico",
                 "O índice geométrico excede o limite aplicável; portanto, a flambagem lateral da alma não ocorre por este critério e nenhuma resistência fictícia é calculada.",
-                r"\eta=\frac{\dfrac{h}{t_w}}{\dfrac{\ell}{b_f}}>\eta_{lim}\;\Rightarrow\;\text{não ocorre}",
-                rf"\eta={_n(d['sidesway_ratio'])}>{_n(d['sidesway_limit'])}\;\Rightarrow\;F_{{Rd,lat}}=\mathrm{{N/A}}",
+                r"\eta=\frac{\dfrac{h}{t_w}}{\dfrac{\ell}{b_f}}>\eta_{lim}",
+                rf"\eta={_n(d['sidesway_ratio'])}>{_n(d['sidesway_limit'])}",
                 f"Conclusão: <strong>{_esc(d['sidesway_case'])}</strong>.", d["reference"], d["sidesway_case"],
             )
         else:
             out += _step(
                 f"7.{index}.3", "Flambagem lateral da alma — aplicabilidade",
                 "Este estado-limite exige deslocamento lateral relativo entre a mesa comprimida carregada e a mesa tracionada. A condição de contenção declarada é verificada antes de qualquer resistência numérica.",
-                r"\text{movimento lateral relativo impedido}\;\Rightarrow\;\text{estado-limite não aplicável}",
+                r"\text{movimento lateral relativo impedido}",
                 r"F_{Rd,lat}=\mathrm{N/A}",
                 f"Conclusão: <strong>{_esc(d['sidesway_case'])}</strong>.", d["reference"], d["sidesway_case"],
             )
-        values = [f"escoamento {_n(d['yielding_FRd'])}", f"enrugamento {_n(d['crippling_FRd'])}"]
+        local_symbols = [r"F_{Rd,y}", r"F_{Rd,cr}"]
+        local_values = [
+            rf"F_{{Rd,y}}={_n(d['yielding_FRd'])}\;kN\quad\text{{escoamento local}}",
+            rf"F_{{Rd,cr}}={_n(d['crippling_FRd'])}\;kN\quad\text{{enrugamento da alma}}",
+        ]
         if d.get("sidesway_FRd") is not None:
-            values.append(f"flambagem lateral {_n(d['sidesway_FRd'])}")
+            local_symbols.append(r"F_{Rd,lat}")
+            local_values.append(
+                rf"F_{{Rd,lat}}={_n(d['sidesway_FRd'])}\;kN\quad\text{{flambagem lateral da alma}}"
+            )
+        local_governing_symbolic = (
+            r"F_{Rd}=\min\left\{\begin{gathered}"
+            + r"\\[5pt]".join(local_symbols)
+            + r"\end{gathered}\right\}"
+        )
+        local_governing_numeric = (
+            r"F_{Rd}=\min\left\{\begin{gathered}"
+            + r"\\[5pt]".join(local_values)
+            + r"\end{gathered}\right\}="
+            + _n(check["resistance"])
+            + r"\;kN"
+        )
         out += _step(
             f"7.{index}.4", "Resistência local governante",
             "A menor resistência entre os estados-limites aplicáveis governa a força transversal localizada.",
-            r"F_{Rd}=\min(F_{Rd,y},F_{Rd,cr},F_{Rd,lat})",
-            r"F_{Rd}=\min(" + r";\;".join(values) + rf")={_n(check['resistance'])}\;kN",
+            local_governing_symbolic,
+            local_governing_numeric,
             f"FRd = <strong>{_n(check['resistance'])} kN</strong>.", d["reference"],
         )
         out += _verification(check["name"], check["demand"], check["resistance"], "kN", check["status"], check["efficiency"], "F_{Sd}", "F_{Rd}", d["reference"])
@@ -1080,15 +1217,39 @@ def _els_section(bundle):
     p_d_term = max(x_d - response.point_position, 0.0)
     d_index = min(range(len(response.x)), key=lambda idx: abs(response.x[idx] - x_d))
     v_signed = response.deflections[d_index]
+    elastic_t_c = response.rotation_integration_constant * x_d
+    elastic_t_m = response.moment_left * x_d**2 / 2.0
+    elastic_t_r = response.reaction_left * x_d**3 / 6.0
+    elastic_t_q = response.q * x_d**4 / 24.0
+    elastic_t_p = response.point_load * p_d_term**3 / 6.0
+    elastic_sum_1 = elastic_t_c + elastic_t_m + elastic_t_r
+    elastic_sum_2 = elastic_t_q + elastic_t_p
+    elastic_sum = elastic_sum_1 - elastic_sum_2
     out += _step(
         "8.2", "Linha elástica por funções de singularidade",
         "A equação EI·v(x) é a dupla integração do momento fletor. A constante C1 satisfaz as condições de contorno; a máxima flecha é pesquisada na malha da viga incluindo a posição da força pontual.",
         _eq(
-            r"E\cdot I_x\cdot v(x)=C_1\cdot x+\frac{M_A\cdot x^2}{2}+\frac{R_A\cdot x^3}{6}-\frac{q_s\cdot x^4}{24}-\frac{P_s\cdot\langle x-a\rangle^3}{6}",
+            r"T_C=C_1\cdot x",
+            r"T_M=\frac{M_A\cdot x^2}{2}",
+            r"T_R=\frac{R_A\cdot x^3}{6}",
+            r"T_q=\frac{q_s\cdot x^4}{24}",
+            r"T_P=\frac{P_s\cdot\langle x-a\rangle^3}{6}",
+            r"S_1=T_C+T_M+T_R",
+            r"S_2=T_q+T_P",
+            r"S_v=S_1-S_2",
+            r"v(x)=\frac{S_v}{E\cdot I_x}",
             r"\delta_{max}=\max_x\left|v(x)\right|",
         ),
         _eq(
-            rf"v({_n(x_d)})=\frac{{{_n(response.rotation_integration_constant)}\cdot{_n(x_d)}+\dfrac{{{_n(response.moment_left)}\cdot{_n(x_d)}^2}}{{2}}+\dfrac{{{_n(response.reaction_left)}\cdot{_n(x_d)}^3}}{{6}}-\dfrac{{{_n(response.q,6)}\cdot{_n(x_d)}^4}}{{24}}-\dfrac{{{_n(response.point_load)}\cdot{_n(p_d_term)}^3}}{{6}}}}{{{_n(bundle['E'])}\cdot{_n(bundle['props']['Ix'])}}}={_n(v_signed,4)}\;cm",
+            rf"T_C={_n(response.rotation_integration_constant)}\cdot{_n(x_d)}={_n(elastic_t_c)}",
+            rf"T_M=\frac{{{_n(response.moment_left)}\cdot{_n(x_d)}^2}}{{2}}={_n(elastic_t_m)}",
+            rf"T_R=\frac{{{_n(response.reaction_left)}\cdot{_n(x_d)}^3}}{{6}}={_n(elastic_t_r)}",
+            rf"T_q=\frac{{{_n(response.q,6)}\cdot{_n(x_d)}^4}}{{24}}={_n(elastic_t_q)}",
+            rf"T_P=\frac{{{_n(response.point_load)}\cdot{_n(p_d_term)}^3}}{{6}}={_n(elastic_t_p)}",
+            rf"S_1={_n(elastic_t_c)}+{_n(elastic_t_m)}+{_n(elastic_t_r)}={_n(elastic_sum_1)}",
+            rf"S_2={_n(elastic_t_q)}+{_n(elastic_t_p)}={_n(elastic_sum_2)}",
+            rf"S_v={_n(elastic_sum_1)}-{_n(elastic_sum_2)}={_n(elastic_sum)}",
+            rf"v({_n(x_d)})=\frac{{{_n(elastic_sum)}}}{{{_n(bundle['E'])}\cdot{_n(bundle['props']['Ix'])}}}={_n(v_signed,4)}\;cm",
             rf"\delta_{{max}}=\max_x\left|v(x)\right|=\left|{_n(v_signed,4)}\right|={_n(response.max_deflection,4)}\;cm\quad(x={_n(x_d/100)}\;m)",
         ),
         f"Flecha máxima = <strong>{_n(response.max_deflection,4)} cm</strong> em x = {_n(response.max_deflection_position/100)} m.",
@@ -1140,7 +1301,7 @@ def _scope_section(bundle):
 def build_memorial_details(bundle):
     """Monta o memorial visual completo sem alterar resultados de cálculo."""
     return (
-        '<div class="audit-banner"><strong>MEMORIAL AUDITÁVEL</strong><span>Simbólica → substituição numérica = resultado | decisão normativa</span></div>'
+        '<div class="audit-banner"><strong>MEMORIAL AUDITÁVEL</strong><span>Equações, verificações e decisões normativas</span></div>'
         + _beam_actions(bundle)
         + _cb_section(bundle)
         + _flexure_section(bundle)
