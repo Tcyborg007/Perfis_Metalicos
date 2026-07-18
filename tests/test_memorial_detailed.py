@@ -76,9 +76,21 @@ class DetailedMemorialTests(unittest.TestCase):
         self.assertIn(r"F_{Rd}=\min\left\{\begin{gathered}", memorial)
         self.assertIn(r"\text{escoamento local}", memorial)
         self.assertNotIn(r"F_{Rd}=\min(escoamento", memorial)
-        self.assertIn(r"\Phi_t=1+0{,}039", memorial)
-        self.assertIn(r"\Phi_{cr}", memorial)
-        self.assertIn(r"S_1=T_C+T_M+T_R", memorial)
+        self.assertIn(r"M_{cr}=\frac{C_b\cdot\pi^2\cdot E\cdot I_y}{L_b^2}\cdot\sqrt{\frac{C_w}{I_y}", memorial)
+        self.assertIn(r"F_{Rd,cr}=\frac{0.66\cdot t_w^2}{\gamma_{a1}}", memorial)
+        self.assertIn(r"E\cdot I_x\cdot v(x)=C_1\cdot x", memorial)
+        for invented_helper in (
+            r"\Phi_t", r"\Phi_w", r"\Phi_{cr}", r"\Psi_{cr}",
+            r"\alpha_f", r"M_{n,FLM}", r"\alpha_w", r"M_{n,FLA}",
+            r"\alpha_{LT}", r"M_{n,FLT}", r"T_C", r"S_1",
+        ):
+            self.assertNotIn(invented_helper, memorial)
+        for item_reference in (
+            "D.2.8-a", "D.2.1 (procedimento alternativo)", "D.2.2",
+            "5.4.3.1.1", "5.7.3.2", "5.7.4.2", "5.7.5.1",
+            "B.2.1 a B.2.4", "Tabela B.1",
+        ):
+            self.assertIn(item_reference, memorial)
         chain_math = "".join(re.findall(r'class="formula-chain">\$\$(.*?)\$\$', memorial, re.S))
         self.assertNotIn(r"\quad;\quad", chain_math)
         for notation in (r"kN/m", r"\mathrm{N/A}", "FLA/mesa"):
@@ -103,10 +115,11 @@ class DetailedMemorialTests(unittest.TestCase):
         self.assertIn("Anexo E — alma esbelta e FLT", memorial)
         self.assertIn("k_{pg}", memorial)
         self.assertIn("I_{yc}", memorial)
-        self.assertIn(r"k_{c,0}=\frac{4}", memorial)
-        self.assertIn(r"k_{c,sup}=\min", memorial)
-        self.assertIn(r"k_c=\max", memorial)
-        self.assertNotIn(r"k_c=\max\left[", memorial)
+        self.assertIn(r"k_c=\max\left[0{,}35;\min", memorial)
+        self.assertNotIn(r"k_{c,0}", memorial)
+        self.assertNotIn(r"k_{c,sup}", memorial)
+        self.assertIn("E.6.2", memorial)
+        self.assertIn("E.6.3", memorial)
         chain_math = "".join(re.findall(r'class="formula-chain">\$\$(.*?)\$\$', memorial, re.S))
         self.assertNotIn(r"\quad;\quad", chain_math)
 

@@ -200,6 +200,20 @@ class ResistanceTests(unittest.TestCase):
 
 
 class CombinationAndStatusTests(unittest.TestCase):
+    def test_els_combination_references_exact_normative_items(self):
+        expected_items = {
+            "rare": "4.8.7.3.4",
+            "frequent": "4.8.7.3.3",
+            "quasi_permanent": "4.8.7.3.2",
+            "variable_only": "4.8.7.3.1",
+        }
+        for combination, item in expected_items.items():
+            with self.subTest(combination=combination):
+                result = combine_els(0.01, 0.02, 0.001, combination=combination)
+                self.assertIn(item, result["reference"])
+                self.assertIn("B.2.4", result["reference"])
+                self.assertIn("B.3.3", result["reference"])
+
     def test_els_rejects_invalid_psi(self):
         with self.assertRaises(ValueError):
             combine_els(0.01, 0.02, 0.001, psi1=1.1)

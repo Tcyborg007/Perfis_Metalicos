@@ -290,6 +290,12 @@ def combine_els(
         "quasi_permanent": psi2,
         "variable_only": 1.0,
     }
+    references = {
+        "rare": "ABNT NBR 8800:2024, 4.8.7.3.4; B.2.4 e B.3.3",
+        "frequent": "ABNT NBR 8800:2024, 4.8.7.3.3; B.2.4 e B.3.3",
+        "quasi_permanent": "ABNT NBR 8800:2024, 4.8.7.3.2; B.2.4 e B.3.3",
+        "variable_only": "ABNT NBR 8800:2024, 4.8.7.3.1 e 4.8.7.3.4; B.2.4 e B.3.3",
+    }
     if combination not in factors:
         raise ValueError("Combinação ELS inválida.")
     factor = factors[combination]
@@ -304,7 +310,7 @@ def combine_els(
         "point_variable": point_variable,
         "variable_factor": factor,
         "include_permanent": include_permanent,
-        "reference": "ABNT NBR 8800:2024, 4.8.7.3 e Anexo B",
+        "reference": references[combination],
     }
 
 
