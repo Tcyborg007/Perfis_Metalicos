@@ -74,6 +74,12 @@ class DetailedMemorialTests(unittest.TestCase):
         self.assertNotIn("equation-caption", memorial)
         self.assertNotIn(r"\Rightarrow", memorial)
         self.assertNotIn("S" + "NR", memorial.upper())
+        self.assertIn(r"F_{Rd}=\min\left\{\begin{gathered}", memorial)
+        self.assertIn(r"\text{escoamento local}", memorial)
+        self.assertNotIn(r"F_{Rd}=\min(escoamento", memorial)
+        self.assertIn(r"\Phi_t=1+0{,}039", memorial)
+        self.assertIn(r"\Phi_{cr}", memorial)
+        self.assertIn(r"S_1=T_C+T_M+T_R", memorial)
         chain_math = "".join(re.findall(r'class="equation-line[^"]*">\$\$(.*?)\$\$', memorial, re.S))
         self.assertNotIn(r"\quad;\quad", chain_math)
         for notation in (r"kN/m", r"\mathrm{N/A}", "FLA/mesa"):

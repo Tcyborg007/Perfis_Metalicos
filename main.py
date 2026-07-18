@@ -28,17 +28,6 @@ from memorial_nbr8800_2024 import build_memorial_details
 # 1. CONFIGURAÇÕES E CONSTANTES GLOBAIS APRIMORADAS
 # ==============================================================================
 
-st.set_page_config(
-    page_title="🏗️ Calculadora Estrutural - Perfis Metálicos",
-    layout="wide",
-    initial_sidebar_state="auto",
-    menu_items={
-        'Get Help': 'https://www.abnt.org.br',
-        'Report a bug': None,
-        'About': f"# Calculadora Estrutural\nCálculos baseados na {NORMA} + Errata 1:2025"
-    }
-)
-
 class Config:
     NOME_NORMA = f'{NORMA} + Errata 1:2025'
     GAMMA_A1 = 1.10
@@ -98,10 +87,20 @@ HTML_TEMPLATE_CSS_PRO = """
     .stApp {
         background-color: var(--background);
     }
+    [data-testid="stMain"] {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+    [data-testid="stMainBlockContainer"],
+    [data-testid="stMain"] .block-container,
+    section.main .block-container,
     .block-container {
-        width: 100%;
-        max-width: 1600px;
-        padding: clamp(1rem, 2.5vw, 2rem) clamp(.85rem, 3.5vw, 3rem) 3rem;
+        box-sizing: border-box !important;
+        width: 100% !important;
+        max-width: 1600px !important;
+        margin-right: auto !important;
+        margin-left: auto !important;
+        padding: clamp(1rem, 2.5vw, 2rem) clamp(.85rem, 3.5vw, 3rem) 3rem !important;
     }
 
     /* --- Títulos e Textos Genéricos --- */
@@ -309,9 +308,12 @@ HTML_TEMPLATE_CSS_PRO = """
 
     /* --- Adaptação global para tablet e smartphone --- */
     @media (max-width: 768px) {
+        [data-testid="stMainBlockContainer"],
+        [data-testid="stMain"] .block-container,
+        section.main .block-container,
         .block-container {
-            max-width: 100%;
-            padding: .75rem .75rem 2rem;
+            max-width: 100% !important;
+            padding: .75rem .75rem 2rem !important;
         }
         [data-testid="stSidebar"] {
             width: min(88vw, 21rem) !important;
@@ -2456,6 +2458,20 @@ def _render_calculation_step(step_dict):
 # ==============================================================================
 
 def main():
+    # Esta chamada precisa ocorrer em toda execução do script. Quando ficava no
+    # escopo do módulo, o cache de importação podia omiti-la após um refresh e o
+    # Streamlit retornava ao contêiner central estreito do layout padrão.
+    st.set_page_config(
+        page_title="🏗️ Calculadora Estrutural - Perfis Metálicos",
+        layout="wide",
+        initial_sidebar_state="auto",
+        menu_items={
+            'Get Help': 'https://www.abnt.org.br',
+            'Report a bug': None,
+            'About': f"# Calculadora Estrutural\nCálculos baseados na {NORMA} + Errata 1:2025"
+        }
+    )
+
     if 'analysis_results' not in st.session_state:
         st.session_state.analysis_results = None
     if 'detailed_analysis_html' not in st.session_state:
