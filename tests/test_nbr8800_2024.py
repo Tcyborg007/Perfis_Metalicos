@@ -92,6 +92,22 @@ class BeamAnalysisTests(unittest.TestCase):
         result = analyze_beam("Bi-apoiada", self.L, self.q)
         cb = calculate_cb(result)
         self.assertAlmostEqual(cb["Cb"], 1.1363636363636365, places=8)
+        self.assertAlmostEqual(cb["xMmax"], self.L / 2.0, places=10)
+
+    def test_cb_mmax_is_analytic_and_independent_of_deflection_mesh(self):
+        coarse = analyze_beam(
+            "Bi-apoiada", self.L, q=0.093521,
+            point_load=11.5, point_position=350.0, samples=101,
+        )
+        fine = analyze_beam(
+            "Bi-apoiada", self.L, q=0.093521,
+            point_load=11.5, point_position=350.0, samples=4001,
+        )
+        coarse_cb = calculate_cb(coarse)
+        fine_cb = calculate_cb(fine)
+        self.assertAlmostEqual(coarse_cb["xMmax"], fine_cb["xMmax"], places=10)
+        self.assertAlmostEqual(coarse_cb["Mmax"], fine_cb["Mmax"], places=10)
+        self.assertAlmostEqual(coarse_cb["Cb"], fine_cb["Cb"], places=10)
 
     def test_cantilever_deflection_reference_length_is_double(self):
         self.assertEqual(

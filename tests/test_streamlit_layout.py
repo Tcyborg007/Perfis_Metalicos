@@ -45,6 +45,15 @@ class StreamlitLayoutTests(unittest.TestCase):
         self.assertNotIn("Logo HQ Engenharia", source)
         self.assertNotIn("lh3.googleusercontent.com", source)
 
+    def test_memorial_diagrams_have_responsive_and_print_styles(self):
+        source = (ROOT / "main.py").read_text(encoding="utf-8")
+        self.assertIn(".container .engineering-visual", source)
+        self.assertIn(".container .engineering-svg", source)
+        self.assertIn("width: 100%; height: auto", source)
+        self.assertIn(".container .visual-metrics", source)
+        self.assertIn('[data-visual="deflection-diagram"] .svg-critical-label', source)
+        self.assertIn(".container .visual-svg-wrap { background: white !important; }", source)
+
 
 if __name__ == "__main__":
     unittest.main()
