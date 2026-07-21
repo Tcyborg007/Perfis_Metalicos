@@ -1658,11 +1658,18 @@ def style_classic_dataframe(df):
     """Aplica estilização clássica com cores sólidas ao DataFrame."""
     def color_efficiency(val):
         if pd.isna(val) or not isinstance(val, (int, float)): return ''
-        if val > 100:   color = '#f8d7da'
-        elif val > 95:  color = '#ffeeba'
-        elif val > 80:  color = '#fff3cd'
-        else:           color = '#d4edda'
-        return f'background-color: {color}'
+        if val > 100:
+            background, foreground = '#991b1b', '#fef2f2'
+        elif val > 95:
+            background, foreground = '#9a3412', '#fff7ed'
+        elif val > 80:
+            background, foreground = '#854d0e', '#fffbeb'
+        else:
+            background, foreground = '#166534', '#f0fdf4'
+        return (
+            f'background-color: {background}; '
+            f'font-weight: bold; color: {foreground};'
+        )
 
     def style_status(val):
         if val == 'APROVADO':

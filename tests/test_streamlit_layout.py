@@ -2,6 +2,10 @@ import ast
 import unittest
 from pathlib import Path
 
+import pandas as pd
+
+from main import style_classic_dataframe
+
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -53,6 +57,23 @@ class StreamlitLayoutTests(unittest.TestCase):
         self.assertIn(".container .visual-metrics", source)
         self.assertIn('[data-visual="deflection-diagram"] .svg-critical-label', source)
         self.assertIn(".container .visual-svg-wrap { background: white !important; }", source)
+
+    def test_efficiency_cells_use_high_contrast_text_on_colored_backgrounds(self):
+        table = pd.DataFrame({
+            "Status": ["APROVADO"] * 4,
+            "Ef. FLT (%)": [70.0, 83.7, 97.0, 105.0],
+        })
+
+        html = style_classic_dataframe(table).to_html()
+
+        for background, foreground in (
+            ("#166534", "#f0fdf4"),
+            ("#854d0e", "#fffbeb"),
+            ("#9a3412", "#fff7ed"),
+            ("#991b1b", "#fef2f2"),
+        ):
+            self.assertIn(f"background-color: {background}", html)
+            self.assertIn(f"color: {foreground}", html)
 
 
 if __name__ == "__main__":
