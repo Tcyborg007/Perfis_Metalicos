@@ -218,11 +218,23 @@ def calculate_cb(
     x0, x1 = segment_start, segment_start + lb
     quarter_points = [x0 + lb / 4.0, x0 + lb / 2.0, x0 + 3.0 * lb / 4.0]
     ma, mb, mc = [abs(response.moment_at(xv)) for xv in quarter_points]
-    values = [abs(response.moment_at(x0)), abs(response.moment_at(x1)), ma, mb, mc]
-    for xv, mv in zip(response.x, response.moments):
-        if x0 <= xv <= x1:
-            values.append(abs(mv))
-    mmax = max(values, default=0.0)
+
+    # O extremo de M(x) ocorre em uma extremidade do trecho, na descontinuidade
+    # causada por P ou onde V(x)=dM/dx=0. A busca analítica evita que Mmax e Cb
+    # dependam do espaçamento da malha usada apenas para a linha elástica.
+    candidates = {x0, x1, *quarter_points}
+    a, q, p = response.point_position, response.q, response.point_load
+    if x0 <= a <= x1:
+        candidates.add(a)
+    if q > 0:
+        root_before = response.reaction_left / q
+        root_after = (response.reaction_left - p) / q
+        if x0 <= root_before <= min(a, x1):
+            candidates.add(root_before)
+        if max(a, x0) <= root_after <= x1:
+            candidates.add(root_after)
+    mmax_x = max(candidates, key=lambda xv: abs(response.moment_at(xv)))
+    mmax = abs(response.moment_at(mmax_x))
     denominator = 2.5 * mmax + 3.0 * ma + 4.0 * mb + 3.0 * mc
     cb = 1.0 if denominator <= 0 else 12.5 * mmax / denominator
     return {
@@ -231,6 +243,7 @@ def calculate_cb(
         "MA": ma,
         "MB": mb,
         "MC": mc,
+        "xMmax": mmax_x,
         "xA": quarter_points[0],
         "xB": quarter_points[1],
         "xC": quarter_points[2],

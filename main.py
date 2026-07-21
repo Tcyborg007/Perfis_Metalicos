@@ -59,6 +59,22 @@ PROFILE_FABRICATION_MAP = {
 }
 
 
+def compact_number(value, max_decimals=3):
+    """Formata valores exibidos sem zeros decimais que não agregam precisão."""
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return "N/A"
+    if not math.isfinite(number):
+        return "N/A"
+    number = round(number, max_decimals)
+    if number == 0:
+        number = 0.0
+    if max_decimals <= 0:
+        return f"{number:.0f}"
+    return f"{number:.{max_decimals}f}".rstrip("0").rstrip(".")
+
+
 HTML_TEMPLATE_CSS_PRO = """
 <style>
     /* Google Fonts */
@@ -438,6 +454,103 @@ HTML_TEMPLATE_CSS_PRO = """
     .container .formula-chain mjx-container[display="true"] {
         margin: .35rem 0 !important; min-width: max-content;
     }
+    /* Diagramas de engenharia contextuais do memorial */
+    .container .engineering-visual-stack {
+        display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; margin: 1rem 0 0;
+    }
+    .container .engineering-visual {
+        margin: 1rem 0 0; border: 1px solid #30435c; border-radius: 11px;
+        background: linear-gradient(145deg, #0c1728, #101d30); overflow: hidden;
+        break-inside: avoid-page;
+    }
+    .container .visual-head {
+        display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+        padding: .8rem 1rem; border-bottom: 1px solid #2a3c54; background: rgba(30,52,81,.48);
+    }
+    .container .visual-head > div { min-width: 0; }
+    .container .visual-head span {
+        display: block; color: #7dd3fc; font-size: .66rem; font-weight: 800;
+        letter-spacing: .1em; text-transform: uppercase;
+    }
+    .container .visual-head h5 { margin: .15rem 0 0; color: #f8fafc; font-size: .95rem; }
+    .container .visual-head small { color: #8fa2ba; white-space: nowrap; }
+    .container .visual-svg-wrap {
+        width: 100%; padding: .7rem .8rem .35rem; box-sizing: border-box;
+        background:
+          radial-gradient(circle at 20% 15%, rgba(56,189,248,.06), transparent 34%),
+          linear-gradient(180deg, rgba(8,15,27,.48), rgba(8,15,27,.18));
+        overflow: hidden;
+    }
+    .container .engineering-svg { display: block; width: 100%; height: auto; max-width: 100%; }
+    .container .visual-metrics {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+        gap: .55rem; padding: .75rem 1rem; border-top: 1px solid #263950;
+    }
+    .container .visual-metric {
+        min-width: 0; padding: .55rem .65rem; border: 1px solid #2b4059;
+        border-radius: 7px; background: rgba(15,30,49,.78);
+    }
+    .container .visual-metric span { display: block; color: #8fa2ba; font-size: .68rem; }
+    .container .visual-metric strong {
+        display: block; margin-top: .12rem; color: #f8fafc; font: 700 .82rem 'JetBrains Mono', monospace;
+        overflow-wrap: anywhere;
+    }
+    .container .engineering-visual figcaption {
+        padding: 0 1rem .85rem; color: #91a4bc; font-size: .76rem; line-height: 1.55;
+    }
+    .container .engineering-svg text { font-family: 'Inter', sans-serif; }
+    .container .engineering-svg .beam-line { stroke: #e2e8f0; stroke-width: 9; stroke-linecap: round; }
+    .container .engineering-svg .beam-datum { stroke: #94a3b8; stroke-width: 3; }
+    .container .engineering-svg .support-shape { fill: #15243a; stroke: #cbd5e1; stroke-width: 2; }
+    .container .engineering-svg .support-fill { fill: #cbd5e1; }
+    .container .engineering-svg .support-ground { stroke: #64748b; stroke-width: 2; }
+    .container .engineering-svg .support-wall { stroke: #cbd5e1; stroke-width: 5; }
+    .container .engineering-svg .load-spine { stroke: #fb7185; stroke-width: 2; }
+    .container .engineering-svg .load-arrow, .container .engineering-svg .point-arrow {
+        stroke: #fb7185; stroke-width: 2.4; fill: none;
+    }
+    .container .engineering-svg .reaction-arrow { stroke: #38bdf8; stroke-width: 2.6; fill: none; }
+    .container .engineering-svg .dimension-line { stroke: #94a3b8; stroke-width: 1.25; fill: none; }
+    .container .engineering-svg .guide-line, .container .engineering-svg .load-guide {
+        stroke: #64748b; stroke-width: 1.25; stroke-dasharray: 6 5;
+    }
+    .container .engineering-svg .load-guide { stroke: #fb7185; opacity: .75; }
+    .container .engineering-svg .critical-guide { stroke: #38bdf8; stroke-width: 1.4; stroke-dasharray: 5 4; }
+    .container .engineering-svg .bearing-patch { fill: rgba(251,191,36,.3); stroke: #fbbf24; stroke-width: 1.5; }
+    .container .engineering-svg .chart-grid { stroke: #263950; stroke-width: 1; }
+    .container .engineering-svg .chart-zero { stroke: #9aabc0; stroke-width: 1.5; }
+    .container .engineering-svg .chart-curve, .container .engineering-svg .deflection-curve {
+        fill: none; stroke-width: 3; stroke-linejoin: round; stroke-linecap: round;
+    }
+    .container .engineering-svg .deflection-curve { stroke: #38bdf8; }
+    .container .engineering-svg .chart-marker circle { stroke: #eef2ff; stroke-width: 2; }
+    .container .engineering-svg .chart-marker.secondary circle { fill: #22d3ee; }
+    .container .engineering-svg .deflection-marker { fill: #38bdf8; stroke: #e0f2fe; stroke-width: 2; }
+    .container .engineering-svg .svg-label { fill: #e2e8f0; font-size: 15px; font-weight: 700; }
+    .container .engineering-svg .load-label { fill: #fda4af; }
+    .container .engineering-svg .reaction-label { fill: #7dd3fc; }
+    .container .engineering-svg .reaction-label-local { fill: #7dd3fc; }
+    .container .engineering-svg .dimension-label { fill: #a8b5c6; font-size: 13px; text-anchor: middle; }
+    .container .engineering-svg .svg-node-label { fill: #f8fafc; font-size: 15px; font-weight: 800; }
+    .container .engineering-svg .svg-axis-label {
+        fill: #8497af; font-size: 12px; text-anchor: middle; font-family: 'JetBrains Mono', monospace;
+    }
+    .container .engineering-svg .svg-axis-title { fill: #a8b5c6; font-size: 13px; font-weight: 700; }
+    .container .engineering-svg .svg-convention-label {
+        fill: #fbbf24; font-size: 11px; font-weight: 800;
+        font-family: 'JetBrains Mono', monospace;
+    }
+    .container .engineering-svg .svg-marker-label {
+        fill: #67e8f9; font-size: 11px; text-anchor: middle; font-family: 'JetBrains Mono', monospace;
+    }
+    .container .engineering-svg .svg-marker-label.load-text { fill: #fda4af; }
+    .container .engineering-svg .svg-critical-label {
+        fill: #f8fafc; font-size: 13px; font-weight: 800; text-anchor: middle;
+        font-family: 'JetBrains Mono', monospace;
+    }
+    .container .engineering-svg .svg-critical-sub {
+        fill: #9eb0c6; font-size: 11px; text-anchor: middle; font-family: 'JetBrains Mono', monospace;
+    }
     .container .verification-chain {
         overflow-x: auto; background: #0b1322; border: 1px solid #31445e;
         border-left: 4px solid #94a3b8; border-radius: 8px; padding: .8rem 1rem;
@@ -541,12 +654,34 @@ HTML_TEMPLATE_CSS_PRO = """
         .container .theory-panel summary strong { margin-left: 0; text-align: left; width: calc(100% - 2.5rem); }
         .container .step-theory-panel summary { align-items: flex-start; flex-wrap: wrap; }
         .container .step-theory-panel summary strong { margin-left: 2.15rem; text-align: left; width: 100%; }
+        .container .visual-head { align-items: flex-start; }
+        .container .visual-head small { display: none; }
+        .container .visual-svg-wrap { padding: .35rem .25rem .2rem; }
+        .container .visual-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: .65rem; }
+        .container .engineering-visual figcaption { padding: 0 .7rem .75rem; }
+        .container .engineering-svg .svg-label { font-size: 27px; }
+        .container .engineering-svg .dimension-label { font-size: 23px; }
+        .container .engineering-svg .svg-node-label { font-size: 25px; }
+        .container .engineering-svg .svg-axis-label { font-size: 21px; }
+        .container .engineering-svg .svg-axis-title { font-size: 22px; }
+        .container .engineering-svg .svg-marker-label { font-size: 19px; }
+        .container .engineering-svg .svg-critical-label { font-size: 23px; }
+        .container .engineering-svg .svg-critical-sub { font-size: 19px; }
+        .container .engineering-svg .reaction-label { display: none; }
+        .container [data-visual="deflection-diagram"] .svg-critical-label,
+        .container [data-visual="deflection-diagram"] .svg-critical-sub,
+        .container [data-visual="deflection-diagram"] .svg-axis-title { display: none; }
+        .container .engineering-svg .beam-line,
+        .container .engineering-svg .chart-curve,
+        .container .engineering-svg .deflection-curve { vector-effect: non-scaling-stroke; }
     }
     @media print {
         body { background: white !important; color: #172033 !important; }
         .container { color: #172033 !important; }
         .container .calc-step, .container .verification-card, .container .info-card, .container .notice, .container .theory-panel, .container .theory-panel summary, .container .theory-concept, .container .step-theory-panel, .container .step-theory-panel summary { background: white !important; color: #172033 !important; box-shadow: none; border-color: #cbd5e1; }
         .container .formula-symbolic, .container .formula-numeric, .container .formula-chain, .container .verification-chain { background: #f8fafc !important; color: #0f172a !important; border-color: #cbd5e1; }
+        .container .engineering-visual, .container .visual-head, .container .visual-metric { background: white !important; color: #172033 !important; border-color: #cbd5e1 !important; }
+        .container .visual-svg-wrap { background: white !important; }
         .container .calc-explanation, .container .chapter-intro, .container .norm-ref { color: #475569 !important; }
     }
 
@@ -2177,17 +2312,17 @@ def perform_all_checks(props, fy_aco, Lb_projeto, Cb_projeto, L_cm, Msd, Vsd, q_
 # Substitua a função build_summary_html por esta versão:
 def build_summary_html(Msd, Vsd, res_flt, res_flm, res_fla, res_cisalhamento, res_flecha):
     verificacoes = [
-        ('Flexão (FLT)', f"{Msd/100:.2f} kN·m", f"{res_flt['Mrdx']/100:.2f} kN·m" if res_flt['status'] != 'N/A' else 'N/A', res_flt['eficiencia'], res_flt['status']),
-        ('Flexão (FLM)', f"{Msd/100:.2f} kN·m", f"{res_flm['Mrdx']/100:.2f} kN·m", res_flm['eficiencia'], res_flm['status']),
-        ('Flexão (FLA/Anexo E)', f"{Msd/100:.2f} kN·m", f"{res_fla['Mrdx']/100:.2f} kN·m", res_fla['eficiencia'], res_fla['status']),
-        ('Cisalhamento', f"{Vsd:.2f} kN", f"{res_cisalhamento['Vrd']:.2f} kN", res_cisalhamento['eficiencia'], res_cisalhamento['status']),
-        ('Flecha (ELS)', f"{res_flecha['flecha_max']:.2f} cm" if res_flecha['status'] != "N/A" else "N/A", f"≤ {res_flecha['flecha_limite']:.2f} cm" if res_flecha['status'] != "N/A" else "N/A", res_flecha['eficiencia'], res_flecha['status'])
+        ('Flexão (FLT)', f"{compact_number(Msd/100,2)} kN·m", f"{compact_number(res_flt['Mrdx']/100,2)} kN·m" if res_flt['status'] != 'N/A' else 'N/A', res_flt['eficiencia'], res_flt['status']),
+        ('Flexão (FLM)', f"{compact_number(Msd/100,2)} kN·m", f"{compact_number(res_flm['Mrdx']/100,2)} kN·m", res_flm['eficiencia'], res_flm['status']),
+        ('Flexão (FLA/Anexo E)', f"{compact_number(Msd/100,2)} kN·m", f"{compact_number(res_fla['Mrdx']/100,2)} kN·m", res_fla['eficiencia'], res_fla['status']),
+        ('Cisalhamento', f"{compact_number(Vsd,2)} kN", f"{compact_number(res_cisalhamento['Vrd'],2)} kN", res_cisalhamento['eficiencia'], res_cisalhamento['status']),
+        ('Flecha (ELS)', f"{compact_number(res_flecha['flecha_max'],2)} cm" if res_flecha['status'] != "N/A" else "N/A", f"≤ {compact_number(res_flecha['flecha_limite'],2)} cm" if res_flecha['status'] != "N/A" else "N/A", res_flecha['eficiencia'], res_flecha['status'])
     ]
     if res_flt.get('rupture_Mrd') is not None:
         verificacoes.insert(3, (
             'Flexão — ruptura na mesa tracionada',
-            f"{Msd/100:.2f} kN·m",
-            f"{res_flt['rupture_Mrd']/100:.2f} kN·m",
+            f"{compact_number(Msd/100,2)} kN·m",
+            f"{compact_number(res_flt['rupture_Mrd']/100,2)} kN·m",
             res_flt['rupture_efficiency'],
             res_flt['rupture_status'],
         ))
@@ -2195,7 +2330,7 @@ def build_summary_html(Msd, Vsd, res_flt, res_flm, res_fla, res_cisalhamento, re
     for nome, sol, res, efic, status in verificacoes:
         # A MUDANÇA ESTÁ AQUI: adiciona a classe 'pass' ou 'fail' ao <td> do status
         status_class = "pass" if status in {"APROVADO", "N/A"} else "fail"
-        efic_str = f"{efic:.1f}%" if status != "N/A" and isinstance(efic, (int, float)) and math.isfinite(efic) else "N/A"
+        efic_str = f"{compact_number(efic,1)}%" if status != "N/A" and isinstance(efic, (int, float)) and math.isfinite(efic) else "N/A"
         rows_html += f"""<tr><td>{nome}</td><td>{sol}</td><td>{res}</td><td>{efic_str}</td><td class="{status_class}">{status}</td></tr>"""
 
     # Retorna o HTML da tabela para ser usado no memorial
@@ -2658,7 +2793,7 @@ def main():
         "Viga prismática I/H duplamente simétrica, carregada no plano da alma e fletida no eixo forte.",
         "Análise elástica de primeira ordem; vinculações ideais selecionadas pelo usuário.",
         "Ações gravitacionais estáticas; valores característicos devem vir das normas de ações aplicáveis.",
-        f"Material nominal: {material}; fy={fy_aco:.2f} kN/cm²; fu={fu_aco:.2f} kN/cm².",
+        f"Material nominal: {material}; fy={compact_number(fy_aco,2)} kN/cm²; fu={compact_number(fu_aco,2)} kN/cm².",
     ]
     input_params = {
         'tipo_viga': tipo_viga, 'L_cm': L_cm, 'input_mode': input_mode, 'Msd': Msd, 'Vsd': Vsd,
@@ -2685,7 +2820,7 @@ def main():
         'include_self_weight': include_self_weight, 'gamma_g': gamma_g, 'gamma_q': gamma_q,
         'gamma_self_weight': gamma_self_weight, 'els_combination': els_combination,
         'els_combination_text': els_combination_text, 'psi1': psi1, 'psi2': psi2,
-        'elu_combination_text': f'{gamma_g:.2f}·G + {gamma_self_weight:.2f}·PP aço + {gamma_q:.2f}·Q',
+        'elu_combination_text': f'{compact_number(gamma_g,2)}·G + {compact_number(gamma_self_weight,2)}·PP aço + {compact_number(gamma_q,2)}·Q',
         'manual_local_checks_confirmed': manual_local_checks_confirmed,
         'unsupported_reasons': unsupported_reasons, 'scope_notes': scope_notes,
         'projeto_info': projeto_info,
@@ -2814,24 +2949,24 @@ def run_detailed_analysis(df, perfil_nome, perfil_tipo_display, input_params):
                 f"""
                 
                 <div style="text-align: left;">
-                    <p><strong>Módulo de Elasticidade (E):</strong> {input_params['E_aco']:.2f} kN/cm²</p>
-                    <p><strong>Tensão de Escoamento (fy):</strong> {input_params['fy_aco']:.2f} kN/cm²</p>
-                    <p><strong>Tensão de Ruptura (fu):</strong> {input_params['fu_aco']:.2f} kN/cm²</p>
-                    <p><strong>Altura total (d):</strong> {perfil_series.get('d (mm)'):.2f} mm</p>
-                    <p><strong>Largura da Mesa (bf):</strong> {perfil_series.get('bf (mm)'):.2f} mm</p>
-                    <p><strong>Espessura da Alma (tw):</strong> {perfil_series.get('tw (mm)'):.2f} mm</p>
-                    <p><strong>Espessura da Mesa (tf):</strong> {perfil_series.get('tf (mm)'):.2f} mm</p>
-                    <p><strong>Distância entre faces internas (h):</strong> {perfil_series.get('h (mm)'):.2f} mm</p>
-                    <p><strong>Altura livre da alma (d′):</strong> {perfil_series.get("d' (mm)"):.2f} mm</p>
-                    <p><strong>Área (A):</strong> {perfil_series.get('Área (cm2)'):.2f} cm²</p>
-                    <p><strong>Inércia Ix:</strong> {perfil_series.get('Ix (cm4)'):.2f} cm⁴</p>
-                    <p><strong>Módulo de Seção Elástico (Wx):</strong> {perfil_series.get('Wx (cm3)'):.2f} cm³</p>
-                    <p><strong>Raio de Giração (rx):</strong> {props.get('rx'):.2f} cm</p>
-                    <p><strong>Módulo de Seção Plástico (Zx):</strong> {props.get('Zx'):.2f} cm³</p>
-                    <p><strong>Inércia Iy:</strong> {props.get('Iy'):.2f} cm⁴</p>
-                    <p><strong>Raio de Giração (ry):</strong> {props.get('ry'):.2f} cm</p>
-                    <p><strong>Constante de Torção (J):</strong> {props.get('J'):.2f} cm⁴</p>
-                    <p><strong>Constante de Empenamento (Cw):</strong> {props.get('Cw'):.2f} cm⁶</p>
+                    <p><strong>Módulo de Elasticidade (E):</strong> {compact_number(input_params['E_aco'],2)} kN/cm²</p>
+                    <p><strong>Tensão de Escoamento (fy):</strong> {compact_number(input_params['fy_aco'],2)} kN/cm²</p>
+                    <p><strong>Tensão de Ruptura (fu):</strong> {compact_number(input_params['fu_aco'],2)} kN/cm²</p>
+                    <p><strong>Altura total (d):</strong> {compact_number(perfil_series.get('d (mm)'),2)} mm</p>
+                    <p><strong>Largura da Mesa (bf):</strong> {compact_number(perfil_series.get('bf (mm)'),2)} mm</p>
+                    <p><strong>Espessura da Alma (tw):</strong> {compact_number(perfil_series.get('tw (mm)'),2)} mm</p>
+                    <p><strong>Espessura da Mesa (tf):</strong> {compact_number(perfil_series.get('tf (mm)'),2)} mm</p>
+                    <p><strong>Distância entre faces internas (h):</strong> {compact_number(perfil_series.get('h (mm)'),2)} mm</p>
+                    <p><strong>Altura livre da alma (d′):</strong> {compact_number(perfil_series.get("d' (mm)"),2)} mm</p>
+                    <p><strong>Área (A):</strong> {compact_number(perfil_series.get('Área (cm2)'),2)} cm²</p>
+                    <p><strong>Inércia Ix:</strong> {compact_number(perfil_series.get('Ix (cm4)'),2)} cm⁴</p>
+                    <p><strong>Módulo de Seção Elástico (Wx):</strong> {compact_number(perfil_series.get('Wx (cm3)'),2)} cm³</p>
+                    <p><strong>Raio de Giração (rx):</strong> {compact_number(props.get('rx'),2)} cm</p>
+                    <p><strong>Módulo de Seção Plástico (Zx):</strong> {compact_number(props.get('Zx'),2)} cm³</p>
+                    <p><strong>Inércia Iy:</strong> {compact_number(props.get('Iy'),2)} cm⁴</p>
+                    <p><strong>Raio de Giração (ry):</strong> {compact_number(props.get('ry'),2)} cm</p>
+                    <p><strong>Constante de Torção (J):</strong> {compact_number(props.get('J'),2)} cm⁴</p>
+                    <p><strong>Constante de Empenamento (Cw):</strong> {compact_number(props.get('Cw'),2)} cm⁶</p>
                 </div>
                 """, input_params['projeto_info']
             )
