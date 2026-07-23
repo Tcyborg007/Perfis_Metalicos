@@ -544,6 +544,16 @@ HTML_TEMPLATE_CSS_PRO = """
         fill: #67e8f9; font-size: 11px; text-anchor: middle; font-family: 'JetBrains Mono', monospace;
     }
     .container .engineering-svg .svg-marker-label.load-text { fill: #fda4af; }
+    .container .engineering-svg .chart-endpoint circle {
+        stroke: #eef2ff; stroke-width: 2;
+    }
+    .container .engineering-svg .svg-endpoint-position {
+        fill: #8fa2ba; font-size: 10px; font-family: 'JetBrains Mono', monospace;
+    }
+    .container .engineering-svg .svg-endpoint-label {
+        fill: #f8fafc; font-size: 12px; font-weight: 800;
+        font-family: 'JetBrains Mono', monospace;
+    }
     .container .engineering-svg .svg-critical-label {
         fill: #f8fafc; font-size: 13px; font-weight: 800; text-anchor: middle;
         font-family: 'JetBrains Mono', monospace;
@@ -665,6 +675,8 @@ HTML_TEMPLATE_CSS_PRO = """
         .container .engineering-svg .svg-axis-label { font-size: 21px; }
         .container .engineering-svg .svg-axis-title { font-size: 22px; }
         .container .engineering-svg .svg-marker-label { font-size: 19px; }
+        .container .engineering-svg .svg-endpoint-position { font-size: 17px; }
+        .container .engineering-svg .svg-endpoint-label { font-size: 20px; }
         .container .engineering-svg .svg-critical-label { font-size: 23px; }
         .container .engineering-svg .svg-critical-sub { font-size: 19px; }
         .container .engineering-svg .reaction-label { display: none; }
@@ -1680,17 +1692,35 @@ def style_classic_dataframe(df):
             return 'background-color: #fff3cd; font-weight: bold; color: #856404;'
         return ''
 
-    efficiency_cols = [col for col in df.columns if '%' in col]
+    def style_stiffener_effect(val):
+        text = str(val)
+        if text.startswith('Eficaz:'):
+            return 'background-color: #166534; font-weight: bold; color: #f0fdf4;'
+        if text.startswith('Sem ganho:'):
+            return 'background-color: #1e3a5f; font-weight: bold; color: #eff6ff;'
+        if text.startswith('Ineficaz:'):
+            return 'background-color: #854d0e; font-weight: bold; color: #fffbeb;'
+        if text == 'Não validado':
+            return 'background-color: #991b1b; font-weight: bold; color: #fef2f2;'
+        return ''
+
+    efficiency_cols = [col for col in df.columns if col.startswith('Ef.')]
     
     styled_df = df.style.map(color_efficiency, subset=efficiency_cols)
     
     if 'Status' in df.columns:
         styled_df = styled_df.map(style_status, subset=['Status'])
+    if 'Efeito Enrijecedor' in df.columns:
+        styled_df = styled_df.map(style_stiffener_effect, subset=['Efeito Enrijecedor'])
         
     format_number_2 = lambda val: "—" if pd.isna(val) else f"{val:.2f}"
     format_number_1 = lambda val: "—" if pd.isna(val) else f"{val:.1f}"
     format_dict = {
         "Peso (kg/m)": format_number_2,
+        "kv": lambda val: "—" if pd.isna(val) else f"{val:.3f}",
+        "VRd s/ Enr. (kN)": format_number_2,
+        "VRd Adotado (kN)": format_number_2,
+        "Ganho VRd (%)": format_number_1,
         **{col: format_number_1 for col in efficiency_cols},
     }
     return styled_df.format(format_dict)
@@ -2745,6 +2775,17 @@ def main():
                 stiffener_width = st.number_input("Largura de cada chapa bs (cm)", 0.1, value=10.0, step=0.5, key='stiffener_width')
                 stiffener_thickness = st.number_input("Espessura ts (cm)", 0.1, value=0.8, step=0.1, key='stiffener_thickness')
                 stiffener_welded = st.checkbox("Par de enrijecedores soldado à alma e às mesas conforme 5.4.3.1.3-a", value=False, key='stiffener_welded')
+                if not stiffener_welded:
+                    st.warning(
+                        "Sem a confirmação da soldagem, o enrijecedor será registrado como não "
+                        "validado e não alterará kv nem VRd."
+                    )
+                else:
+                    st.info(
+                        "A eficácia será verificada individualmente: detalhamento, a/h ≤ 3 e "
+                        "regime da alma. Um enrijecedor válido pode não aumentar VRd quando a "
+                        "alma já atinge o escoamento."
+                    )
 
         with st.container(border=True):
             st.subheader("Forças localizadas — apoios e carga pontual")
@@ -2861,6 +2902,19 @@ def main():
                     df_aprovados_cat = df_type[df_type['Status'] == 'APROVADO'].copy().sort_values(by='Peso (kg/m)')
                     df_reprovados_cat = df_type[df_type['Status'] == 'REPROVADO'].copy().sort_values(by='Peso (kg/m)')
                     df_pendentes_cat = df_type[df_type['Status'] == 'NÃO VERIFICADO'].copy().sort_values(by='Peso (kg/m)')
+
+                    if input_params['usa_enrijecedores'] and not df_type.empty:
+                        effect = df_type['Efeito Enrijecedor'].astype(str)
+                        gains = int(effect.str.startswith('Eficaz:').sum())
+                        no_gain = int(effect.str.startswith('Sem ganho:').sum())
+                        ineffective = int(
+                            (effect.str.startswith('Ineficaz:') | effect.eq('Não validado')).sum()
+                        )
+                        st.info(
+                            f"Diagnóstico dos enrijecedores nesta categoria: {gains} perfil(is) "
+                            f"com ganho de VRd; {no_gain} eficaz(es) para kv, mas sem ganho por "
+                            f"escoamento; {ineffective} ineficaz(es) ou não validado(s)."
+                        )
 
                     # Botão de download para todos os resultados em uma aba
                     if not df_type.empty:
@@ -3006,6 +3060,11 @@ def run_batch_analysis(all_sheets, input_params):
                 all_results.append({
                     'Tipo': sheet_name, 'Perfil': row['Bitola (mm x kg/m)'],
                     'Peso (kg/m)': props.get('Peso', 0), 'Status': status_geral,
+                    'Efeito Enrijecedor': res_cis['core']['stiffener_effect_label'],
+                    'kv': res_cis['core']['kv'],
+                    'VRd s/ Enr. (kN)': res_cis['core']['Vrd_without_stiffener'],
+                    'VRd Adotado (kN)': res_cis['core']['Vrd'],
+                    'Ganho VRd (%)': res_cis['core']['Vrd_gain_percent'],
                     'Ef. FLT (%)': res_flt['eficiencia'], 'Ef. FLM (%)': res_flm['eficiencia'],
                     'Ef. FLA (%)': res_fla['eficiencia'], 'Ef. Cisalhamento (%)': res_cis['eficiencia'],
                     'Ef. Ruptura Mesa (%)': (

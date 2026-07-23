@@ -144,6 +144,9 @@ class DetailedMemorialTests(unittest.TestCase):
             local_unbraced_cm=300.0,
         )
         self.assertIn("Validação dos enrijecedores", memorial)
+        self.assertIn("Sem ganho: alma em escoamento", memorial)
+        self.assertIn(r"V_{Rd,0}=V_{Rd}(k_v=5{,}34)", memorial)
+        self.assertIn(r"g_V=\frac{\Delta V_{Rd}}{V_{Rd,0}}\cdot100", memorial)
         self.assertIn("Furos na mesa tracionada", memorial)
         self.assertIn(r"\delta_{lim}=\min", memorial)
         self.assertEqual(memorial.count('class="formula-chain"'), memorial.count('class="calc-step"'))
@@ -288,6 +291,32 @@ class DetailedMemorialTests(unittest.TestCase):
             f'data-critical-value="{compact_number(response.max_deflection,4)}"',
             deflection,
         )
+        for diagram in (moment_figure, deflection):
+            self.assertEqual(diagram.count('data-endpoint="start"'), 1)
+            self.assertEqual(diagram.count('data-endpoint="end"'), 1)
+
+    def test_both_diagram_ends_are_labeled_without_duplicating_boundary_critical_label(self):
+        response = analyze_beam(
+            "fixed_fixed", 500.0,
+            q=0.093521, point_load=0.0, point_position=250.0,
+            E=20_000.0, I=3_437.0, samples=4_001,
+        )
+        efforts = effort_diagrams_visual(response)
+        moment_figure = re.search(
+            r'<figure class="engineering-visual" data-visual="moment-diagram".*?</figure>',
+            efforts, re.S,
+        ).group(0)
+        endpoint_groups = re.findall(
+            r'<g class="chart-endpoint" data-endpoint="(?:start|end)">.*?</g>',
+            moment_figure, re.S,
+        )
+
+        self.assertEqual(len(endpoint_groups), 2)
+        self.assertIn("x = 0 m", endpoint_groups[0])
+        self.assertIn("x = 5 m", endpoint_groups[1])
+        self.assertIn("Md =", endpoint_groups[0])
+        self.assertIn("Md =", endpoint_groups[1])
+        self.assertNotIn('<g class="chart-marker">', moment_figure)
 
     def test_sagging_moment_is_drawn_below_the_reference_axis(self):
         response = analyze_beam(

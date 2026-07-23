@@ -1050,7 +1050,7 @@ def _shear_section(bundle):
     s, p = bundle["shear"], bundle["props"]
     fy, E, gamma1, Vsd = bundle["fy"], bundle["E"], bundle["gamma_a1"], bundle["Vsd"]
     out = _chapter("6. Resistência ao cisalhamento", "A alma é classificada, os enrijecedores são validados quando declarados e o ramo resistente é mostrado explicitamente.") + _shear_theory()
-    if s["stiffener_valid"]:
+    if s["stiffener_effective_for_kv"]:
         kv_symbolic = r"k_v=5+\frac{5}{\left(\dfrac{a}{h}\right)^2}"
         kv_numeric = rf"k_v=5+\frac{{5}}{{\left(\dfrac{{{_n(s['a_h']*p['h_clear'])}}}{{{_n(p['h_clear'])}}}\right)^2}}={_n(s['kv'])}"
     else:
@@ -1058,7 +1058,7 @@ def _shear_section(bundle):
         kv_numeric = rf"k_v=5.34={_n(s['kv'])}"
     out += _step(
         "6.1", "Esbeltez da alma e coeficiente kv",
-        "O coeficiente kv só considera enrijecedores transversais quando soldagem, esbeltez e inércia são atendidas; caso contrário, o núcleo usa kv = 5,34.",
+        "O coeficiente kv só considera enrijecedores transversais quando soldagem, esbeltez, inércia e a condição a/h ≤ 3 são atendidas; caso contrário, o núcleo usa kv = 5,34.",
         _eq(
             r"\lambda=\frac{h}{t_w}",
             kv_symbolic,
@@ -1084,8 +1084,13 @@ def _shear_section(bundle):
                 rf"I_{{st}}={_n(s['I_st'])}\; {'\\ge' if checks['inércia']['passed'] else '<'}\; I_{{req}}={_n(s['a_h']*p['h_clear'])}\cdot{_n(p['tw'])}^3\cdot{_n(s['j'])}={_n(s['I_required'])}\;cm^4",
                 rf"\frac{{b}}{{t}}=\frac{{{_n(s['stiffener_width'])}}}{{{_n(s['stiffener_thickness'])}}}={_n(s['stiffener_slenderness'])}\; {'\\le' if checks['b/t']['passed'] else '>'}\;0.56\cdot\sqrt{{\frac{{{_n(E)}}}{{{_n(fy)}}}}}={_n(s['stiffener_slenderness_limit'])}",
             ),
-            f"Enrijecedor <strong>{'validado' if s['stiffener_valid'] else 'não validado'}</strong>; soldagem às mesas e à alma: {'sim' if checks['soldagem']['passed'] else 'não'}.",
-            "ABNT NBR 8800:2024, 5.4.3.1.3, com correção da Errata 1:2025.", "Somente enrijecedores integralmente aprovados alteram kv.",
+            (
+                f"Detalhamento <strong>{'aprovado' if s['stiffener_valid'] else 'não aprovado'}</strong>; "
+                f"efeito no cisalhamento: <strong>{_esc(s['stiffener_effect_label'])}</strong>. "
+                f"{_esc(s['stiffener_effect_explanation'])}"
+            ),
+            "ABNT NBR 8800:2024, 5.4.3.1.1 e 5.4.3.1.3, com correção da Errata 1:2025.",
+            s["stiffener_effect_label"],
         )
     step_no = "6.3" if s["stiffener_requested"] else "6.2"
     if s["regime"] == "escoamento":
@@ -1100,6 +1105,19 @@ def _shear_section(bundle):
         active_numeric = rf"V_{{Rd}}=\frac{{{_n(s['lambda_p'])}}}{{{_n(s['lambda'])}}}\cdot\frac{{{_n(s['Vpl'])}}}{{{_n(gamma1,2)}}}={_n(s['Vrd'])}\;kN"
     else:
         active_numeric = rf"V_{{Rd}}=1.24\cdot\left(\frac{{{_n(s['lambda_p'])}}}{{{_n(s['lambda'])}}}\right)^2\cdot\frac{{{_n(s['Vpl'])}}}{{{_n(gamma1,2)}}}={_n(s['Vrd'])}\;kN"
+    comparison_symbolic = []
+    comparison_numeric = []
+    if s["stiffener_requested"]:
+        comparison_symbolic = [
+            r"V_{Rd,0}=V_{Rd}(k_v=5{,}34)",
+            r"\Delta V_{Rd}=V_{Rd}-V_{Rd,0}",
+            r"g_V=\frac{\Delta V_{Rd}}{V_{Rd,0}}\cdot100",
+        ]
+        comparison_numeric = [
+            rf"V_{{Rd,0}}={_n(s['Vrd_without_stiffener'])}\;kN",
+            rf"\Delta V_{{Rd}}={_n(s['Vrd'])}-{_n(s['Vrd_without_stiffener'])}={_n(s['Vrd_gain'])}\;kN",
+            rf"g_V=\frac{{{_n(s['Vrd_gain'])}}}{{{_n(s['Vrd_without_stiffener'])}}}\cdot100={_n(s['Vrd_gain_percent'],2)}\%",
+        ]
     out += _step(
         step_no, "Resistência da alma ao cisalhamento",
         "Os limites λp e λr identificam escoamento, flambagem inelástica ou flambagem elástica. A fórmula ativa é registrada abaixo.",
@@ -1108,6 +1126,7 @@ def _shear_section(bundle):
             r"V_{pl}=0{,}60\cdot d\cdot t_w\cdot f_y",
             r"\lambda_p=1{,}10\cdot\sqrt{\frac{k_v\cdot E}{f_y}}",
             r"\lambda_r=1{,}37\cdot\sqrt{\frac{k_v\cdot E}{f_y}}", active,
+            *comparison_symbolic,
         ),
         _eq(
             rf"\lambda=\frac{{{_n(p['h_clear'])}}}{{{_n(p['tw'])}}}={_n(s['lambda'])}",
@@ -1115,8 +1134,19 @@ def _shear_section(bundle):
             rf"\lambda_p=1.1\cdot\sqrt{{\frac{{{_n(s['kv'])}\cdot{_n(E)}}}{{{_n(fy)}}}}}={_n(s['lambda_p'])}",
             rf"\lambda_r=1.37\cdot\sqrt{{\frac{{{_n(s['kv'])}\cdot{_n(E)}}}{{{_n(fy)}}}}}={_n(s['lambda_r'])}",
             active_numeric,
+            *comparison_numeric,
         ),
-        f"VRd = <strong>{_n(s['Vrd'])} kN</strong>; regime {s['regime']}.", "ABNT NBR 8800:2024, 5.4.3.1.1 e 5.4.3.1.2.", s["regime"],
+        (
+            f"VRd adotado = <strong>{_n(s['Vrd'])} kN</strong>; regime {s['regime']}. "
+            + (
+                f"Comparação sem enrijecedor: {_n(s['Vrd_without_stiffener'])} kN; "
+                f"ganho = <strong>{_n(s['Vrd_gain_percent'],2)}%</strong>. "
+                f"{_esc(s['stiffener_effect_explanation'])}"
+                if s["stiffener_requested"] else ""
+            )
+        ),
+        "ABNT NBR 8800:2024, 5.4.3.1.1 e 5.4.3.1.2.",
+        s["stiffener_effect_label"] if s["stiffener_requested"] else s["regime"],
     )
     status = "APROVADO" if Vsd <= s["Vrd"] else "REPROVADO"
     out += _verification("Cisalhamento", Vsd, s["Vrd"], "kN", status, Vsd/s["Vrd"]*100, "V_{Sd}", "V_{Rd}", "ABNT NBR 8800:2024, 5.4.3.1.1 e 5.4.3.1.2.")

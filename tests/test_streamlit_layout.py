@@ -55,6 +55,7 @@ class StreamlitLayoutTests(unittest.TestCase):
         self.assertIn(".container .engineering-svg", source)
         self.assertIn("width: 100%; height: auto", source)
         self.assertIn(".container .visual-metrics", source)
+        self.assertIn(".container .engineering-svg .svg-endpoint-label", source)
         self.assertIn('[data-visual="deflection-diagram"] .svg-critical-label', source)
         self.assertIn(".container .visual-svg-wrap { background: white !important; }", source)
 
@@ -74,6 +75,18 @@ class StreamlitLayoutTests(unittest.TestCase):
         ):
             self.assertIn(f"background-color: {background}", html)
             self.assertIn(f"color: {foreground}", html)
+
+    def test_stiffener_diagnosis_is_exposed_in_batch_results(self):
+        source = (ROOT / "main.py").read_text(encoding="utf-8")
+        for label in (
+            "Efeito Enrijecedor",
+            "VRd s/ Enr. (kN)",
+            "VRd Adotado (kN)",
+            "Ganho VRd (%)",
+            "Sem a confirmação da soldagem",
+            "Diagnóstico dos enrijecedores nesta categoria",
+        ):
+            self.assertIn(label, source)
 
 
 if __name__ == "__main__":
