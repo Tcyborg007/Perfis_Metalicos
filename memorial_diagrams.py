@@ -226,8 +226,8 @@ def _chart_svg(
     color, critical, guide_x=None, markers=(), positive_down=False,
     convention_label="",
 ):
-    height = 286.0
-    top, bottom = 38.0, 218.0
+    height = 360.0
+    top, bottom = 118.0, 270.0
     values = [value for _, value in points] or [0.0]
     y_min, y_max = min(min(values), 0.0), max(max(values), 0.0)
     span = y_max - y_min
@@ -256,12 +256,47 @@ def _chart_svg(
         x = PLOT_LEFT + ratio * PLOT_WIDTH
         grid.extend((
             f'<line x1="{x:.1f}" y1="{top}" x2="{x:.1f}" y2="{bottom}" class="chart-grid"/>',
-            f'<text x="{x:.1f}" y="245" class="svg-axis-label">{_num(length*ratio/100,2)}</text>',
+            f'<text x="{x:.1f}" y="298" class="svg-axis-label">{_num(length*ratio/100,2)}</text>',
         ))
     critical_x, critical_value = critical
     cx, cy = _x_px(critical_x, length), y_px(critical_value)
     anchor = "end" if cx > 560 else "start"
     label_x = cx - 10 if anchor == "end" else cx + 10
+    endpoint_tolerance = max(abs(length) * 1e-6, 1e-9)
+    critical_at_endpoint = (
+        abs(critical_x) <= endpoint_tolerance
+        or abs(critical_x - length) <= endpoint_tolerance
+    )
+    if cy - top >= 48.0:
+        critical_label_y, critical_sub_y = cy - 27.0, cy - 10.0
+    else:
+        critical_label_y, critical_sub_y = cy + 23.0, cy + 40.0
+    critical_annotation = ""
+    if not critical_at_endpoint:
+        critical_annotation = (
+            f'<g class="chart-marker"><circle cx="{cx:.1f}" cy="{cy:.1f}" r="5" style="fill:{color}"/>'
+            f'<text x="{label_x:.1f}" y="{critical_label_y:.1f}" style="text-anchor:{anchor}" '
+            f'class="svg-critical-label">{_num(critical_value)} {value_unit}</text>'
+            f'<text x="{label_x:.1f}" y="{critical_sub_y:.1f}" style="text-anchor:{anchor}" '
+            f'class="svg-critical-sub">x = {_num(critical_x/100)} m</text></g>'
+        )
+    axis_symbol = axis_label.split(" ", 1)[0]
+    start_x, start_value = points[0] if points else (0.0, 0.0)
+    end_x, end_value = points[-1] if points else (length, 0.0)
+    endpoint_annotations = (
+        f'<g class="chart-endpoint" data-endpoint="start">'
+        f'<circle cx="{_x_px(start_x, length):.1f}" cy="{y_px(start_value):.1f}" r="4" style="fill:{color}"/>'
+        f'<text x="{PLOT_LEFT:.1f}" y="42" style="text-anchor:start" class="svg-endpoint-position">'
+        f'x = {_num(start_x/100)} m</text>'
+        f'<text x="{PLOT_LEFT:.1f}" y="73" style="text-anchor:start" class="svg-endpoint-label">'
+        f'{_esc(axis_symbol)} = {_num(start_value)} {_esc(value_unit)}</text></g>'
+        f'<g class="chart-endpoint" data-endpoint="end">'
+        f'<circle cx="{_x_px(end_x, length):.1f}" cy="{y_px(end_value):.1f}" r="4" style="fill:{color}"/>'
+        f'<text x="{PLOT_RIGHT:.1f}" y="42" style="text-anchor:end" class="svg-endpoint-position">'
+        f'x = {_num(end_x/100)} m</text>'
+        f'<text x="{PLOT_RIGHT:.1f}" y="73" style="text-anchor:end" class="svg-endpoint-label">'
+        f'{_esc(axis_symbol)} = {_num(end_value)} {_esc(value_unit)}</text></g>'
+    )
     extra_markers = []
     for marker in markers:
         mx = _x_px(marker[0], length)
@@ -274,9 +309,12 @@ def _chart_svg(
     guide = ""
     if guide_x is not None:
         gx = _x_px(guide_x, length)
+        guide_anchor = "start" if gx < 150 else "end" if gx > 570 else "middle"
+        guide_label_x = gx + 8 if guide_anchor == "start" else gx - 8 if guide_anchor == "end" else gx
         guide = (
             f'<line x1="{gx:.1f}" y1="{top}" x2="{gx:.1f}" y2="{bottom}" class="load-guide"/>'
-            f'<text x="{gx:.1f}" y="{top-9:.1f}" class="svg-marker-label load-text">P em {_num(guide_x/100,2)} m</text>'
+            f'<text x="{guide_label_x:.1f}" y="{top-9:.1f}" style="text-anchor:{guide_anchor}" '
+            f'class="svg-marker-label load-text">P em {_num(guide_x/100,2)} m</text>'
         )
     svg = [
         _svg_open(uid, height, title, description, color),
@@ -285,18 +323,17 @@ def _chart_svg(
         f'<line x1="{PLOT_LEFT}" y1="{zero_y:.2f}" x2="{PLOT_RIGHT}" y2="{zero_y:.2f}" class="chart-zero"/>',
         f'<path d="{area}" fill="url(#{uid}-area)"/>',
         f'<path d="{path}" class="chart-curve" style="stroke:{color}"/>',
+        endpoint_annotations,
         guide,
         *extra_markers,
-        f'<g class="chart-marker"><circle cx="{cx:.1f}" cy="{cy:.1f}" r="5" style="fill:{color}"/>'
-        f'<text x="{label_x:.1f}" y="{cy-12:.1f}" text-anchor="{anchor}" class="svg-critical-label">{_num(critical_value)} {value_unit}</text>'
-        f'<text x="{label_x:.1f}" y="{cy+9:.1f}" text-anchor="{anchor}" class="svg-critical-sub">x = {_num(critical_x/100)} m</text></g>',
+        critical_annotation,
         f'<text x="{PLOT_LEFT}" y="20" class="svg-axis-title">{_esc(axis_label)}</text>',
         (
-            f'<text x="{PLOT_LEFT}" y="271" text-anchor="start" '
+            f'<text x="{PLOT_LEFT}" y="342" text-anchor="start" '
             f'class="svg-convention-label">{_esc(convention_label)}</text>'
             if convention_label else ""
         ),
-        f'<text x="{PLOT_RIGHT}" y="271" text-anchor="end" class="svg-axis-title">x (m)</text>',
+        f'<text x="{PLOT_RIGHT}" y="342" text-anchor="end" class="svg-axis-title">x (m)</text>',
         '</g></svg>',
     ]
     return "".join(svg)
@@ -462,34 +499,54 @@ def deflection_diagram_visual(response, deflection_limit):
         list(response.x), [abs(value) for value in response.deflections],
         required_x=(response.max_deflection_position, response.point_position),
     )
-    top_y, max_depth = 78.0, 120.0
+    top_y, max_depth = 124.0, 112.0
     scale = max(response.max_deflection, 1e-12)
     coords = [(_x_px(x, L), top_y + value / scale * max_depth) for x, value in pairs]
     path = " ".join(("M" if index == 0 else "L") + f"{x:.2f},{y:.2f}" for index, (x, y) in enumerate(coords))
     area = f'M{PLOT_LEFT},{top_y} ' + " ".join(f'L{x:.2f},{y:.2f}' for x, y in coords) + f' L{PLOT_RIGHT},{top_y} Z'
     cx = _x_px(response.max_deflection_position, L)
     cy = top_y + max_depth
+    critical_anchor = "end" if cx > 560 else "start" if cx < 160 else "middle"
+    critical_label_x = cx - 10 if critical_anchor == "end" else cx + 10 if critical_anchor == "start" else cx
+    start_value = pairs[0][1] if pairs else 0.0
+    end_value = pairs[-1][1] if pairs else 0.0
     guide = ""
     if response.point_load > 0:
         gx = _x_px(response.point_position, L)
+        guide_anchor = "start" if gx < 150 else "end" if gx > 570 else "middle"
+        guide_label_x = gx + 8 if guide_anchor == "start" else gx - 8 if guide_anchor == "end" else gx
         guide = (
-            f'<line x1="{gx:.1f}" y1="29" x2="{gx:.1f}" y2="214" class="load-guide"/>'
-            f'<text x="{gx:.1f}" y="22" class="svg-marker-label load-text">P em x = {_num(response.point_position/100)} m</text>'
+            f'<line x1="{gx:.1f}" y1="31" x2="{gx:.1f}" y2="218" class="load-guide"/>'
+            f'<text x="{guide_label_x:.1f}" y="24" style="text-anchor:{guide_anchor}" '
+            f'class="svg-marker-label load-text">P em x = {_num(response.point_position/100)} m</text>'
         )
     svg = [
-        _svg_open(uid, 276, "Linha elástica e flecha máxima", "Deslocamento vertical ao longo da viga, com escala vertical ampliada.", "#38bdf8"),
+        _svg_open(uid, 344, "Linha elástica e flecha máxima", "Deslocamento vertical ao longo da viga, com escala vertical ampliada.", "#38bdf8"),
         '<g class="engineering-chart">',
         f'<line x1="{PLOT_LEFT}" y1="{top_y}" x2="{PLOT_RIGHT}" y2="{top_y}" class="beam-datum"/>',
         f'<path d="{area}" fill="url(#{uid}-area)"/>',
         f'<path d="{path}" class="deflection-curve"/>',
+        f'<g class="chart-endpoint" data-endpoint="start">'
+        f'<circle cx="{PLOT_LEFT:.1f}" cy="{top_y + start_value/scale*max_depth:.1f}" r="4"/>'
+        f'<text x="{PLOT_LEFT:.1f}" y="48" style="text-anchor:start" class="svg-endpoint-position">x = 0 m</text>'
+        f'<text x="{PLOT_LEFT:.1f}" y="79" style="text-anchor:start" class="svg-endpoint-label">'
+        f'v = {_num(start_value,4)} cm</text></g>',
+        f'<g class="chart-endpoint" data-endpoint="end">'
+        f'<circle cx="{PLOT_RIGHT:.1f}" cy="{top_y + end_value/scale*max_depth:.1f}" r="4"/>'
+        f'<text x="{PLOT_RIGHT:.1f}" y="48" style="text-anchor:end" class="svg-endpoint-position">'
+        f'x = {_num(L/100)} m</text>'
+        f'<text x="{PLOT_RIGHT:.1f}" y="79" style="text-anchor:end" class="svg-endpoint-label">'
+        f'v = {_num(end_value,4)} cm</text></g>',
         guide,
         f'<line x1="{cx:.1f}" y1="{top_y}" x2="{cx:.1f}" y2="{cy:.1f}" class="critical-guide"/>',
         f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="6" class="deflection-marker"><title>Flecha máxima em x = {_num(response.max_deflection_position/100)} m</title></circle>',
-        f'<text x="{cx:.1f}" y="{cy+23:.1f}" class="svg-critical-label">δmax = {_num(response.max_deflection,4)} cm</text>',
-        f'<text x="{cx:.1f}" y="{cy+42:.1f}" class="svg-critical-sub">xδ = {_num(response.max_deflection_position/100)} m</text>',
-        f'<text x="{PLOT_LEFT}" y="64" class="svg-node-label">A</text>',
-        f'<text x="{PLOT_RIGHT}" y="64" text-anchor="end" class="svg-node-label">B</text>',
-        f'<text x="{PLOT_RIGHT}" y="260" text-anchor="end" class="svg-axis-title">deformação vertical ampliada</text>',
+        f'<text x="{critical_label_x:.1f}" y="{cy+23:.1f}" style="text-anchor:{critical_anchor}" '
+        f'class="svg-critical-label">δmax = {_num(response.max_deflection,4)} cm</text>',
+        f'<text x="{critical_label_x:.1f}" y="{cy+42:.1f}" style="text-anchor:{critical_anchor}" '
+        f'class="svg-critical-sub">xδ = {_num(response.max_deflection_position/100)} m</text>',
+        f'<text x="{PLOT_LEFT}" y="{top_y-8:.1f}" class="svg-node-label">A</text>',
+        f'<text x="{PLOT_RIGHT}" y="{top_y-8:.1f}" text-anchor="end" class="svg-node-label">B</text>',
+        f'<text x="{PLOT_RIGHT}" y="328" text-anchor="end" class="svg-axis-title">deformação vertical ampliada</text>',
         '</g></svg>',
     ]
     utilization = response.max_deflection / deflection_limit * 100.0 if deflection_limit > 0 else math.inf

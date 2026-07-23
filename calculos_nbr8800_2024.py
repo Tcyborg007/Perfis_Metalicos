@@ -640,25 +640,75 @@ def shear_strength_i(
         ]
         stiffener_valid = all(check["passed"] for check in stiffener_checks)
 
-    if stiffener_requested and stiffener_valid and a_h <= 3.0:
+    stiffener_effective_for_kv = bool(
+        stiffener_requested and stiffener_valid and a_h <= 3.0
+    )
+    if stiffener_effective_for_kv:
         kv = 5.0 + 5.0 / a_h**2
         kv_basis = "alma com enrijecedores transversais validados"
     else:
         kv = 5.34
         kv_basis = "alma sem enrijecedores eficazes ou a/h > 3"
 
-    lambda_p = 1.10 * math.sqrt(kv * E / fy)
-    lambda_r = 1.37 * math.sqrt(kv * E / fy)
     Vpl = 0.60 * d * tw * fy
-    if slenderness <= lambda_p:
-        Vrd = Vpl / gamma_a1
-        regime = "escoamento"
-    elif slenderness <= lambda_r:
-        Vrd = (lambda_p / slenderness) * Vpl / gamma_a1
-        regime = "flambagem inelástica"
+
+    def capacity_for(kv_value: float) -> tuple[float, float, float, str]:
+        lambda_p_value = 1.10 * math.sqrt(kv_value * E / fy)
+        lambda_r_value = 1.37 * math.sqrt(kv_value * E / fy)
+        if slenderness <= lambda_p_value:
+            return lambda_p_value, lambda_r_value, Vpl / gamma_a1, "escoamento"
+        if slenderness <= lambda_r_value:
+            return (
+                lambda_p_value,
+                lambda_r_value,
+                (lambda_p_value / slenderness) * Vpl / gamma_a1,
+                "flambagem inelástica",
+            )
+        return (
+            lambda_p_value,
+            lambda_r_value,
+            1.24 * (lambda_p_value / slenderness) ** 2 * Vpl / gamma_a1,
+            "flambagem elástica",
+        )
+
+    base_kv = 5.34
+    base_lambda_p, base_lambda_r, base_vrd, base_regime = capacity_for(base_kv)
+    lambda_p, lambda_r, Vrd, regime = capacity_for(kv)
+    vrd_gain = max(Vrd - base_vrd, 0.0)
+    vrd_gain_percent = 100.0 * vrd_gain / base_vrd if base_vrd > 0 else 0.0
+    capacity_changed = vrd_gain > max(1e-9, 1e-9 * base_vrd)
+
+    if not stiffener_requested:
+        effect_code = "not_requested"
+        effect_label = "Não solicitado"
+        effect_explanation = "O cálculo adota kv = 5,34 para alma sem enrijecedor eficaz."
+    elif not stiffener_valid:
+        failed = [check["name"] for check in stiffener_checks if not check["passed"]]
+        effect_code = "detailing_invalid"
+        effect_label = "Não validado"
+        effect_explanation = (
+            "Sem efeito em kv: não atendido(s) " + ", ".join(failed) + "."
+        )
+    elif a_h > 3.0:
+        effect_code = "spacing_ineffective"
+        effect_label = "Ineficaz: a/h > 3"
+        effect_explanation = (
+            f"Detalhamento aprovado, porém a/h = {a_h:.3f} > 3; mantém-se kv = 5,34."
+        )
+    elif not capacity_changed:
+        effect_code = "no_capacity_gain_yielding"
+        effect_label = "Sem ganho: alma em escoamento"
+        effect_explanation = (
+            "O enrijecedor eleva kv, mas não aumenta VRd porque h/tw permanece menor "
+            "ou igual a λp e a alma já atinge o escoamento."
+        )
     else:
-        Vrd = 1.24 * (lambda_p / slenderness) ** 2 * Vpl / gamma_a1
-        regime = "flambagem elástica"
+        effect_code = "capacity_gain"
+        effect_label = f"Eficaz: +{vrd_gain_percent:.1f}% em VRd"
+        effect_explanation = (
+            f"O enrijecedor eleva kv de {base_kv:.3f} para {kv:.3f} e VRd em "
+            f"{vrd_gain:.3f} kN ({vrd_gain_percent:.2f}%)."
+        )
     return {
         "Vrd": Vrd,
         "Vpl": Vpl,
@@ -670,6 +720,11 @@ def shear_strength_i(
         "regime": regime,
         "stiffener_requested": stiffener_requested,
         "stiffener_valid": stiffener_valid,
+        "stiffener_effective_for_kv": stiffener_effective_for_kv,
+        "stiffener_capacity_changed": capacity_changed,
+        "stiffener_effect_code": effect_code,
+        "stiffener_effect_label": effect_label,
+        "stiffener_effect_explanation": effect_explanation,
         "stiffener_checks": stiffener_checks,
         "a_h": a_h,
         "j": j,
@@ -681,6 +736,13 @@ def shear_strength_i(
         "stiffener_slenderness": b_t,
         "stiffener_slenderness_limit": slender_limit,
         "one_plate_inertia": one_plate_inertia,
+        "kv_without_stiffener": base_kv,
+        "lambda_p_without_stiffener": base_lambda_p,
+        "lambda_r_without_stiffener": base_lambda_r,
+        "regime_without_stiffener": base_regime,
+        "Vrd_without_stiffener": base_vrd,
+        "Vrd_gain": vrd_gain,
+        "Vrd_gain_percent": vrd_gain_percent,
         "reference": f"{NORMA}, 5.4.3.1; {ERRATA}",
     }
 

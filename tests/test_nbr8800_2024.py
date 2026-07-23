@@ -175,6 +175,59 @@ class ResistanceTests(unittest.TestCase):
         one_plate = t * b**3 / 12.0 + t * b * ((tw + b) / 2.0) ** 2
         self.assertAlmostEqual(result["I_st"], 2.0 * one_plate, places=8)
 
+    def test_unconfirmed_stiffener_welding_has_no_effect(self):
+        result = shear_strength_i(
+            self.props, fy=34.5, E=20_000.0,
+            stiffener_spacing=0.5 * self.props["h_clear"],
+            stiffener_width=10.0, stiffener_thickness=1.0,
+            stiffener_pair=True, stiffener_welded_to_web_and_flanges=False,
+        )
+        self.assertFalse(result["stiffener_valid"])
+        self.assertFalse(result["stiffener_effective_for_kv"])
+        self.assertEqual(result["stiffener_effect_code"], "detailing_invalid")
+        self.assertIn("soldagem", result["stiffener_effect_explanation"])
+        self.assertAlmostEqual(result["Vrd"], result["Vrd_without_stiffener"])
+
+    def test_spacing_above_three_h_does_not_change_kv(self):
+        result = shear_strength_i(
+            self.props, fy=34.5, E=20_000.0,
+            stiffener_spacing=4.0 * self.props["h_clear"],
+            stiffener_width=10.0, stiffener_thickness=1.0,
+            stiffener_pair=True, stiffener_welded_to_web_and_flanges=True,
+        )
+        self.assertTrue(result["stiffener_valid"])
+        self.assertFalse(result["stiffener_effective_for_kv"])
+        self.assertEqual(result["stiffener_effect_code"], "spacing_ineffective")
+        self.assertEqual(result["kv"], 5.34)
+
+    def test_effective_stiffener_can_have_zero_gain_in_yielding_regime(self):
+        result = shear_strength_i(
+            self.props, fy=34.5, E=20_000.0,
+            stiffener_spacing=0.5 * self.props["h_clear"],
+            stiffener_width=10.0, stiffener_thickness=1.0,
+            stiffener_pair=True, stiffener_welded_to_web_and_flanges=True,
+        )
+        self.assertTrue(result["stiffener_effective_for_kv"])
+        self.assertGreater(result["kv"], result["kv_without_stiffener"])
+        self.assertEqual(result["regime"], "escoamento")
+        self.assertEqual(result["stiffener_effect_code"], "no_capacity_gain_yielding")
+        self.assertAlmostEqual(result["Vrd"], result["Vrd_without_stiffener"])
+        self.assertAlmostEqual(result["Vrd_gain_percent"], 0.0)
+
+    def test_effective_stiffener_increases_strength_of_slender_web(self):
+        props = dict(self.props)
+        props.update(d=40.0, h_clear=38.7, tw=0.475)
+        result = shear_strength_i(
+            props, fy=34.5, E=20_000.0,
+            stiffener_spacing=100.0,
+            stiffener_width=10.0, stiffener_thickness=0.8,
+            stiffener_pair=True, stiffener_welded_to_web_and_flanges=True,
+        )
+        self.assertTrue(result["stiffener_effective_for_kv"])
+        self.assertEqual(result["stiffener_effect_code"], "capacity_gain")
+        self.assertGreater(result["Vrd"], result["Vrd_without_stiffener"])
+        self.assertGreater(result["Vrd_gain_percent"], 0.0)
+
     def test_tension_flange_holes_can_govern(self):
         result = flexural_strength_i(
             self.props, fy=34.5, fu=45.0, E=20_000.0, Lb=5.0, Cb=1.0,
