@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0",
+  "case_id": "EXAMPLE-ANALYSIS-001",
+  "beam": {
+    "length_cm": 600.0,
+    "support": "SIMPLY_SUPPORTED"
+  },
+  "material": {
+    "elastic_modulus_kN_per_cm2": 20000.0
+  },
+  "section": {
+    "ix_cm4": 12500.0
+  },
+  "loads": [
+    {
+      "type": "uniform",
+      "start_cm": 0.0,
+      "end_cm": 600.0,
+      "intensity_kN_per_cm": 0.08
+    },
+    {
+      "type": "point",
+      "position_cm": 225.0,
+      "force_kN": 12.0
+    }
+  ],
+  "relative_tolerance": 1e-07,
+  "max_refinements": 8
+}

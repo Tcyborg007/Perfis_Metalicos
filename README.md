@@ -1,6 +1,9 @@
 # Perfis Metálicos
 
-Aplicação Streamlit para análise de perfis de aço, geração de memorial de cálculo auditável e verificações implementadas com referência à ABNT NBR 8800:2024 e à Errata 1:2025.
+Aplicação Streamlit para análise de perfis de aço e geração de memorial de cálculo.
+As verificações implementadas estão em auditoria contra a ABNT NBR 8800:2024.
+Documentos normativos não disponíveis no repositório, inclusive erratas, permanecem
+marcados como `NORMATIVE_REVIEW_REQUIRED`.
 
 ## Executar localmente
 
@@ -19,7 +22,11 @@ python -m streamlit run app.py
 ## Validação
 
 ```bash
-python -m unittest discover -s tests -v
+python -m pytest
+python scripts/audit_normative_manifest.py
+python scripts/validate_catalog.py
+python scripts/validate_determinism.py
+python scripts/generate_reproducible_record.py --commit <sha-do-commit>
 ```
 
 Os resultados produzidos pelo programa devem ser conferidos e validados por profissional legalmente habilitado, considerando o sistema estrutural completo, as hipóteses adotadas e as condições reais da obra.

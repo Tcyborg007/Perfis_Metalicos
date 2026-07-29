@@ -33,12 +33,16 @@ jobs:
       - name: Tests and branch coverage
         run: python -m pytest --cov --cov-branch --cov-report=term-missing --cov-report=xml
       - name: Memorial generation smoke test
-        run: python -m pytest tests/test_memorial_detailed.py -q
+        run: |
+          python scripts/generate_reproducible_record.py --commit "${GITHUB_SHA}"
+          python -m pytest tests/test_memorial_detailed.py tests/test_reproducible_record.py -q
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: coverage-${{ matrix.python-version }}
-          path: coverage.xml
+          path: |
+            coverage.xml
+            build/reproducible_analysis_record.json
 
   mutation:
     runs-on: ubuntu-latest
