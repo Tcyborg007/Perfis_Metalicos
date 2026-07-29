@@ -64,3 +64,7 @@ warn_unused_ignores = true
 warn_redundant_casts = true
 no_implicit_optional = true
 disable_error_code = ["import-untyped"]
+
+[tool.mutmut]
+source_paths = ["src/perfis_metalicos/checks/flexure.py"]
+pytest_add_cli_args_test_selection = ["tests/test_flexure_piecewise.py"]

@@ -23,6 +23,8 @@
 - rotinas antigas e sem chamadas de esforços, flecha, `Cb`, FLT, FLM, FLA,
   cisalhamento e memorial foram removidas do Streamlit;
 - versão do motor centralizada e elevada para `0.2.0`.
+- memorial compatível com a sintaxe de `f-string` do Python 3.11 e campanha
+  experimental do Mutmut 3.6 configurada no `pyproject.toml`.
 
 ### Known limitations
 

@@ -46,7 +46,6 @@ jobs:
 
   mutation:
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -58,14 +57,16 @@ jobs:
           python -m pip install -r requirements.lock -e . --no-deps
           python -m pip install mutmut==3.6.0
       - name: Critical flexure mutation campaign
+        id: mutation
+        continue-on-error: true
+        run: mutmut run
+      - name: Record mutation results
+        if: always()
         run: |
           set +e
-          mutmut run \
-            --paths-to-mutate=src/perfis_metalicos/checks/flexure.py \
-            --tests-dir=tests/test_flexure_piecewise.py
-          mutation_exit=$?
           mutmut results | tee mutation-results.txt
-          exit $mutation_exit
+          echo "run_outcome=${{ steps.mutation.outcome }}" >> mutation-results.txt
+          exit 0
       - uses: actions/upload-artifact@v4
         if: always()
         with:
