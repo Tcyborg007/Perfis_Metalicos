@@ -21,13 +21,13 @@
 | ELS quase permanente, frequente e rara | NBR 8681:2025; NBR 8800:2024, 4.8.7.3 | ELS | mecanismo genérico disponível; regras de produção bloqueadas | `combine_els`, `combinations.generate_combinations` | fatores sintéticos e baseline | ausente | NORMATIVE_REVIEW_REQUIRED | não designado |
 | ações de uso/ocupação | NBR 6120:2019 corrigida | quando inseridas | número livre sem categoria controlada | UI | ausente | ausente | NORMATIVE_REVIEW_REQUIRED | não designado |
 | vento | NBR 6123:2023 corrigida/Er1:2025 | quando houver vento | não implementado | nenhum | ausente | ausente | OUT_OF_SCOPE | não designado |
-| análise de q uniforme total | modelo elástico e NBR 8800:2024, 4.10 | viga prismática de um vão | implementada para quatro vínculos | `analyze_beam` | fórmulas clássicas | parcial, sem relatório assinado | INDEPENDENT_EVIDENCE_REQUIRED | não designado |
-| carga uniforme parcial | modelo estrutural | quando houver | não implementado | nenhum | ausente | ausente | NOT_IMPLEMENTED | não designado |
-| carga linearmente variável | modelo estrutural | quando houver | não implementado | nenhum | ausente | ausente | NOT_IMPLEMENTED | não designado |
-| várias forças pontuais | modelo estrutural | quando houver | somente uma força | `analyze_beam` | uma força excêntrica | ausente | NOT_IMPLEMENTED | não designado |
-| momentos aplicados | modelo estrutural | quando houver | não implementado | nenhum | ausente | ausente | NOT_IMPLEMENTED | não designado |
+| análise de q uniforme total | modelo elástico e NBR 8800:2024, 4.10 | viga prismática de um vão | solver genérico para quatro vínculos; motor legado ainda ativo na UI | `analysis.analyze_prismatic_beam`, `analyze_beam` | soluções clássicas dos quatro vínculos | sem relatório assinado | INDEPENDENT_EVIDENCE_REQUIRED | não designado |
+| carga uniforme parcial | modelo estrutural | quando houver | solver genérico implementado, ainda não integrado à UI | `analysis.analyze_prismatic_beam` | equilíbrio e reações independentes | ausente | PARTIAL_IMPLEMENTATION | não designado |
+| carga linearmente variável | modelo estrutural | quando houver | solver genérico implementado, ainda não integrado à UI | `analysis.analyze_prismatic_beam` | resultante triangular independente | ausente | PARTIAL_IMPLEMENTATION | não designado |
+| várias forças pontuais | modelo estrutural | quando houver | solver genérico implementado, ainda não integrado à UI | `analysis.analyze_prismatic_beam` | equilíbrio com duas forças | ausente | PARTIAL_IMPLEMENTATION | não designado |
+| momentos aplicados | modelo estrutural | quando houver | solver genérico implementado, ainda não integrado à UI | `analysis.analyze_prismatic_beam` | salto de momento | ausente | PARTIAL_IMPLEMENTATION | não designado |
 | extremos de M e V | modelo estrutural | modelo atual | M analítico; V por candidatos | `analyze_beam` | parcial | ausente | INDEPENDENT_EVIDENCE_REQUIRED | não designado |
-| extremo de deslocamento | modelo estrutural | quando E e I informados | malha fixa de 2.001 pontos | `analyze_beam` | contraste de malha apenas para Cb | ausente | NOT_IMPLEMENTED | não designado |
+| extremo de deslocamento | modelo estrutural | quando E e I informados | raízes da rotação por elemento e refinamento com erro no solver novo; UI ainda usa malha fixa | `analysis.analyze_prismatic_beam`, `analyze_beam` | raízes, tolerância e não convergência | ausente | PARTIAL_IMPLEMENTATION | não designado |
 | Cb por trecho | NBR 8800:2024, 5.4.2.3 a 5.4.2.5 | FLT | um único trecho | `calculate_cb`, `perform_all_checks` | q uniforme | ausente | BASELINE_IMPLEMENTED_UNVERIFIED | não designado |
 | FLT por todos os segmentos | NBR 8800:2024, 5.4.2 | viga com contenções | não implementado | nenhum | ausente | ausente | NOT_IMPLEMENTED | não designado |
 | mesa comprimida por segmento | NBR 8800:2024, 5.4.2 | FLT | não implementado | nenhum | ausente | ausente | NOT_IMPLEMENTED | não designado |

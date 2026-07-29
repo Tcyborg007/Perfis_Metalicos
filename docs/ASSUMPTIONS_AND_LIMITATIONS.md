@@ -27,8 +27,10 @@ para fabricação ou substituir cálculo e revisão de engenheiro habilitado.
 - não suporta coleção genérica de ações;
 - não alterna todas as ações variáveis como principais;
 - não gera envelope de combinações;
-- não representa carregamento parcial, trapezoidal, triangular, vários pontos ou momentos aplicados;
-- não resolve a posição da flecha máxima por rotação nula;
+- a interface ainda não usa o solver novo que representa carregamento parcial, linear variável,
+  vários pontos e momentos aplicados;
+- a interface ainda usa o motor legado para flecha; o solver novo resolve rotação nula por
+  elemento e registra erro de refinamento;
 - não modela segmentos de contenção nem mesa comprimida por segmento;
 - não separa contenção lateral, torcional e de empenamento;
 - não verifica todos os requisitos de enrijecedores, soldas e transferência;
