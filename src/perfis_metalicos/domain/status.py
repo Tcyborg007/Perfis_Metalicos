@@ -8,6 +8,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
+from perfis_metalicos.version import ENGINE_VERSION
+
 APPROVED_SCOPE_TEXT = "APROVADO NO ESCOPO COMPUTACIONAL DECLARADO"
 
 
@@ -53,7 +55,7 @@ class VerificationResult:
     combination: str | None = None
     position: Any | None = None
     segment: str | None = None
-    engine_version: str = "0.1.0"
+    engine_version: str = ENGINE_VERSION
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -144,4 +146,3 @@ def aggregate_verifications(
         blockers=blockers,
         failures=failures,
     )
-

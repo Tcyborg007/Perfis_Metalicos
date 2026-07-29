@@ -2,7 +2,7 @@ schema_version: "1.0"
 manifest_status: "NORMATIVE_REVIEW_REQUIRED"
 generated_on: "2026-07-29"
 baseline_commit: "ab68c099e53a1f26974fd2adcbe752b0d4c8a6ec"
-engine_version: "baseline-unversioned"
+engine_version: "0.2.0"
 protected_material_policy:
   version_full_text: false
   record_only:

@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 
 from perfis_metalicos.audit import build_reproducible_analysis_record
+from perfis_metalicos.version import ENGINE_VERSION
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -24,7 +25,7 @@ def main() -> None:
     payload = json.loads(args.input.read_text(encoding="utf-8"))
     record = build_reproducible_analysis_record(
         payload,
-        engine_version="0.1.0",
+        engine_version=ENGINE_VERSION,
         commit=args.commit,
         catalog_path=ROOT / "perfis.xlsx",
         normative_manifest_path=ROOT / "norms" / "normative_manifest.yaml",

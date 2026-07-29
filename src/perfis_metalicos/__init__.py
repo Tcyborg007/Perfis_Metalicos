@@ -7,6 +7,7 @@ from perfis_metalicos.domain.status import (
     VerificationStatus,
     aggregate_verifications,
 )
+from perfis_metalicos.version import ENGINE_VERSION
 
 __all__ = [
     "APPROVED_SCOPE_TEXT",
@@ -14,7 +15,7 @@ __all__ = [
     "VerificationResult",
     "VerificationStatus",
     "aggregate_verifications",
+    "ENGINE_VERSION",
 ]
 
-__version__ = "0.1.0"
-
+__version__ = ENGINE_VERSION

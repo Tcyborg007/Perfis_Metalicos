@@ -11,6 +11,7 @@ from perfis_metalicos.domain.status import (
     VerificationStatus,
 )
 from perfis_metalicos.domain.units import Length
+from perfis_metalicos.version import ENGINE_VERSION
 
 
 class ServiceCombinationFamily(Enum):
@@ -94,7 +95,7 @@ def evaluate_serviceability_deflection(
     limit: ServiceabilityLimit,
     camber: Length | None = None,
     position: Length | None = None,
-    engine_version: str = "0.1.0",
+    engine_version: str = ENGINE_VERSION,
 ) -> VerificationResult:
     camber = camber or Length(0.0)
     demand = _criterion_demand(phase, limit.criterion, camber)

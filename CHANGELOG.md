@@ -19,11 +19,13 @@
 - evidência externa não é convertida em resultado do programa;
 - dupla simetria deve ser declarada e fundamentada;
 - triagem geométrica de enrijecedor não libera aumento de resistência.
+- rotinas antigas e sem chamadas de esforços, flecha, `Cb`, FLT, FLM, FLA,
+  cisalhamento e memorial foram removidas do Streamlit;
+- versão do motor centralizada e elevada para `0.2.0`.
 
 ### Known limitations
 
 - normas complementares e Errata 1:2025 ainda não foram fornecidas;
 - catálogo atual está `INVALID_CATALOG_DATA`;
-- fluxo Streamlit ainda utiliza partes do motor legado;
+- a interface ainda usa adaptadores de compatibilidade para o núcleo de cálculo;
 - não há revisão estrutural independente nem golden cases assinados.
-
