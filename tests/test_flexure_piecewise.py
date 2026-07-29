@@ -222,7 +222,7 @@ def test_piecewise_rejects_every_invalid_positive_finite_input(
 def test_piecewise_rejects_non_increasing_slenderness_limits(lambda_p, lambda_r):
     with pytest.raises(
         ValueError,
-        match=re.escape("λr deve ser maior que λp."),
+        match=rf"^{re.escape('λr deve ser maior que λp.')}$",
     ):
         piecewise_design_strength(
             slenderness=10.0,
@@ -239,9 +239,7 @@ def test_piecewise_rejects_non_increasing_slenderness_limits(lambda_p, lambda_r)
 def test_piecewise_rejects_residual_moment_above_upper_moment():
     with pytest.raises(
         ValueError,
-        match=re.escape(
-            "O momento residual não pode superar o momento superior."
-        ),
+        match=rf"^{re.escape('O momento residual não pode superar o momento superior.')}$",
     ):
         piecewise_design_strength(
             slenderness=15.0,
