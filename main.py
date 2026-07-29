@@ -2212,6 +2212,15 @@ def perform_all_checks(props, fy_aco, Lb_projeto, Cb_projeto, L_cm, Msd, Vsd, q_
             tipo_viga, L_cm, els_loads['q'], els_loads['P'], point_position,
             E=E_aco, I=props['Ix'],
         )
+        scope_issues.append(
+            "ELS legado: a flecha total ainda não está decomposta por fase, "
+            "permanente antes/depois de elemento frágil, variável principal e "
+            "acompanhantes; permanece NOT_CHECKED no fluxo de produção."
+        )
+        scope_issues.append(
+            "ELS de vibração: OUT_OF_SCOPE; a flecha estática não substitui "
+            "análise dinâmica."
+        )
     else:
         external_evidence = kwargs.get("external_evidence")
         if external_evidence is None:

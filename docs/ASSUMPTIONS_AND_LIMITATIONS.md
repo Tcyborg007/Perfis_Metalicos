@@ -42,7 +42,8 @@ para fabricação ou substituir cálculo e revisão de engenheiro habilitado.
 - possui matriz tipada de aplicabilidade para forças localizadas, mas a UI automática ainda
   representa apenas compressão e não coleta todas as classificações de 5.7.1; transferência por
   solda, condições de 5.7.8 e dimensionamento de 5.7.9 permanecem bloqueantes;
-- não decompõe deslocamentos por fase e parcela;
+- o domínio novo decompõe deslocamentos por fase e parcela, mas o fluxo de produção ainda usa
+  flecha total simplificada e por isso permanece `NOT_CHECKED`;
 - não implementa vibração;
 - valida hash e coerências automáticas do catálogo, mas a origem oficial das quatro famílias não
   foi fornecida; cinco designações estão duplicadas na família VS e o status atual é
