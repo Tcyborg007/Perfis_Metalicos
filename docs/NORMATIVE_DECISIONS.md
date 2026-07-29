@@ -43,10 +43,27 @@ Uma decisão somente passa a `APPROVED` quando contém:
 
 | Campo | Registro |
 |---|---|
-| status | `REJECTED_BASELINE_BEHAVIOR_PENDING_IMPLEMENTATION` |
+| status | `PARTIAL_IMPLEMENTATION` |
 | problema | a UI permite tornar FLT globalmente não aplicável por uma seleção única |
 | fundamento de segurança | a aplicabilidade depende de segmento, sinal do momento, mesa comprimida e tipo de contenção |
-| decisão de software | o comportamento global não será mantido na arquitetura nova |
+| decisão de software | o checkbox global foi removido; a arquitetura nova classifica contenções por mesa, extremidade e intervalo e não desativa FLT globalmente |
 | decisão normativa detalhada | pendente de revisão da NBR 8800:2024/Er1:2025 por item |
+| implementação | `analysis.stability_segments`; uma única mesa continuamente contida segue caminho separado e bloqueante |
+| testes | `tests/test_flt_segments.py` |
+| revisor estrutural | não designado |
+| data | não definida |
+
+## ND-004 - Associação de Cb, demanda e resistência ao trecho
+
+| Campo | Registro |
+|---|---|
+| status | `PARTIAL_IMPLEMENTATION` |
+| problema | o baseline calculava um único `Cb` e podia associá-lo à demanda global, sem provar identidade de trecho |
+| evidência consultada | cópia fornecida da ABNT NBR 8800:2024, item 5.4.2.3, páginas numeradas 54 e 55 (páginas físicas 71 e 72 do PDF), inspecionadas visualmente |
+| decisão de software | `Mmax`, `MA`, `MB`, `MC`, `Cb`, demanda, resistência e utilização são objetos do mesmo `UnbracedSegment`; o governante é escolhido pela utilização |
+| limite aplicado | `Cb <= 3,0` no caso geral do item 5.4.2.3-a |
+| barreiras | carga acima da semialtura, balanço não classificado, contenção insuficiente e uma única mesa continuamente contida não recebem resultado numérico liberado |
+| teste de regressão obrigatório | `test_each_segment_uses_its_own_moments_cb_demand_and_resistance` |
+| pendência | equações de resistência de FLT e eficácia/dimensionamento das contenções ainda exigem revisão completa e evidência independente |
 | revisor estrutural | não designado |
 | data | não definida |

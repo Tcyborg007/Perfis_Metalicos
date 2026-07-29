@@ -58,6 +58,8 @@ standards:
       - "calculos_nbr8800_2024.validate_material"
       - "calculos_nbr8800_2024.calculate_cb"
       - "perfis_metalicos.analysis.analyze_prismatic_beam"
+      - "perfis_metalicos.analysis.stability_segments.segment_moment_data"
+      - "perfis_metalicos.analysis.stability_segments.evaluate_flt_segments"
       - "calculos_nbr8800_2024.combine_elu_normal"
       - "calculos_nbr8800_2024.combine_els"
       - "calculos_nbr8800_2024.flexural_strength_i"
@@ -71,6 +73,7 @@ standards:
       - "tests.test_memorial_detailed"
       - "tests.test_profile_catalog_integration"
       - "tests.test_generic_beam_analysis"
+      - "tests.test_flt_segments"
     review:
       responsible_reviewer: null
       review_date: null

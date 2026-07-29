@@ -31,15 +31,21 @@ para fabricação ou substituir cálculo e revisão de engenheiro habilitado.
   vários pontos e momentos aplicados;
 - a interface ainda usa o motor legado para flecha; o solver novo resolve rotação nula por
   elemento e registra erro de refinamento;
-- não modela segmentos de contenção nem mesa comprimida por segmento;
-- não separa contenção lateral, torcional e de empenamento;
+- o núcleo novo modela segmentos, mesa comprimida e contenções lateral/torcional/empenamento,
+  porém ainda não está integrado à interface de produção;
+- a eficácia, resistência, rigidez e ligação das contenções não são dimensionadas pelo núcleo;
+- o caso de uma única mesa continuamente contida permanece bloqueado até a revisão completa de
+  5.4.2.4;
+- balanços permanecem bloqueados na seleção de `Cb` até a classificação explícita das restrições;
 - não verifica todos os requisitos de enrijecedores, soldas e transferência;
 - não possui matriz completa de forças localizadas;
 - não decompõe deslocamentos por fase e parcela;
 - não implementa vibração;
 - não valida a origem do catálogo;
-- não exige evidência documental externa no modo manual;
-- não possui estados tipados capazes de bloquear aprovação com pendência.
+- a interface exige arquivo e metadados de evidência externa, mas ainda não importa resultados
+  numéricos assinados para comparação;
+- os estados tipados e o agregador seguro existem; partes legadas ainda precisam ser removidas
+  para que todo o fluxo use exclusivamente esse domínio.
 
 ## Fora do escopo declarado até implementação validada
 
@@ -73,4 +79,5 @@ para fabricação ou substituir cálculo e revisão de engenheiro habilitado.
 
 Qualquer entrada que acione uma limitação obrigatória deve produzir estado bloqueante
 (`NOT_CHECKED`, `OUT_OF_SCOPE`, `INVALID_INPUT` ou `EXTERNAL_EVIDENCE_REQUIRED`), nunca aprovação.
-Essa regra ainda não está implementada no commit-base.
+Essa regra está implementada no novo domínio e na ponte de segurança do modo manual, mas a
+migração integral do fluxo legado ainda é uma pendência obrigatória.
