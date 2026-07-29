@@ -5,6 +5,12 @@ from perfis_metalicos.analysis.beam_fem import (
     BeamExtremum,
     analyze_prismatic_beam,
 )
+from perfis_metalicos.analysis.envelope import (
+    BeamResponseEnvelope,
+    CombinationAnalysis,
+    EnvelopeExtreme,
+    analyze_combination_envelope,
+)
 from perfis_metalicos.analysis.stability_segments import (
     ContinuousFlangeCbCase,
     ContinuousFlangeRestraint,
@@ -24,8 +30,11 @@ from perfis_metalicos.analysis.stability_segments import (
 __all__ = [
     "BeamAnalysisResult",
     "BeamExtremum",
+    "BeamResponseEnvelope",
+    "CombinationAnalysis",
     "ContinuousFlangeCbCase",
     "ContinuousFlangeRestraint",
+    "EnvelopeExtreme",
     "Flange",
     "LoadApplicationHeight",
     "RestraintPoint",
@@ -33,6 +42,7 @@ __all__ = [
     "SegmentMomentData",
     "UnbracedSegment",
     "analyze_prismatic_beam",
+    "analyze_combination_envelope",
     "build_unbraced_segments",
     "continuous_flange_cb",
     "evaluate_flt_segments",

@@ -12,6 +12,7 @@
 - matriz de forças localizadas e ELS por fases e parcelas;
 - manifesto e validação automática do catálogo;
 - auditorias reproduzíveis e workflow de qualidade.
+- envelope rastreável de momento, cortante e deslocamento por combinação.
 
 ### Changed
 
