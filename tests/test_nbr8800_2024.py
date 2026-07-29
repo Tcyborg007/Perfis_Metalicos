@@ -189,6 +189,11 @@ class ResistanceTests(unittest.TestCase):
         )
         one_plate = t * b**3 / 12.0 + t * b * ((tw + b) / 2.0) ** 2
         self.assertAlmostEqual(result["I_st"], 2.0 * one_plate, places=8)
+        self.assertTrue(result["stiffener_geometric_valid"])
+        self.assertFalse(result["stiffener_design_complete"])
+        self.assertFalse(result["stiffener_valid"])
+        self.assertEqual(result["kv"], 5.34)
+        self.assertIn("dimensionamento das soldas", result["stiffener_incomplete_items"])
 
     def test_tension_flange_holes_can_govern(self):
         result = flexural_strength_i(

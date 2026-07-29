@@ -37,7 +37,8 @@ para fabricação ou substituir cálculo e revisão de engenheiro habilitado.
 - o caso de uma única mesa continuamente contida permanece bloqueado até a revisão completa de
   5.4.2.4;
 - balanços permanecem bloqueados na seleção de `Cb` até a classificação explícita das restrições;
-- não verifica todos os requisitos de enrijecedores, soldas e transferência;
+- não verifica todos os requisitos de enrijecedores, soldas e transferência; a triagem geométrica
+  é separada e não aumenta `kv` nem libera aprovação;
 - não possui matriz completa de forças localizadas;
 - não decompõe deslocamentos por fase e parcela;
 - não implementa vibração;

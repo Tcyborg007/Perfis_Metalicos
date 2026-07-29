@@ -2255,6 +2255,12 @@ def perform_all_checks(props, fy_aco, Lb_projeto, Cb_projeto, L_cm, Msd, Vsd, q_
         stiffener_pair=kwargs.get('stiffener_pair', True),
         stiffener_welded_to_web_and_flanges=kwargs.get('stiffener_welded', False),
     )
+    if shear['stiffener_requested'] and not shear['stiffener_design_complete']:
+        scope_issues.append(
+            "Enrijecedores: a triagem geométrica foi calculada, mas resistência "
+            "axial, flambagem, transferência, soldas, contato com mesas, painéis "
+            "extremos e a Errata 1:2025 permanecem NOT_CHECKED."
+        )
 
     if not kwargs.get("flt_applicable", True):
         scope_issues.append(

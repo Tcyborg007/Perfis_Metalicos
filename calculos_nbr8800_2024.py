@@ -649,6 +649,10 @@ def shear_strength_i(
     stiffener_requested = bool(stiffener_spacing and stiffener_spacing > 0)
     stiffener_checks: list[dict] = []
     stiffener_valid = False
+    stiffener_geometric_valid = False
+    stiffener_design_complete = False
+    stiffener_normative_source_verified = False
+    stiffener_incomplete_items: list[str] = []
     a_h = math.inf
     j = None
     I_st = None
@@ -679,7 +683,24 @@ def shear_strength_i(
             {"name": "b/t", "value": b_t, "limit": slender_limit, "passed": b_t <= slender_limit},
             {"name": "inércia", "value": I_st, "limit": I_req, "passed": I_st >= I_req},
         ]
-        stiffener_valid = all(check["passed"] for check in stiffener_checks)
+        stiffener_geometric_valid = all(check["passed"] for check in stiffener_checks)
+        stiffener_incomplete_items = [
+            "resistência axial do enrijecedor",
+            "flambagem do enrijecedor",
+            "transferência da força para o enrijecedor",
+            "dimensionamento das soldas",
+            "contato e ligação com as mesas",
+            "requisitos de painéis extremos",
+            "confirmação da expressão de j na Errata 1:2025",
+        ]
+        # A geometria isolada não autoriza o aumento de kv. O caminho somente
+        # poderá ser liberado quando todos os itens e a fonte da errata forem
+        # verificados.
+        stiffener_valid = (
+            stiffener_geometric_valid
+            and stiffener_design_complete
+            and stiffener_normative_source_verified
+        )
 
     if stiffener_requested and stiffener_valid and a_h <= 3.0:
         kv = 5.0 + 5.0 / a_h**2
@@ -711,6 +732,10 @@ def shear_strength_i(
         "regime": regime,
         "stiffener_requested": stiffener_requested,
         "stiffener_valid": stiffener_valid,
+        "stiffener_geometric_valid": stiffener_geometric_valid,
+        "stiffener_design_complete": stiffener_design_complete,
+        "stiffener_normative_source_verified": stiffener_normative_source_verified,
+        "stiffener_incomplete_items": stiffener_incomplete_items,
         "stiffener_checks": stiffener_checks,
         "a_h": a_h,
         "j": j,
