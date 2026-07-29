@@ -5,7 +5,7 @@
 - data: 2026-07-29;
 - Python: 3.13.5;
 - comando: `python -m pytest --cov --cov-branch`;
-- testes: 178 aprovados;
+- testes: 179 aprovados;
 - cobertura total do pacote novo: **90,06 %** com branches;
 - limite atual de CI: 85 %;
 - meta de aceite: 95 % no núcleo e 100 % de branches nas funções normativas críticas.

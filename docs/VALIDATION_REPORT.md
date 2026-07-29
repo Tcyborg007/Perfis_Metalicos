@@ -17,14 +17,14 @@ da suíte não substitui revisão de engenheiro habilitado.
 
 | Verificação | Resultado |
 |---|---|
-| testes | 178 aprovados |
+| testes | 179 aprovados |
 | cobertura com branches | 90,06 %; `checks.flexure` em 100 %; meta global de 95 % não atingida |
 | Ruff | aprovado no pacote, scripts e testes |
 | mypy | aprovado em 24 módulos do pacote |
 | determinismo | hash `7f147faeb25bfb590d0fdc4c39813da8c7a33ab80a022105006f850d65483ba7` |
 | manifesto | quatro documentos registrados; estado `NORMATIVE_REVIEW_REQUIRED` |
 | catálogo | 560 linhas, 14 ocorrências; estado `INVALID_CATALOG_DATA` |
-| mutação | 124 mutantes; 92 mortos; 32 sobreviventes; score 74,19 %; meta elevada não atingida |
+| mutação | `checks.flexure`: 124 mutantes, 124 mortos, score 100 %; demais módulos sem campanha equivalente |
 | evidência independente | ausente |
 
 ## Critérios de aceite
@@ -41,7 +41,7 @@ da suíte não substitui revisão de engenheiro habilitado.
 | catálogo com origem e validações | não | validações existem; origem oficial e duplicidades faltam |
 | testes independentes dos estados-limites | não | não há golden cases assinados |
 | transições de regime testadas | sim para primitivas centralizadas | parâmetros completos ainda aguardam revisão |
-| suíte passa em CI | sim | run `30478048679`: Python 3.11, Python 3.13 e job de mutação concluídos; sobreviventes de mutação continuam como pendência de qualidade |
+| suíte passa em CI | sim | run `30478567687`: Python 3.11, Python 3.13 e campanha crítica de mutação concluídos |
 | memorial integralmente rastreável | parcial | registro JSON da análise existe; resistências e memorial visual ainda não são reconstruídos integralmente |
 | revisão independente | não | profissional não designado |
 | limitações declaradas | sim | `ASSUMPTIONS_AND_LIMITATIONS.md` |
@@ -52,7 +52,7 @@ da suíte não substitui revisão de engenheiro habilitado.
    `ND-001`; o catálogo NBR 8681:2025 está controlado, mas propositalmente bloqueado.
 2. A expressão atribuída à Errata 1:2025 permanece bloqueada.
 3. O catálogo atual não pode fundamentar aprovação executiva.
-4. Os 32 mutantes sobreviventes da primitiva de flexão ainda exigem triagem.
+4. Os módulos normativos fora de `checks.flexure` ainda não têm mutation score.
 5. Enrijecedores, soldas, contato, transferência e painéis extremos não possuem
    verificação completa.
 6. O fluxo Streamlit ainda usa um adaptador monolítico para partes de resistência
