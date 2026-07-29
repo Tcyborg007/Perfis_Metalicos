@@ -63,6 +63,45 @@ def test_piecewise_expected_monotonicity():
 
 
 @pytest.mark.parametrize(
+    ("slenderness", "expected_nominal", "expected_design", "regime"),
+    (
+        (5.0, 100.0, 100.0 / 1.10, FlexuralRegime.PLASTIC_OR_YIELD),
+        (15.0, 90.0, 90.0 / 1.10, FlexuralRegime.INELASTIC),
+        (25.0, 51.2, 51.2 / 1.10, FlexuralRegime.ELASTIC),
+    ),
+)
+def test_piecewise_returns_exact_strength_and_traceable_inputs(
+    slenderness,
+    expected_nominal,
+    expected_design,
+    regime,
+):
+    result = strength(slenderness)
+    assert result.slenderness == slenderness
+    assert result.lambda_p == 10.0
+    assert result.lambda_r == 20.0
+    assert result.nominal_moment.kN_cm == pytest.approx(expected_nominal)
+    assert result.design_moment.kN_cm == pytest.approx(expected_design)
+    assert result.regime is regime
+    assert result.reference is ANNEX_D_D21
+
+
+def test_piecewise_applies_gamma_once_after_selecting_nominal_strength():
+    result = piecewise_design_strength(
+        slenderness=15.0,
+        lambda_p=10.0,
+        lambda_r=20.0,
+        plastic_or_yield_moment=Moment(100.0),
+        residual_moment=Moment(80.0),
+        elastic_critical_moment=Moment(70.0),
+        gamma_a1=2.0,
+        reference=ANNEX_D_D21,
+    )
+    assert result.nominal_moment.kN_cm == 90.0
+    assert result.design_moment.kN_cm == 45.0
+
+
+@pytest.mark.parametrize(
     ("lambda_lt", "regime"),
     (
         (0.4 - EPSILON, FlexuralRegime.PLASTIC_OR_YIELD),
@@ -94,6 +133,20 @@ def test_ltb_alternative_transition_at_14_has_only_formula_rounding_jump():
 
 
 @pytest.mark.parametrize(
+    ("lambda_lt", "expected", "regime"),
+    (
+        (0.2, 1.0, FlexuralRegime.PLASTIC_OR_YIELD),
+        (0.9, 0.755, FlexuralRegime.INELASTIC),
+        (2.0, 0.25, FlexuralRegime.ELASTIC),
+    ),
+)
+def test_ltb_alternative_exact_values(lambda_lt, expected, regime):
+    reduction, actual_regime = ltb_alternative_reduction(lambda_lt)
+    assert reduction == pytest.approx(expected)
+    assert actual_regime is regime
+
+
+@pytest.mark.parametrize(
     "invalid",
     (0.0, -1.0, math.inf, math.nan),
 )
@@ -109,3 +162,81 @@ def test_piecewise_rejects_invalid_slenderness(invalid):
             gamma_a1=1.10,
             reference=ANNEX_D_D21,
         )
+
+
+@pytest.mark.parametrize(
+    ("field", "invalid"),
+    (
+        ("lambda_p", 0.0),
+        ("lambda_p", math.inf),
+        ("lambda_r", -1.0),
+        ("lambda_r", math.nan),
+        ("gamma_a1", 0.0),
+        ("gamma_a1", -1.0),
+        ("plastic", 0.0),
+        ("plastic", math.inf),
+        ("residual", 0.0),
+        ("residual", math.nan),
+        ("critical", 0.0),
+        ("critical", -1.0),
+    ),
+)
+def test_piecewise_rejects_every_invalid_positive_finite_input(field, invalid):
+    values = {
+        "lambda_p": 10.0,
+        "lambda_r": 20.0,
+        "gamma_a1": 1.10,
+        "plastic": 100.0,
+        "residual": 80.0,
+        "critical": 70.0,
+    }
+    values[field] = invalid
+    with pytest.raises(ValueError, match="finito"):
+        piecewise_design_strength(
+            slenderness=15.0,
+            lambda_p=values["lambda_p"],
+            lambda_r=values["lambda_r"],
+            plastic_or_yield_moment=Moment(values["plastic"]),
+            residual_moment=Moment(values["residual"]),
+            elastic_critical_moment=Moment(values["critical"]),
+            gamma_a1=values["gamma_a1"],
+            reference=ANNEX_D_D21,
+        )
+
+
+@pytest.mark.parametrize(
+    ("lambda_p", "lambda_r"),
+    ((10.0, 10.0), (11.0, 10.0)),
+)
+def test_piecewise_rejects_non_increasing_slenderness_limits(lambda_p, lambda_r):
+    with pytest.raises(ValueError, match="λr deve ser maior"):
+        piecewise_design_strength(
+            slenderness=10.0,
+            lambda_p=lambda_p,
+            lambda_r=lambda_r,
+            plastic_or_yield_moment=Moment(100.0),
+            residual_moment=Moment(80.0),
+            elastic_critical_moment=Moment(70.0),
+            gamma_a1=1.10,
+            reference=ANNEX_D_D21,
+        )
+
+
+def test_piecewise_rejects_residual_moment_above_upper_moment():
+    with pytest.raises(ValueError, match="não pode superar"):
+        piecewise_design_strength(
+            slenderness=15.0,
+            lambda_p=10.0,
+            lambda_r=20.0,
+            plastic_or_yield_moment=Moment(100.0),
+            residual_moment=Moment(100.01),
+            elastic_critical_moment=Moment(70.0),
+            gamma_a1=1.10,
+            reference=ANNEX_D_D21,
+        )
+
+
+@pytest.mark.parametrize("invalid", (0.0, -1.0, math.inf, math.nan))
+def test_ltb_alternative_rejects_invalid_slenderness(invalid):
+    with pytest.raises(ValueError, match="positivo e finito"):
+        ltb_alternative_reduction(invalid)
