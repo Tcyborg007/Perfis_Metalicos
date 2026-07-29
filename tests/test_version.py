@@ -11,5 +11,5 @@ def test_engine_version_is_single_source_for_results():
         status=VerificationStatus.NOT_CHECKED,
         justification="Teste da versão centralizada.",
     )
-    assert ENGINE_VERSION == __version__ == "0.2.0"
+    assert ENGINE_VERSION == __version__ == "0.3.0"
     assert result.engine_version == ENGINE_VERSION

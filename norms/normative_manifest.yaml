@@ -2,7 +2,7 @@ schema_version: "1.0"
 manifest_status: "NORMATIVE_REVIEW_REQUIRED"
 generated_on: "2026-07-29"
 baseline_commit: "ab68c099e53a1f26974fd2adcbe752b0d4c8a6ec"
-engine_version: "0.2.0"
+engine_version: "0.3.0"
 protected_material_policy:
   version_full_text: false
   record_only:
@@ -119,11 +119,13 @@ standards:
       - "calculos_nbr8800_2024.combine_elu_normal"
       - "calculos_nbr8800_2024.combine_els"
       - "perfis_metalicos.combinations.generate_combinations"
+      - "perfis_metalicos.combinations.nbr8681_2025.build_pending_nbr8681_2025_rule_set"
       - "main.main"
       - "main.perform_all_checks"
     existing_tests:
       - "tests.test_nbr8800_2024.CombinationAndStatusTests"
       - "tests.test_generic_combinations (TEST_ONLY factors)"
+      - "tests.test_nbr8681_2025_catalog"
     review:
       responsible_reviewer: null
       review_date: null

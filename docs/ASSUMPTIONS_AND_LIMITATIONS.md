@@ -25,7 +25,8 @@ para fabricação ou substituir cálculo e revisão de engenheiro habilitado.
 ## Limitações computacionais conhecidas
 
 - o núcleo suporta coleção genérica de ações, alterna variáveis principais e gera envelope, mas
-  não possui regras normativas de produção enquanto a NBR 8681:2025 não for fornecida e revisada;
+  o catálogo transcrito da NBR 8681:2025 permanece bloqueado até a decisão de compatibilidade
+  `ND-001` e a revisão de engenheiro estrutural;
 - a interface ainda não usa o solver novo que representa carregamento parcial, linear variável,
   vários pontos e momentos aplicados;
 - a interface ainda usa o motor legado para flecha; o solver novo resolve rotação nula por
@@ -75,7 +76,10 @@ para fabricação ou substituir cálculo e revisão de engenheiro habilitado.
 
 - apenas a cópia original da NBR 8800:2024 está disponível;
 - a Errata 1:2025 da NBR 8800 não foi fornecida;
-- NBR 8681:2025, NBR 6120:2019 corrigida e NBR 6123:2023 corrigida/Er1:2025 não foram fornecidas;
+- a NBR 8681:2025 integral foi fornecida e as Seções 5.1.3 a 5.1.6 foram conferidas, mas
+  a compatibilidade com 4.8 da NBR 8800:2024 ainda não foi aprovada;
+- da NBR 6120:2019 foi fornecida somente a edição original, sem versão corrigida/errata comprovada;
+- da NBR 6123:2023 foi fornecida somente a edição original, sem versão corrigida/Errata 1:2025;
 - referências existentes no baseline ainda não foram revisadas item a item;
 - não existe engenheiro responsável designado para a revisão normativa;
 - não existem resultados independentes assinados;

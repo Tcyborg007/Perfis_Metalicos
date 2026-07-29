@@ -2,10 +2,10 @@
 
 | Aspecto | Commit-base `ab68c099` | Branch auditada |
 |---|---|---|
-| suíte | 40 testes | 142 testes |
-| cobertura | 59 % no conjunto medido do baseline | 88,99 % com branches no pacote novo |
+| suíte | 40 testes | 152 testes |
+| cobertura | 59 % no conjunto medido do baseline | 89,88 % com branches no pacote novo |
 | estrutura | módulos de topo e Streamlit com rotinas duplicadas | pacote `src/perfis_metalicos` separado por domínio, combinações, análise, verificações, catálogo e auditoria |
-| ações | modelo simplificado | ações tipadas e gerador genérico dirigido por regras; coeficientes de produção bloqueados |
+| ações | modelo simplificado | ações tipadas, gerador genérico e catálogo NBR 8681:2025 em duas classificações (`γq` e `ψ`); produção bloqueada até `ND-001` |
 | análise | carga uniforme e uma força pontual | carga uniforme total/parcial, linear, múltiplos pontos, momentos e refinamento controlado |
 | envelope | ausente | extremos associados à combinação e posição; não convergência bloqueia |
 | FLT | um `Cb` global | segmentos com `Lb`, momentos, `Cb`, mesa comprimida, contenções, resistência e utilização próprios |

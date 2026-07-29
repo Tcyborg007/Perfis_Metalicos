@@ -6,20 +6,21 @@ devem citar cópia controlada, edição, item/página e decisão do engenheiro r
 ## Documentos necessários
 
 1. Fornecer a cópia legal da ABNT NBR 8800:2024/Er1:2025.
-2. Fornecer a cópia legal da ABNT NBR 8681:2025.
-3. Fornecer a identificação exata e a cópia da NBR 6120:2019 versão corrigida e errata aplicável.
-4. Fornecer a identificação exata e a cópia da NBR 6123:2023 versão corrigida e Errata 1:2025.
-5. Identificar catálogos oficiais de Laminados, CS, CVS e VS, com edição e páginas.
+2. Fornecer a identificação exata e a cópia da NBR 6120:2019 versão corrigida e errata aplicável.
+3. Fornecer a identificação exata e a cópia da NBR 6123:2023 versão corrigida e Errata 1:2025.
+4. Identificar catálogos oficiais de Laminados, CS, CVS e VS, com edição e páginas.
 
 ## Decisões sobre ações e combinações
 
-1. Quais disposições da NBR 8681:2025 substituem, complementam ou exigem interpretação conjunta
-   com 4.8 da NBR 8800:2024?
-2. Como tratar a nota da NBR 8800:2024 que ainda referencia a NBR 8681:2003?
-3. Quais categorias de ações e tabelas devem ser expostas pela aplicação sem permitir categoria
+1. Aprovar uma das alternativas da decisão `ND-001` para compatibilizar a norma geral
+   NBR 8681:2025 com a norma específica NBR 8800:2024.
+2. Confirmar se a Errata 1:2025 da NBR 8800 altera algum coeficiente, nota ou equação de 4.8.
+3. Definir o tratamento de protensão, ações truncadas, ocupação industrial, pilares que suportam
+   vigas de rolamento, fogo e sismo nos limites do escopo da aplicação.
+4. Quais categorias de ações e tabelas devem ser expostas pela aplicação sem permitir categoria
    livre não rastreada?
-4. Quais ações favoráveis podem ser consideradas e em quais combinações?
-5. Quais combinações especiais, de construção e excepcionais pertencem ao escopo inicial?
+5. Quais ações favoráveis podem ser consideradas e em quais combinações?
+6. Quais combinações especiais, de construção e excepcionais pertencem ao escopo inicial?
 
 ## Decisões sobre análise e estabilidade
 
