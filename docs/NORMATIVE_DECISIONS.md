@@ -22,7 +22,7 @@ Uma decisão somente passa a `APPROVED` quando contém:
 | evidência ausente | texto integral e metadado controlado da NBR 8681:2025; Errata 1:2025 da NBR 8800 |
 | alternativas | ainda não formuladas, para evitar inferência sem fonte |
 | decisão | nenhuma |
-| impacto atual | bloqueia coeficientes e categorias do novo gerador de combinações |
+| impacto atual | o mecanismo genérico aceita múltiplas ações e fatores rastreados, mas não há `CombinationRuleSet` de produção; somente fatores `TEST_ONLY` são exercitados |
 | revisor estrutural | não designado |
 | data | não definida |
 

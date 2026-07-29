@@ -97,10 +97,12 @@ standards:
     affected_functions:
       - "calculos_nbr8800_2024.combine_elu_normal"
       - "calculos_nbr8800_2024.combine_els"
+      - "perfis_metalicos.combinations.generate_combinations"
       - "main.main"
       - "main.perform_all_checks"
     existing_tests:
       - "tests.test_nbr8800_2024.CombinationAndStatusTests"
+      - "tests.test_generic_combinations (TEST_ONLY factors)"
     review:
       responsible_reviewer: null
       review_date: null
