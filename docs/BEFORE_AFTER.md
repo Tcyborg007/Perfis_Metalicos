@@ -2,8 +2,8 @@
 
 | Aspecto | Commit-base `ab68c099` | Branch auditada |
 |---|---|---|
-| suíte | 40 testes | 152 testes |
-| cobertura | 59 % no conjunto medido do baseline | 89,88 % com branches no pacote novo |
+| suíte | 40 testes | 178 testes |
+| cobertura | 59 % no conjunto medido do baseline | 90,06 % com branches no pacote novo; `checks.flexure` em 100 % |
 | estrutura | módulos de topo e Streamlit com rotinas duplicadas | pacote `src/perfis_metalicos` separado por domínio, combinações, análise, verificações, catálogo e auditoria |
 | ações | modelo simplificado | ações tipadas, gerador genérico e catálogo NBR 8681:2025 em duas classificações (`γq` e `ψ`); produção bloqueada até `ND-001` |
 | análise | carga uniforme e uma força pontual | carga uniforme total/parcial, linear, múltiplos pontos, momentos e refinamento controlado |
@@ -15,6 +15,7 @@
 | status | textos permissivos | enum tipado; pendência obrigatória impede aprovação |
 | reprodutibilidade | sessão Streamlit | JSON canônico com hashes, versão, commit, escopo e pendências |
 | CI | inexistente | Python 3.11/3.13, lock, Ruff, mypy, testes, cobertura e auditorias |
+| mutação | inexistente | campanha de flexão executada: 92/124 mortos (74,19 %); 32 sobreviventes ainda bloqueiam a meta |
 
 ## Resultado
 

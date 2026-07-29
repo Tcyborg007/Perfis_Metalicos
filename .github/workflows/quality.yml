@@ -66,9 +66,16 @@ jobs:
           set +e
           mutmut results | tee mutation-results.txt
           echo "run_outcome=${{ steps.mutation.outcome }}" >> mutation-results.txt
+          awk -F: '/survived/{gsub(/^ +/, "", $1); print $1}' mutation-results.txt |
+            while read -r mutant; do
+              echo "===== ${mutant} =====" >> mutation-details.txt
+              mutmut show "${mutant}" >> mutation-details.txt
+            done
           exit 0
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: mutation-results
-          path: mutation-results.txt
+          path: |
+            mutation-results.txt
+            mutation-details.txt
