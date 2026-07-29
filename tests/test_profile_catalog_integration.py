@@ -46,6 +46,10 @@ class ProfileCatalogIntegrationTests(unittest.TestCase):
                 flexure = flexural_strength_i(
                     props, fy=34.5, fu=45.0, E=20_000.0,
                     Lb=500.0, Cb=1.0, fabrication=fabrication,
+                    section_symmetry="DOUBLE",
+                    symmetry_basis=(
+                        "Planilha atual representa mesas iguais por bf e tf únicos."
+                    ),
                 )
                 shear = shear_strength_i(props, fy=34.5, E=20_000.0)
                 local = local_compression_strength(

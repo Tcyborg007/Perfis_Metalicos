@@ -2218,6 +2218,11 @@ def perform_all_checks(props, fy_aco, Lb_projeto, Cb_projeto, L_cm, Msd, Vsd, q_
         flt_applicable=True,
         net_tension_flange_area=Afn_tension,
         gross_tension_flange_area=Afg_tension,
+        section_symmetry="DOUBLE",
+        symmetry_basis=(
+            "Esquema geométrico do catálogo atual com uma única dimensão bf e tf "
+            "comum às mesas superior e inferior."
+        ),
     )
     scope_issues.extend(flex['applicability_issues'])
 

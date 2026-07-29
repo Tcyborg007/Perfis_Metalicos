@@ -75,6 +75,9 @@ para fabricação ou substituir cálculo e revisão de engenheiro habilitado.
 - não existem resultados independentes assinados;
 - não existe certificação do software.
 
+O texto do adaptador legado não declara mais que a Errata 1:2025 foi verificada. Toda referência
+à expressão de `j` atribuída à errata é emitida com `NORMATIVE_REVIEW_REQUIRED`.
+
 ## Regra de segurança
 
 Qualquer entrada que acione uma limitação obrigatória deve produzir estado bloqueante

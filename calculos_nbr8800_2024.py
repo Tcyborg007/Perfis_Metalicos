@@ -1,8 +1,11 @@
-"""Núcleo de cálculo para vigas I/H conforme ABNT NBR 8800:2024 + Errata 1:2025.
+"""Adaptador legado de cálculo para vigas I/H baseado na ABNT NBR 8800:2024.
 
 Unidades internas: kN e cm. O módulo de elasticidade e as resistências são
 informados em kN/cm². Este módulo é deliberadamente independente do Streamlit
 para permitir ensaios unitários e revisão das equações.
+
+A Errata 1:2025 não foi fornecida integralmente e permanece
+``NORMATIVE_REVIEW_REQUIRED`` no manifesto normativo.
 """
 
 from __future__ import annotations
@@ -22,7 +25,7 @@ from perfis_metalicos.domain.units import Moment
 
 
 NORMA = "ABNT NBR 8800:2024"
-ERRATA = "ABNT NBR 8800:2024/Er1:2025 — Errata 1 (25/02/2025)"
+ERRATA = "ABNT NBR 8800:2024/Er1:2025 — NORMATIVE_REVIEW_REQUIRED"
 GAMMA_A1 = 1.10
 GAMMA_A2 = 1.35
 
@@ -363,6 +366,8 @@ def flexural_strength_i(
     flt_applicable: bool = True,
     net_tension_flange_area: float | None = None,
     gross_tension_flange_area: float | None = None,
+    section_symmetry: str | None = None,
+    symmetry_basis: str | None = None,
     gamma_a1: float = GAMMA_A1,
     gamma_a2: float = GAMMA_A2,
 ) -> dict:
@@ -387,6 +392,15 @@ def flexural_strength_i(
     slender_web = web_lambda > web_lr
     warnings: list[str] = []
     applicability: list[str] = []
+    if section_symmetry != "DOUBLE":
+        applicability.append(
+            "A igualdade Wxc = Wxt = Wx exige seção I/H duplamente simétrica "
+            "explicitamente declarada."
+        )
+    if section_symmetry == "DOUBLE" and not (symmetry_basis or "").strip():
+        applicability.append(
+            "A declaração de dupla simetria exige base geométrica ou documental."
+        )
     Mr_flange = None
     Mcr_flange = None
     Mr_web = None
@@ -484,7 +498,9 @@ def flexural_strength_i(
         if kpg <= 0:
             applicability.append("O fator kpg resultou não positivo.")
 
+        # A igualdade é permitida somente pela hipótese explícita verificada acima.
         Wxc = W
+        Wxt = W
         M_y = kpg * fy * Wxc
         M_r = kpg * (fy - sigma_r) * Wxc
         web_segment = hc / 6.0
@@ -537,7 +553,7 @@ def flexural_strength_i(
             FlexuralRegime.ELASTIC: "elástico",
         }[flange_result.regime]
         mrd_flange = min(mrd_flange, cap)
-        mrd_tension = min(fy * W / gamma_a1, cap)
+        mrd_tension = min(fy * Wxt / gamma_a1, cap)
         mrd_web, web_regime = mrd_tension, "Anexo E — escoamento da mesa tracionada"
 
     rupture_limit = None
@@ -594,6 +610,9 @@ def flexural_strength_i(
         "M_y_annex_e": M_y,
         "M_r_annex_e": M_r,
         "Wxc": Wxc,
+        "Wxt": W if section_symmetry == "DOUBLE" else None,
+        "section_symmetry": section_symmetry,
+        "symmetry_basis": symmetry_basis,
         "hc": hc,
         "Iyc": Iyc,
         "Ayc": Ayc,
