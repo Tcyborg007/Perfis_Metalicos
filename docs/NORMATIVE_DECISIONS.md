@@ -61,7 +61,8 @@ Uma decisão somente passa a `APPROVED` quando contém:
 | problema | o baseline calculava um único `Cb` e podia associá-lo à demanda global, sem provar identidade de trecho |
 | evidência consultada | cópia fornecida da ABNT NBR 8800:2024, item 5.4.2.3, páginas numeradas 54 e 55 (páginas físicas 71 e 72 do PDF), inspecionadas visualmente |
 | decisão de software | `Mmax`, `MA`, `MB`, `MC`, `Cb`, demanda, resistência e utilização são objetos do mesmo `UnbracedSegment`; o governante é escolhido pela utilização |
-| limite aplicado | `Cb <= 3,0` no caso geral do item 5.4.2.3-a |
+| parâmetro de seção | `Rm` é obrigatório; para seção duplamente simétrica o chamador deve declarar `Rm = 1,0` |
+| limite aplicado | nenhum limite artificial é imposto ao resultado da expressão geral de 5.4.2.3-a |
 | barreiras | carga acima da semialtura, balanço não classificado, contenção insuficiente e uma única mesa continuamente contida não recebem resultado numérico liberado |
 | teste de regressão obrigatório | `test_each_segment_uses_its_own_moments_cb_demand_and_resistance` |
 | pendência | equações de resistência de FLT e eficácia/dimensionamento das contenções ainda exigem revisão completa e evidência independente |

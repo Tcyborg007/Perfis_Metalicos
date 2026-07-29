@@ -77,6 +77,7 @@ class SegmentMomentData:
     ma: Moment
     mb: Moment
     mc: Moment
+    rm: float | None
     cb: float | None
     compressed_flange: Flange
     status: VerificationStatus
@@ -230,6 +231,8 @@ def _restraint_deficiencies(
 def segment_moment_data(
     response: BeamAnalysisResult,
     segment: UnbracedSegment,
+    *,
+    rm: float | None = None,
 ) -> SegmentMomentData:
     start, length = segment.start.cm, segment.length.cm
     candidates = _segment_candidates(response, segment)
@@ -247,8 +250,28 @@ def segment_moment_data(
         "ma": Moment(ma),
         "mb": Moment(mb),
         "mc": Moment(mc),
+        "rm": rm,
         "compressed_flange": compressed,
     }
+    if rm is None:
+        return SegmentMomentData(
+            **common,
+            cb=None,
+            status=VerificationStatus.NOT_CHECKED,
+            justification=(
+                "Rm não foi informado. O parâmetro de monossimetria deve ser "
+                "explicitamente classificado para o segmento."
+            ),
+            reference_item="ABNT NBR 8800:2024, 5.4.2.3-a",
+        )
+    if not math.isfinite(rm) or rm <= 0:
+        return SegmentMomentData(
+            **common,
+            cb=None,
+            status=VerificationStatus.INVALID_INPUT,
+            justification="Rm deve ser positivo e finito.",
+            reference_item="ABNT NBR 8800:2024, 5.4.2.3-a",
+        )
     if segment.load_application_height is LoadApplicationHeight.ABOVE_MID_DEPTH:
         return SegmentMomentData(
             **common,
@@ -309,15 +332,14 @@ def segment_moment_data(
             ),
         )
     denominator = 2.5 * mmax + 3.0 * ma + 4.0 * mb + 3.0 * mc
-    cb_calculated = 1.0 if denominator <= 0 else 12.5 * mmax / denominator
-    cb = min(cb_calculated, 3.0)
+    cb = 1.0 if denominator <= 0 else 12.5 * mmax * rm / denominator
     return SegmentMomentData(
         **common,
         cb=cb,
         status=VerificationStatus.PASS,
         justification=(
-            "Cb calculado com momentos do próprio comprimento destravado e limitado "
-            "a 3,0."
+            "Cb calculado com momentos do próprio comprimento destravado e com Rm "
+            "explicitamente informado."
         ),
         reference_item="ABNT NBR 8800:2024, 5.4.2.3-a",
         restraint_assumptions=(
@@ -336,10 +358,12 @@ def evaluate_flt_segments(
     response: BeamAnalysisResult,
     segments: Iterable[UnbracedSegment],
     resistance_provider: ResistanceProvider,
+    *,
+    rm: float | None,
 ) -> tuple[SegmentFltCheck, ...]:
     checks: list[SegmentFltCheck] = []
     for segment in segments:
-        data = segment_moment_data(response, segment)
+        data = segment_moment_data(response, segment, rm=rm)
         if data.status is not VerificationStatus.PASS or data.cb is None:
             checks.append(
                 SegmentFltCheck(

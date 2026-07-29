@@ -75,7 +75,7 @@ def test_each_segment_uses_its_own_moments_cb_demand_and_resistance():
         calls.append((segment.segment_id, cb))
         return Moment(10_000 * cb)
 
-    checks = evaluate_flt_segments(beam, segments, provider)
+    checks = evaluate_flt_segments(beam, segments, provider, rm=1.0)
 
     assert len(checks) == 2
     assert calls[0][0] == "SEG-001"
@@ -103,6 +103,7 @@ def test_governing_segment_is_selected_by_utilization_not_by_largest_cb():
         lambda segment, cb: Moment(
             5_000 if segment.segment_id == "SEG-002" else 20_000
         ),
+        rm=1.0,
     )
     governing = governing_flt_segment(checks)
     assert governing is not None
@@ -120,7 +121,7 @@ def test_one_continuously_restrained_flange_uses_specific_blocking_path():
             ),
         ),
     )
-    data = segment_moment_data(beam, segments[0])
+    data = segment_moment_data(beam, segments[0], rm=1.0)
     assert data.cb is None
     assert data.status is VerificationStatus.NOT_CHECKED
     assert data.reference_item.endswith("5.4.2.4")
@@ -133,7 +134,7 @@ def test_load_above_mid_depth_requires_external_stability_evidence():
         (restraint(0, "A"), restraint(600, "B")),
         load_application_height=LoadApplicationHeight.ABOVE_MID_DEPTH,
     )
-    data = segment_moment_data(beam, segments[0])
+    data = segment_moment_data(beam, segments[0], rm=1.0)
     assert data.status is VerificationStatus.EXTERNAL_EVIDENCE_REQUIRED
     assert data.cb is None
 
@@ -149,7 +150,7 @@ def test_reversal_identifies_both_possible_compressed_flanges():
         beam.model.length,
         (restraint(0, "A"), restraint(500, "B")),
     )[0]
-    data = segment_moment_data(beam, segment)
+    data = segment_moment_data(beam, segment, rm=1.0)
     assert data.compressed_flange is Flange.REVERSING
 
 
@@ -159,7 +160,10 @@ def test_positive_moment_identifies_top_compressed_flange():
         beam.model.length,
         (restraint(0, "A"), restraint(600, "B")),
     )[0]
-    assert segment_moment_data(beam, segment).compressed_flange is Flange.TOP
+    assert (
+        segment_moment_data(beam, segment, rm=1.0).compressed_flange
+        is Flange.TOP
+    )
 
 
 def test_negative_moment_segment_identifies_bottom_compressed_flange():
@@ -173,7 +177,10 @@ def test_negative_moment_segment_identifies_bottom_compressed_flange():
         beam.model.length,
         (restraint(0, "A"), restraint(75, "B"), restraint(500, "C")),
     )[0]
-    assert segment_moment_data(beam, segment).compressed_flange is Flange.BOTTOM
+    assert (
+        segment_moment_data(beam, segment, rm=1.0).compressed_flange
+        is Flange.BOTTOM
+    )
 
 
 def test_missing_lateral_restraint_of_compressed_flange_blocks_segment():
@@ -185,7 +192,7 @@ def test_missing_lateral_restraint_of_compressed_flange_blocks_segment():
             selective_restraint(600, "B", top=False),
         ),
     )[0]
-    data = segment_moment_data(beam, segment)
+    data = segment_moment_data(beam, segment, rm=1.0)
     assert data.status is VerificationStatus.EXTERNAL_EVIDENCE_REQUIRED
     assert data.cb is None
     assert "mesa TOP" in data.justification
@@ -200,7 +207,7 @@ def test_missing_torsional_restraint_blocks_segment():
             restraint(600, "B"),
         ),
     )[0]
-    data = segment_moment_data(beam, segment)
+    data = segment_moment_data(beam, segment, rm=1.0)
     assert data.status is VerificationStatus.EXTERNAL_EVIDENCE_REQUIRED
     assert data.cb is None
     assert "torcional" in data.justification
@@ -220,7 +227,7 @@ def test_reversal_requires_both_flanges_restrained():
             selective_restraint(500, "B", bottom=False),
         ),
     )[0]
-    data = segment_moment_data(beam, segment)
+    data = segment_moment_data(beam, segment, rm=1.0)
     assert data.compressed_flange is Flange.REVERSING
     assert data.status is VerificationStatus.EXTERNAL_EVIDENCE_REQUIRED
 
@@ -240,7 +247,7 @@ def test_special_support_conditions_never_bypass_segment_classification(support)
         beam.model.length,
         (restraint(0, "A"), restraint(500, "B")),
     )[0]
-    data = segment_moment_data(beam, segment)
+    data = segment_moment_data(beam, segment, rm=1.0)
     if support is SupportCondition.CANTILEVER:
         assert data.status is VerificationStatus.NOT_CHECKED
         assert data.cb is None
@@ -259,3 +266,27 @@ def test_segments_require_unique_end_restraints():
             Length(600),
             (restraint(0, "A"), restraint(0, "B"), restraint(600, "C")),
         )
+
+
+def test_rm_is_mandatory_and_never_assumed_silently():
+    beam = response()
+    segment = build_unbraced_segments(
+        beam.model.length,
+        (restraint(0, "A"), restraint(600, "B")),
+    )[0]
+    data = segment_moment_data(beam, segment)
+    assert data.status is VerificationStatus.NOT_CHECKED
+    assert data.cb is None
+    assert "Rm" in data.justification
+
+
+def test_cb_includes_explicit_rm_without_non_normative_cap():
+    beam = response()
+    segment = build_unbraced_segments(
+        beam.model.length,
+        (restraint(0, "A"), restraint(600, "B")),
+    )[0]
+    base = segment_moment_data(beam, segment, rm=1.0)
+    modified = segment_moment_data(beam, segment, rm=2.5)
+    assert base.cb is not None
+    assert modified.cb == pytest.approx(2.5 * base.cb)
