@@ -31,6 +31,12 @@ from perfis_metalicos.catalog import (
     CatalogValidationStatus,
     validate_catalog_workbook,
 )
+from perfis_metalicos.checks import (
+    LimitStateApplicability,
+    LocalizedForceCase,
+    LocalizedLimitState,
+    localized_force_limit_state_matrix,
+)
 from perfis_metalicos.domain import APPROVED_SCOPE_TEXT
 # ==============================================================================
 # 1. CONFIGURAÇÕES E CONSTANTES GLOBAIS APRIMORADAS
@@ -2288,6 +2294,11 @@ def perform_all_checks(props, fy_aco, Lb_projeto, Cb_projeto, L_cm, Msd, Vsd, q_
     local_checks = []
     local_statuses = []
     if automatic and elu_response:
+        if kwargs.get("localized_forces_centered_on_web") is not True:
+            scope_issues.append(
+                "Forças localizadas: a centralização em relação à alma, exigida "
+                "pelo escopo de 5.7.1, não foi comprovada."
+            )
         locations = [
             (
                 "Apoio esquerdo", abs(elu_response.reaction_left),
@@ -2308,6 +2319,11 @@ def perform_all_checks(props, fy_aco, Lb_projeto, Cb_projeto, L_cm, Msd, Vsd, q_
                 kwargs.get('point_relative_lateral_restrained', True),
             ))
         for name, demand, bearing, distance_end, x_load, lateral_restrained in locations:
+            requirements = localized_force_limit_state_matrix(
+                LocalizedForceCase.COMPRESSION_ON_WEB,
+                welded_section=tipo_fabricacao.lower().startswith("sold"),
+                is_support_or_free_end=name.startswith("Apoio"),
+            )
             local = local_compression_strength(
                 props, fy_aco, E_aco, bearing, distance_end, tipo_fabricacao,
                 weld_root_or_radius=kwargs.get('weld_root_cm', 0.0),
@@ -2316,7 +2332,27 @@ def perform_all_checks(props, fy_aco, Lb_projeto, Cb_projeto, L_cm, Msd, Vsd, q_
                 relative_lateral_movement_restrained=lateral_restrained,
                 moment_at_load=elu_response.moment_at(x_load),
             )
+            local["limit_state_matrix"] = requirements
+            if any(
+                item.limit_state is LocalizedLimitState.WELD_FORCE_TRANSFER
+                and item.applicability is LimitStateApplicability.REQUIRED
+                for item in requirements
+            ):
+                scope_issues.append(
+                    f"{name}: transferência da força pela solda mesa–alma "
+                    "permanece NOT_CHECKED."
+                )
+            if name.startswith("Apoio"):
+                scope_issues.append(
+                    f"{name}: as condições de apoio/extremidade de 5.7.8 "
+                    "permanecem NOT_CHECKED."
+                )
             efficiency, status = _verification_status(demand, local['FRd'])
+            if demand > local["FRd"]:
+                scope_issues.append(
+                    f"{name}: há necessidade potencial de enrijecedor, cujo "
+                    "dimensionamento completo conforme 5.7.9 permanece NOT_CHECKED."
+                )
             local_checks.append({
                 'name': name, 'demand': demand, 'resistance': local['FRd'],
                 'efficiency': efficiency, 'status': status, 'details': local,

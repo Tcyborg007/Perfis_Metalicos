@@ -21,7 +21,8 @@ from perfis_metalicos.checks.flexure import (
     ltb_alternative_reduction,
     piecewise_design_strength,
 )
-from perfis_metalicos.domain.units import Moment
+from perfis_metalicos.checks.localized_forces import flange_local_bending_resistance
+from perfis_metalicos.domain.units import Length, Moment, Stress
 
 
 NORMA = "ABNT NBR 8800:2024"
@@ -879,10 +880,18 @@ def local_compression_strength(
 def local_flange_bending_strength(
     tf: float, fy: float, distance_to_end: float, gamma_a1: float = GAMMA_A1
 ) -> float:
-    resistance = 6.25 * tf**2 * fy / gamma_a1
-    if distance_to_end < 10.0 * tf:
-        resistance *= 0.5
-    return resistance
+    """Compatibilidade legada; assume força distribuída por toda a largura da mesa."""
+
+    resistance = flange_local_bending_resistance(
+        flange_thickness=Length(tf),
+        yield_strength=Stress(fy),
+        distance_to_end=Length(distance_to_end),
+        transverse_load_length=Length(1.0),
+        flange_width=Length(1.0),
+        gamma_a1=gamma_a1,
+    )
+    assert resistance is not None
+    return resistance.kN
 
 
 def deflection_limit(

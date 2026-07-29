@@ -39,7 +39,9 @@ para fabricação ou substituir cálculo e revisão de engenheiro habilitado.
 - balanços permanecem bloqueados na seleção de `Cb` até a classificação explícita das restrições;
 - não verifica todos os requisitos de enrijecedores, soldas e transferência; a triagem geométrica
   é separada e não aumenta `kv` nem libera aprovação;
-- não possui matriz completa de forças localizadas;
+- possui matriz tipada de aplicabilidade para forças localizadas, mas a UI automática ainda
+  representa apenas compressão e não coleta todas as classificações de 5.7.1; transferência por
+  solda, condições de 5.7.8 e dimensionamento de 5.7.9 permanecem bloqueantes;
 - não decompõe deslocamentos por fase e parcela;
 - não implementa vibração;
 - valida hash e coerências automáticas do catálogo, mas a origem oficial das quatro famílias não

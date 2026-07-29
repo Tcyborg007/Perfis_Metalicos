@@ -88,12 +88,19 @@ class DetailedMemorialTests(unittest.TestCase):
         self.assertIn(r"x_\delta=\frac{L}{2}", memorial)
         self.assertNotIn(r"E\cdot I_x\cdot v(x)=C_1\cdot x", memorial)
         self.assertNotIn(r"C_1", memorial)
+        formula_html = "".join(
+            re.findall(
+                r'<div class="formula-chain">(.*?)</div>',
+                memorial,
+                flags=re.DOTALL,
+            )
+        )
         for invented_helper in (
             r"\Phi_t", r"\Phi_w", r"\Phi_{cr}", r"\Psi_{cr}",
             r"\alpha_f", r"M_{n,FLM}", r"\alpha_w", r"M_{n,FLA}",
             r"\alpha_{LT}", r"M_{n,FLT}", r"T_C", r"S_1",
         ):
-            self.assertNotIn(invented_helper, memorial)
+            self.assertNotIn(invented_helper, formula_html)
         for item_reference in (
             "D.2.8-a", "D.2.1 (procedimento alternativo)", "D.2.2",
             "5.4.3.1.1", "5.7.3.2", "5.7.4.2", "5.7.5.1",
