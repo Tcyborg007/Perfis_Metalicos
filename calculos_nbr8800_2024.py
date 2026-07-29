@@ -11,6 +11,15 @@ from dataclasses import dataclass
 import math
 from typing import Iterable
 
+from perfis_metalicos.checks.flexure import (
+    ANNEX_D_D21,
+    ANNEX_D_D22,
+    FlexuralRegime,
+    ltb_alternative_reduction,
+    piecewise_design_strength,
+)
+from perfis_metalicos.domain.units import Moment
+
 
 NORMA = "ABNT NBR 8800:2024"
 ERRATA = "ABNT NBR 8800:2024/Er1:2025 — Errata 1 (25/02/2025)"
@@ -342,23 +351,6 @@ def _overall_flexural_cap(W: float, fy: float, gamma_a1: float) -> float:
     return 1.50 * W * fy / gamma_a1
 
 
-def _piecewise_strength(
-    slenderness: float,
-    lambda_p: float,
-    lambda_r: float,
-    plastic_or_yield: float,
-    residual: float,
-    critical: float,
-    gamma_a1: float,
-) -> tuple[float, str]:
-    if slenderness <= lambda_p:
-        return plastic_or_yield / gamma_a1, "plástico"
-    if slenderness <= lambda_r:
-        fraction = (slenderness - lambda_p) / (lambda_r - lambda_p)
-        return (plastic_or_yield - (plastic_or_yield - residual) * fraction) / gamma_a1, "inelástico"
-    return critical / gamma_a1, "elástico"
-
-
 def flexural_strength_i(
     props: dict,
     fy: float,
@@ -419,15 +411,12 @@ def flexural_strength_i(
             * math.sqrt((Cw / Iy) * (1.0 + 0.039 * J * Lb**2 / Cw))
         )
         lambda_lt = math.sqrt(Mpl / Mcr_ltb) if Mcr_ltb > 0 else math.inf
-        if lambda_lt <= 0.4:
-            chi_lt = 1.0
-            ltb_regime = "plástico"
-        elif lambda_lt <= 1.4:
-            chi_lt = 1.0 - 0.49 * (lambda_lt - 0.4)
-            ltb_regime = "inelástico"
-        else:
-            chi_lt = 1.0 / lambda_lt**2
-            ltb_regime = "elástico"
+        chi_lt, ltb_regime_value = ltb_alternative_reduction(lambda_lt)
+        ltb_regime = {
+            FlexuralRegime.PLASTIC_OR_YIELD: "plástico",
+            FlexuralRegime.INELASTIC: "inelástico",
+            FlexuralRegime.ELASTIC: "elástico",
+        }[ltb_regime_value]
         mrd_ltb = min(chi_lt * Mpl / gamma_a1, cap) if flt_applicable else None
 
         flange_lambda = bf / (2.0 * tf)
@@ -440,9 +429,22 @@ def flexural_strength_i(
             flange_lr = 0.83 * math.sqrt(E / (fy - sigma_r))
             Mcr_flange = 0.69 * E * W / flange_lambda**2
         Mr_flange = (fy - sigma_r) * W
-        mrd_flange, flange_regime = _piecewise_strength(
-            flange_lambda, flange_lp, flange_lr, Mpl, Mr_flange, Mcr_flange, gamma_a1
+        flange_result = piecewise_design_strength(
+            slenderness=flange_lambda,
+            lambda_p=flange_lp,
+            lambda_r=flange_lr,
+            plastic_or_yield_moment=Moment(Mpl),
+            residual_moment=Moment(Mr_flange),
+            elastic_critical_moment=Moment(Mcr_flange),
+            gamma_a1=gamma_a1,
+            reference=ANNEX_D_D22,
         )
+        mrd_flange = flange_result.design_moment.kN_cm
+        flange_regime = {
+            FlexuralRegime.PLASTIC_OR_YIELD: "plástico",
+            FlexuralRegime.INELASTIC: "inelástico",
+            FlexuralRegime.ELASTIC: "elástico",
+        }[flange_result.regime]
         mrd_flange = min(mrd_flange, cap)
 
         Mr_web = fy * W
@@ -493,9 +495,22 @@ def flexural_strength_i(
         ltb_lp = 1.10 * math.sqrt(E / fy)
         ltb_lr = math.pi * math.sqrt(E / (fy - sigma_r))
         Mcr_ltb = Cb * kpg * math.pi**2 * E * Wxc / ltb_lambda**2
-        mrd_ltb_value, ltb_regime = _piecewise_strength(
-            ltb_lambda, ltb_lp, ltb_lr, M_y, M_r, Mcr_ltb, gamma_a1
+        ltb_result = piecewise_design_strength(
+            slenderness=ltb_lambda,
+            lambda_p=ltb_lp,
+            lambda_r=ltb_lr,
+            plastic_or_yield_moment=Moment(M_y),
+            residual_moment=Moment(M_r),
+            elastic_critical_moment=Moment(Mcr_ltb),
+            gamma_a1=gamma_a1,
+            reference=ANNEX_D_D21,
         )
+        mrd_ltb_value = ltb_result.design_moment.kN_cm
+        ltb_regime = {
+            FlexuralRegime.PLASTIC_OR_YIELD: "plástico",
+            FlexuralRegime.INELASTIC: "inelástico",
+            FlexuralRegime.ELASTIC: "elástico",
+        }[ltb_result.regime]
         mrd_ltb = min(mrd_ltb_value, cap) if flt_applicable else None
         lambda_lt = ltb_lambda
         chi_lt = None
@@ -505,15 +520,22 @@ def flexural_strength_i(
         kc = max(0.35, min(4.0 / math.sqrt(h / tw), 0.76))
         flange_lr = 0.95 * math.sqrt(E * kc / (fy - sigma_r))
         Mcr_flange = 0.90 * kpg * E * kc * Wxc / flange_lambda**2
-        mrd_flange, flange_regime = _piecewise_strength(
-            flange_lambda,
-            flange_lp,
-            flange_lr,
-            M_y,
-            M_r,
-            Mcr_flange,
-            gamma_a1,
+        flange_result = piecewise_design_strength(
+            slenderness=flange_lambda,
+            lambda_p=flange_lp,
+            lambda_r=flange_lr,
+            plastic_or_yield_moment=Moment(M_y),
+            residual_moment=Moment(M_r),
+            elastic_critical_moment=Moment(Mcr_flange),
+            gamma_a1=gamma_a1,
+            reference=ANNEX_D_D22,
         )
+        mrd_flange = flange_result.design_moment.kN_cm
+        flange_regime = {
+            FlexuralRegime.PLASTIC_OR_YIELD: "plástico",
+            FlexuralRegime.INELASTIC: "inelástico",
+            FlexuralRegime.ELASTIC: "elástico",
+        }[flange_result.regime]
         mrd_flange = min(mrd_flange, cap)
         mrd_tension = min(fy * W / gamma_a1, cap)
         mrd_web, web_regime = mrd_tension, "Anexo E — escoamento da mesa tracionada"

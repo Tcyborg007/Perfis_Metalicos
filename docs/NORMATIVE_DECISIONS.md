@@ -67,3 +67,17 @@ Uma decisão somente passa a `APPROVED` quando contém:
 | pendência | equações de resistência de FLT e eficácia/dimensionamento das contenções ainda exigem revisão completa e evidência independente |
 | revisor estrutural | não designado |
 | data | não definida |
+
+## ND-005 - Fronteiras das funções por partes do Anexo D
+
+| Campo | Registro |
+|---|---|
+| status | `PARTIAL_IMPLEMENTATION` |
+| evidência consultada | ABNT NBR 8800:2024, D.2.1 e D.2.2, páginas numeradas 137 e 138 |
+| decisão de software | `λ <= λp` seleciona o ramo plástico/escoamento; `λp < λ <= λr` seleciona o ramo inelástico; `λ > λr` seleciona o ramo elástico |
+| procedimento alternativo de FLT | limites de `λLT` em 0,4 e 1,4 centralizados em `ltb_alternative_reduction` |
+| observação numérica | as expressões publicadas dos ramos inelástico e elástico do procedimento alternativo apresentam diferença relativa inferior a 0,05 % imediatamente acima de 1,4; o teste registra essa transição sem “corrigir” coeficiente normativo |
+| testes | `tests/test_flexure_piecewise.py` |
+| pendência | parâmetros específicos de cada estado-limite e a Errata 1:2025 ainda exigem revisão e evidência independente |
+| revisor estrutural | não designado |
+| data | não definida |
