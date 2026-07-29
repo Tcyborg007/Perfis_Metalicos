@@ -240,6 +240,18 @@ class CombinationAndStatusTests(unittest.TestCase):
             "REPROVADO",
         )
 
+    def test_na_never_authorizes_global_approval(self):
+        self.assertEqual(
+            overall_status(["APROVADO", "N/A"]),
+            "NÃO VERIFICADO",
+        )
+
+    def test_explicit_non_applicability_can_accompany_scoped_approval(self):
+        self.assertEqual(
+            overall_status(["APROVADO", "NÃO APLICÁVEL"]),
+            "APROVADO NO ESCOPO COMPUTACIONAL DECLARADO",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

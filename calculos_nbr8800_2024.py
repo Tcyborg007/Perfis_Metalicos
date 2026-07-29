@@ -841,6 +841,8 @@ def overall_status(statuses: Iterable[str]) -> str:
         return "REPROVADO"
     if any(value == "NÃO VERIFICADO" for value in values):
         return "NÃO VERIFICADO"
-    if all(value in {"APROVADO", "N/A"} for value in values):
-        return "APROVADO"
+    if any(value == "N/A" for value in values):
+        return "NÃO VERIFICADO"
+    if all(value in {"APROVADO", "NÃO APLICÁVEL"} for value in values):
+        return "APROVADO NO ESCOPO COMPUTACIONAL DECLARADO"
     return "NÃO VERIFICADO"

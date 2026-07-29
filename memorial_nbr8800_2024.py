@@ -42,7 +42,13 @@ def _esc(value):
 
 
 def _status_class(status):
-    return "pass" if status == "APROVADO" else "pending" if status in {"N/A", "NÃO VERIFICADO"} else "fail"
+    return (
+        "pass"
+        if status in {"APROVADO", "APROVADO NO ESCOPO COMPUTACIONAL DECLARADO"}
+        else "pending"
+        if status in {"N/A", "NÃO APLICÁVEL", "NÃO VERIFICADO"}
+        else "fail"
+    )
 
 
 def _eq(*lines):
@@ -1511,12 +1517,28 @@ def _els_section(bundle):
 def _scope_section(bundle):
     notes = "".join(f"<li>{_esc(item)}</li>" for item in bundle.get("scope_notes", [])) or "<li>Nenhuma hipótese adicional registrada.</li>"
     issues = "".join(f"<li>{_esc(item)}</li>" for item in bundle.get("scope_issues", [])) or "<li>Nenhuma pendência declarada.</li>"
+    external = bundle.get("external_evidence")
+    if external is None:
+        external_html = "<p>Nenhuma evidência externa registrada.</p>"
+    else:
+        checked = ", ".join(_esc(item) for item in external.checked_items)
+        external_html = f"""
+        <dl>
+          <dt>Documento</dt><dd>{_esc(external.document_id)} / {_esc(external.revision)}</dd>
+          <dt>Responsável</dt><dd>{_esc(external.responsible_engineer)} — {_esc(external.professional_registration)}</dd>
+          <dt>Data</dt><dd>{_esc(external.date.isoformat())}</dd>
+          <dt>SHA-256</dt><dd><code>{_esc(external.file_hash)}</code></dd>
+          <dt>Itens declarados</dt><dd>{checked}</dd>
+        </dl>
+        <p><strong>Classificação:</strong> evidência externa; não recalculada pelo programa.</p>
+        """
     cls = _status_class(bundle["status_global"])
     return f"""
     {_chapter('9. Escopo, hipóteses e conclusão', 'O status global inclui resistências, serviço, forças localizadas e limitações de aplicabilidade.')}
     <div class="scope-grid">
       <div class="info-card"><h4>Hipóteses adotadas</h4><ul>{notes}</ul></div>
       <div class="info-card"><h4>Pendências e exclusões</h4><ul>{issues}</ul></div>
+      <div class="info-card"><h4>Evidências externas</h4>{external_html}</div>
     </div>
     <div class="global-status {cls}"><span>STATUS GLOBAL</span><strong>{_esc(bundle['status_global'])}</strong></div>
     <div class="notice"><strong>Nota de responsabilidade:</strong> este memorial documenta o modelo declarado e não substitui a revisão do engenheiro responsável, o detalhamento das ligações, a estabilidade global da estrutura nem verificações fora do escopo explicitado.</div>

@@ -7,6 +7,7 @@ import io
 import openpyxl
 from openpyxl.styles import PatternFill
 import base64
+import hashlib
 import pytz
 from pathlib import Path
 from calculos_nbr8800_2024 import (
@@ -24,6 +25,8 @@ from calculos_nbr8800_2024 import (
     validate_material,
 )
 from memorial_nbr8800_2024 import build_memorial_details
+from perfis_metalicos.audit import ExternalEvidence
+from perfis_metalicos.domain import APPROVED_SCOPE_TEXT
 # ==============================================================================
 # 1. CONFIGURAÇÕES E CONSTANTES GLOBAIS APRIMORADAS
 # ==============================================================================
@@ -1672,7 +1675,7 @@ def style_classic_dataframe(df):
         )
 
     def style_status(val):
-        if val == 'APROVADO':
+        if val in {'APROVADO', APPROVED_SCOPE_TEXT}:
             return 'background-color: #d4edda; font-weight: bold; color: #155724;'
         elif val == 'REPROVADO':
             return 'background-color: #f8d7da; font-weight: bold; color: #721c24;'
@@ -1997,7 +2000,7 @@ def _render_esforcos_viga_section(params):
 
 def _verification_status(demand, resistance, applicable=True):
     if not applicable:
-        return 0.0, "N/A"
+        return 0.0, "NÃO APLICÁVEL"
     if resistance is None or resistance <= 0:
         return float('inf'), "NÃO VERIFICADO"
     efficiency = demand / resistance * 100.0
@@ -2182,8 +2185,26 @@ def perform_all_checks(props, fy_aco, Lb_projeto, Cb_projeto, L_cm, Msd, Vsd, q_
             tipo_viga, L_cm, els_loads['q'], els_loads['P'], point_position,
             E=E_aco, I=props['Ix'],
         )
-    elif not kwargs.get('manual_local_checks_confirmed', False):
-        scope_issues.append("Modo manual sem reações/forças localizadas e sem verificação ELS.")
+    else:
+        external_evidence = kwargs.get("external_evidence")
+        if external_evidence is None:
+            scope_issues.append(
+                "Modo manual: forças localizadas e ELS exigem evidência externa documental."
+            )
+        else:
+            checked_items = set(external_evidence.checked_items)
+            required_items = {"LOCAL_FORCES", "ELS_DEFLECTION"}
+            missing_items = sorted(required_items - checked_items)
+            if missing_items:
+                scope_issues.append(
+                    "Evidência externa não cobre os itens obrigatórios: "
+                    + ", ".join(missing_items)
+                    + "."
+                )
+            scope_issues.append(
+                "Resultados externos foram registrados, mas não foram recalculados nem aprovados "
+                "pelo motor; permanecem separados do escopo computacional."
+            )
 
     Afg_tension = None
     Afn_tension = None
@@ -2194,7 +2215,7 @@ def perform_all_checks(props, fy_aco, Lb_projeto, Cb_projeto, L_cm, Msd, Vsd, q_
     flex = flexural_strength_i(
         props, fy_aco, fu_aco, E_aco, Lb_projeto, Cb_final, tipo_fabricacao,
         stiffener_spacing=a_enr if usa_enrijecedores else None,
-        flt_applicable=kwargs.get('flt_applicable', True),
+        flt_applicable=True,
         net_tension_flange_area=Afn_tension,
         gross_tension_flange_area=Afg_tension,
     )
@@ -2209,7 +2230,12 @@ def perform_all_checks(props, fy_aco, Lb_projeto, Cb_projeto, L_cm, Msd, Vsd, q_
         stiffener_welded_to_web_and_flanges=kwargs.get('stiffener_welded', False),
     )
 
-    flt_eff, flt_status = _verification_status(Msd, flex['Mrd_FLT'], kwargs.get('flt_applicable', True))
+    if not kwargs.get("flt_applicable", True):
+        scope_issues.append(
+            "A declaração global de contenção não desativa a FLT; a aplicabilidade deve ser "
+            "demonstrada por mesa e por segmento."
+        )
+    flt_eff, flt_status = _verification_status(Msd, flex['Mrd_FLT'])
     flm_eff, flm_status = _verification_status(Msd, flex['Mrd_FLM'])
     fla_eff, fla_status = _verification_status(Msd, flex['Mrd_FLA_or_tension'])
     rupture_eff, rupture_status = _verification_status(
@@ -2267,7 +2293,7 @@ def perform_all_checks(props, fy_aco, Lb_projeto, Cb_projeto, L_cm, Msd, Vsd, q_
             local_statuses.append(status)
 
     flecha_max = flecha_limite = eficiencia_flecha = 0.0
-    status_flecha = "N/A"
+    status_flecha = "NÃO VERIFICADO"
     if els_response:
         absolute_limit = 1.5 if kwargs.get('masonry_on_beam', False) else None
         flecha_limite = deflection_limit(tipo_viga, L_cm, limite_flecha_divisor, absolute_limit)
@@ -2312,6 +2338,7 @@ def perform_all_checks(props, fy_aco, Lb_projeto, Cb_projeto, L_cm, Msd, Vsd, q_
         'deflection_limit': flecha_limite, 'deflection_divisor': limite_flecha_divisor,
         'deflection_efficiency': eficiencia_flecha, 'deflection_status': status_flecha,
         'scope_notes': scope_notes, 'scope_issues': scope_issues, 'status_global': status_global,
+        'external_evidence': kwargs.get('external_evidence'),
     }
     passo_a_passo_html = _memorial_2024_html(bundle) if detalhado else ""
     return res_flt, res_flm, res_fla, res_cis, res_flecha, passo_a_passo_html
@@ -2336,8 +2363,8 @@ def build_summary_html(Msd, Vsd, res_flt, res_flm, res_fla, res_cisalhamento, re
     rows_html = ""
     for nome, sol, res, efic, status in verificacoes:
         # A MUDANÇA ESTÁ AQUI: adiciona a classe 'pass' ou 'fail' ao <td> do status
-        status_class = "pass" if status in {"APROVADO", "N/A"} else "fail"
-        efic_str = f"{compact_number(efic,1)}%" if status != "N/A" and isinstance(efic, (int, float)) and math.isfinite(efic) else "N/A"
+        status_class = "pass" if status in {"APROVADO", "NÃO APLICÁVEL"} else "fail"
+        efic_str = f"{compact_number(efic,1)}%" if status not in {"N/A", "NÃO APLICÁVEL", "NÃO VERIFICADO"} and isinstance(efic, (int, float)) and math.isfinite(efic) else "N/A"
         rows_html += f"""<tr><td>{nome}</td><td>{sol}</td><td>{res}</td><td>{efic_str}</td><td class="{status_class}">{status}</td></tr>"""
 
     # Retorna o HTML da tabela para ser usado no memorial
@@ -2585,7 +2612,7 @@ def main():
         g_area = q_area = 0.0
         p_pos_cm = L_cm / 2.0
         point_bearing_cm = 10.0
-        manual_local_checks_confirmed = False
+        external_evidence = None
         include_self_weight = True
         gamma_g, gamma_q, gamma_self_weight = 1.50, 1.50, 1.25
         psi1, psi2 = 0.6, 0.4
@@ -2662,7 +2689,53 @@ def main():
                 st.warning("No modo manual, informe esforços já combinados. Sem reações e cargas de serviço, o aplicativo não pode auditar 5.7 nem o ELS.")
                 Msd = st.number_input("Momento solicitante Msd (kN·m)", 0.0, value=100.0, key='msd_input') * 100.0
                 Vsd = st.number_input("Força cortante Vsd (kN)", 0.0, value=50.0, key='vsd_input')
-                manual_local_checks_confirmed = st.checkbox("Confirmo que forças localizadas e ELS foram verificados externamente", value=False, key='manual_external_checks')
+                st.markdown("#### Evidência externa")
+                st.caption(
+                    "Uma declaração isolada não conclui verificações. O documento permanece "
+                    "separado dos cálculos executados pelo programa."
+                )
+                evidence_document_id = st.text_input(
+                    "Identificação do documento", key="external_document_id"
+                )
+                evidence_revision = st.text_input(
+                    "Revisão do documento", key="external_revision"
+                )
+                evidence_engineer = st.text_input(
+                    "Engenheiro responsável", key="external_engineer"
+                )
+                evidence_registration = st.text_input(
+                    "Registro profissional", key="external_registration"
+                )
+                evidence_date = st.date_input(
+                    "Data do documento", value=datetime.now().date(), key="external_date"
+                )
+                evidence_checked_items = tuple(
+                    st.multiselect(
+                        "Itens cobertos pelo documento",
+                        ("LOCAL_FORCES", "ELS_DEFLECTION"),
+                        key="external_checked_items",
+                    )
+                )
+                evidence_file = st.file_uploader(
+                    "Arquivo da evidência", type=("pdf",), key="external_evidence_file"
+                )
+                if evidence_file is not None:
+                    try:
+                        external_evidence = ExternalEvidence(
+                            document_id=evidence_document_id,
+                            revision=evidence_revision,
+                            responsible_engineer=evidence_engineer,
+                            professional_registration=evidence_registration,
+                            date=evidence_date,
+                            file_hash=hashlib.sha256(evidence_file.getvalue()).hexdigest(),
+                            checked_items=evidence_checked_items,
+                        )
+                        st.success(
+                            "Evidência registrada para rastreabilidade; isso não transforma "
+                            "verificação externa em cálculo aprovado pelo programa."
+                        )
+                    except ValueError as exc:
+                        st.error(str(exc))
             detalhes_esforcos_memorial = {'input_mode': input_mode, 'Msd': Msd, 'Vsd': Vsd, 'L_cm': L_cm}
 
         st.markdown("---")
@@ -2701,12 +2774,11 @@ def main():
                 key='tension_flange_net_ratio',
             )
 
-        flt_condition = st.selectbox(
-            "Condição da mesa comprimida",
-            ("Trechos com contenções discretas — verificar FLT", "Contenção lateral contínua eficaz — FLT não aplicável"),
-            key='flt_condition'
+        st.info(
+            "A FLT permanece ativa. A não aplicabilidade somente poderá ser demonstrada "
+            "por mesa e por segmento no modelo de contenções."
         )
-        flt_applicable = flt_condition.startswith("Trechos")
+        flt_applicable = True
         Lb_projeto = st.number_input("Comprimento destravado Lb (cm)", 1.0, max_value=L_cm, value=L_cm, step=1.0, key='Lb_projeto')
         lb_start_cm = st.number_input("Início do trecho destravado x0 (cm)", 0.0, max_value=max(L_cm-Lb_projeto, 0.0), value=0.0, step=1.0, key='lb_start_cm')
         load_height = st.selectbox(
@@ -2828,7 +2900,7 @@ def main():
         'gamma_self_weight': gamma_self_weight, 'els_combination': els_combination,
         'els_combination_text': els_combination_text, 'psi1': psi1, 'psi2': psi2,
         'elu_combination_text': f'{compact_number(gamma_g,2)}·G + {compact_number(gamma_self_weight,2)}·PP aço + {compact_number(gamma_q,2)}·Q',
-        'manual_local_checks_confirmed': manual_local_checks_confirmed,
+        'external_evidence': external_evidence,
         'unsupported_reasons': unsupported_reasons, 'scope_notes': scope_notes,
         'projeto_info': projeto_info,
     }
@@ -2858,7 +2930,7 @@ def main():
             for i, sheet_name in enumerate(all_sheets.keys()):
                 with tabs[i]:
                     df_type = df_all_results[df_all_results['Tipo'] == sheet_name].drop(columns=['Tipo'])
-                    df_aprovados_cat = df_type[df_type['Status'] == 'APROVADO'].copy().sort_values(by='Peso (kg/m)')
+                    df_aprovados_cat = df_type[df_type['Status'] == APPROVED_SCOPE_TEXT].copy().sort_values(by='Peso (kg/m)')
                     df_reprovados_cat = df_type[df_type['Status'] == 'REPROVADO'].copy().sort_values(by='Peso (kg/m)')
                     df_pendentes_cat = df_type[df_type['Status'] == 'NÃO VERIFICADO'].copy().sort_values(by='Peso (kg/m)')
 
@@ -2944,7 +3016,7 @@ def run_detailed_analysis(df, perfil_nome, perfil_tipo_display, input_params):
                 "Cisalhamento": res_cis['eficiencia'],
                 "Flecha": res_flecha['eficiencia'],
             }
-            if res_flt.get('rupture_status') != 'N/A':
+            if res_flt.get('rupture_status') not in {'N/A', 'NÃO APLICÁVEL'}:
                 eficiencias["Ruptura da mesa"] = res_flt['rupture_efficiency']
             st.session_state.profile_efficiency_chart = create_profile_efficiency_chart(perfil_nome, eficiencias)
             
@@ -3010,7 +3082,7 @@ def run_batch_analysis(all_sheets, input_params):
                     'Ef. FLA (%)': res_fla['eficiencia'], 'Ef. Cisalhamento (%)': res_cis['eficiencia'],
                     'Ef. Ruptura Mesa (%)': (
                         res_flt['rupture_efficiency']
-                        if res_flt.get('rupture_status') != 'N/A' else None
+                        if res_flt.get('rupture_status') not in {'N/A', 'NÃO APLICÁVEL'} else None
                     ),
                     'Ef. Forças Locais (%)': max_local_efficiency,
                     'Ef. Flecha (%)': res_flecha['eficiencia']

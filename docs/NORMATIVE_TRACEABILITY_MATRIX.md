@@ -5,6 +5,8 @@
 - `BASELINE_IMPLEMENTED_UNVERIFIED`: existe código, mas a transcrição e a aplicabilidade ainda não
   foram verificadas com evidência controlada.
 - `NORMATIVE_REVIEW_REQUIRED`: falta fonte integral, decisão normativa ou revisão.
+- `PARTIAL_IMPLEMENTATION`: barreira de segurança implementada, mas o requisito completo ainda
+  possui trabalho ou evidência pendente.
 - `NOT_IMPLEMENTED`: funcionalidade ausente.
 - `OUT_OF_SCOPE`: funcionalidade deliberadamente excluída, com bloqueio de aprovação quando
   aplicável.
@@ -43,6 +45,6 @@
 | ELS por fase/parcela | NBR 8800:2024, Anexo B; NBR 8681:2025 | elemento sensível | flecha total simplificada | `combine_els`, `deflection_limit` | limite de balanço | ausente | NORMATIVE_REVIEW_REQUIRED | não designado |
 | vibração | NBR 8800:2024, Anexo I | quando aplicável | triagem textual | UI | ausente | ausente | OUT_OF_SCOPE | não designado |
 | catálogo rastreável | catálogo oficial de cada fabricante/família | todos os perfis | planilha sem metadados | `perfis.xlsx` | executabilidade | ausente | NORMATIVE_REVIEW_REQUIRED | não designado |
-| evidência externa manual | política de auditoria | modo manual | checkbox sem documento | UI e `perform_all_checks` | memorial declara ausência quando desmarcado | ausente | NOT_IMPLEMENTED | não designado |
-| status global seguro | política de auditoria | todas as verificações | três strings; N/A pode aprovar | `overall_status` | só prioridade de falha | ausente | NOT_IMPLEMENTED | não designado |
+| evidência externa manual | política de auditoria | modo manual | modelo tipado, upload PDF, SHA-256 e identificação; resultados externos ainda não são importados | `ExternalEvidence`, UI e `perform_all_checks` | rastreabilidade e bloqueio | ausente | PARTIAL_IMPLEMENTATION | não designado |
+| status global seguro | política de auditoria | todas as verificações | enum e agregador novos; ponte legada bloqueia N/A e usa frase de escopo | `domain.status`, `overall_status` | bloqueadores, N/A e não aplicabilidade | ausente | PARTIAL_IMPLEMENTATION | não designado |
 | memorial reproduzível por JSON | política de auditoria | toda análise | HTML dependente da sessão | memorial/UI | testes textuais | ausente | NOT_IMPLEMENTED | não designado |
