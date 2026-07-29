@@ -1,0 +1,60 @@
+schema_version: "1.0"
+workbook:
+  filename: "perfis.xlsx"
+  sha256: "EB95CEA376935EF62C8B9C311E0BB8BD72A80EE65BC69811E87CB2C8D2C08001"
+  status: "UNVALIDATED_CATALOG_SOURCE"
+  units:
+    length: "mm"
+    area: "cm2"
+    second_moment_of_area: "cm4"
+    section_modulus: "cm3"
+    warping_constant: "cm6"
+    linear_mass: "kg/m"
+families:
+  Laminados:
+    manufacturer: null
+    catalog: null
+    edition: null
+    page: null
+    origin: null
+    source_hash: null
+    source_date: null
+    tolerances: null
+    reviewer: null
+    review_date: null
+  CS:
+    manufacturer: null
+    catalog: null
+    edition: null
+    page: null
+    origin: null
+    source_hash: null
+    source_date: null
+    tolerances: null
+    reviewer: null
+    review_date: null
+  CVS:
+    manufacturer: null
+    catalog: null
+    edition: null
+    page: null
+    origin: null
+    source_hash: null
+    source_date: null
+    tolerances: null
+    reviewer: null
+    review_date: null
+  VS:
+    manufacturer: null
+    catalog: null
+    edition: null
+    page: null
+    origin: null
+    source_hash: null
+    source_date: null
+    tolerances: null
+    reviewer: null
+    review_date: null
+limitations:
+  - "As fontes oficiais das quatro famílias não foram fornecidas."
+  - "O arquivo não pode liberar aprovação executiva enquanto a amostragem documental estiver pendente."

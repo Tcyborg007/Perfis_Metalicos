@@ -10,6 +10,7 @@ import base64
 import hashlib
 import pytz
 from pathlib import Path
+from functools import lru_cache
 from calculos_nbr8800_2024 import (
     ERRATA,
     NORMA,
@@ -26,13 +27,17 @@ from calculos_nbr8800_2024 import (
 )
 from memorial_nbr8800_2024 import build_memorial_details
 from perfis_metalicos.audit import ExternalEvidence
+from perfis_metalicos.catalog import (
+    CatalogValidationStatus,
+    validate_catalog_workbook,
+)
 from perfis_metalicos.domain import APPROVED_SCOPE_TEXT
 # ==============================================================================
 # 1. CONFIGURAÇÕES E CONSTANTES GLOBAIS APRIMORADAS
 # ==============================================================================
 
 class Config:
-    NOME_NORMA = f'{NORMA} + Errata 1:2025'
+    NOME_NORMA = f'{NORMA} | Er1:2025: NORMATIVE_REVIEW_REQUIRED'
     GAMMA_A1 = 1.10
     FATOR_SIGMA_R = 0.3
     FATOR_LAMBDA_P_FLT = 1.76
@@ -53,6 +58,15 @@ PROFILE_TYPE_MAP = {
     "CVS": "Perfis CVS Soldados",
     "VS": "Perfis Soldados"
 }
+
+
+@lru_cache(maxsize=1)
+def _catalog_validation_report():
+    root = Path(__file__).resolve().parent
+    return validate_catalog_workbook(
+        root / "perfis.xlsx",
+        root / "catalog" / "catalog_manifest.yaml",
+    )
 
 PROFILE_FABRICATION_MAP = {
     "Laminados": "Laminado",
@@ -2127,6 +2141,13 @@ def perform_all_checks(props, fy_aco, Lb_projeto, Cb_projeto, L_cm, Msd, Vsd, q_
     scope_issues = list(kwargs.get('unsupported_reasons', []))
     scope_notes = list(kwargs.get('scope_notes', []))
     scope_issues.extend(validate_material(fy_aco, fu_aco))
+    catalog_report = _catalog_validation_report()
+    if catalog_report.status is not CatalogValidationStatus.VALIDATED_CATALOG_SOURCE:
+        scope_issues.append(
+            f"{catalog_report.status.value}: o catálogo possui "
+            f"{len(catalog_report.blocking_issues)} pendência(s) bloqueante(s); "
+            "não pode sustentar aprovação executiva."
+        )
 
     self_weight = props['Peso'] * 9.80665 / 100_000.0 if kwargs.get('include_self_weight', True) else 0.0
     elu_response = None
@@ -2344,6 +2365,8 @@ def perform_all_checks(props, fy_aco, Lb_projeto, Cb_projeto, L_cm, Msd, Vsd, q_
         'deflection_efficiency': eficiencia_flecha, 'deflection_status': status_flecha,
         'scope_notes': scope_notes, 'scope_issues': scope_issues, 'status_global': status_global,
         'external_evidence': kwargs.get('external_evidence'),
+        'catalog_status': catalog_report.status.value,
+        'catalog_sha256': catalog_report.workbook_sha256,
     }
     passo_a_passo_html = _memorial_2024_html(bundle) if detalhado else ""
     return res_flt, res_flm, res_fla, res_cis, res_flecha, passo_a_passo_html

@@ -41,7 +41,9 @@ para fabricação ou substituir cálculo e revisão de engenheiro habilitado.
 - não possui matriz completa de forças localizadas;
 - não decompõe deslocamentos por fase e parcela;
 - não implementa vibração;
-- não valida a origem do catálogo;
+- valida hash e coerências automáticas do catálogo, mas a origem oficial das quatro famílias não
+  foi fornecida; cinco designações estão duplicadas na família VS e o status atual é
+  `INVALID_CATALOG_DATA`;
 - a interface exige arquivo e metadados de evidência externa, mas ainda não importa resultados
   numéricos assinados para comparação;
 - os estados tipados e o agregador seguro existem; partes legadas ainda precisam ser removidas
