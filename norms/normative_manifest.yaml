@@ -46,6 +46,13 @@ standards:
       full_text_review_complete: false
       repository_path: null
       note: "Cópia fornecida pelo usuário; material protegido não é versionado."
+      additional_copy:
+        filename_record: "ABNT NBR 8800-2024.pdf"
+        sha256: "13E77118CB83E6336D8CA197CB0DA68A5F4966983247ED205D6D2908C3A5080B"
+        pdf_pages: 293
+        numbered_pages: 276
+        visual_cover_verified: true
+        incorporated_errata_identified: false
     scope_used:
       - "materiais de aço dentro do escopo declarado"
       - "ações e combinações atualmente existentes no baseline"
@@ -82,17 +89,26 @@ standards:
 
   - key: "nbr_8681_2025"
     identification: "ABNT NBR 8681:2025"
-    title: "Ações e segurança nas estruturas - Procedimento"
-    edition: "2025"
-    publication_date: null
+    title: "Ações e segurança nas estruturas"
+    edition: "2"
+    publication_date: "2025-09-24"
     amendment_or_errata: []
     current_status:
       value: "NORMATIVE_REVIEW_REQUIRED"
-      reason: "A cópia integral e o metadado oficial controlado não foram fornecidos."
+      reason: "A cópia integral foi fornecida e as Seções 5.1.3 a 5.1.6 foram conferidas visualmente; a compatibilidade com a norma específica ABNT NBR 8800:2024 ainda exige decisão de engenheiro revisor."
     consulted_copy:
-      available: false
-      sha256: null
+      available: true
+      filename_record: "ABNT NBR 8681 2025 - Ações e segurança nas estruturas.pdf"
+      sha256: "0D275BBE0B4408309D395F03A26836384E50A35CDB3AC406C8D1F2769FEC7FAE"
+      pdf_pages: 29
+      numbered_pages: 23
+      encrypted: false
+      visual_cover_verified: true
+      visual_pages_verified:
+        - "12-19"
       full_text_review_complete: false
+      repository_path: null
+      note: "Cópia fornecida pelo usuário; material protegido não é versionado."
     scope_used:
       - "classificação de ações"
       - "efeitos favoráveis e desfavoráveis"
@@ -117,8 +133,8 @@ standards:
   - key: "nbr_6120_2019_corrected"
     identification: "ABNT NBR 6120:2019"
     title: "Ações para o cálculo de estruturas de edificações"
-    edition: "2019"
-    publication_date: null
+    edition: "2"
+    publication_date: "2019-09-30"
     amendment_or_errata:
       required:
         - identification: "versão corrigida e errata aplicável"
@@ -127,11 +143,18 @@ standards:
           status: "NORMATIVE_REVIEW_REQUIRED"
     current_status:
       value: "NORMATIVE_REVIEW_REQUIRED"
-      reason: "A cópia integral, a identificação da versão corrigida e a errata aplicável não foram fornecidas."
+      reason: "A edição original integral foi fornecida; ela não se identifica como versão corrigida nem incorpora errata aplicável."
     consulted_copy:
-      available: false
-      sha256: null
+      available: true
+      filename_record: "NBR_6120_2019_Ações_para_o_cálculo_de_estruturas_de_edificações.pdf"
+      sha256: "A525D9D084BBBD36ED4115C1EAD4ECB1A463165DA2C9D05D8B99A352ADEF2B61"
+      pdf_pages: 66
+      numbered_pages: 60
+      encrypted: false
+      visual_cover_verified: false
       full_text_review_complete: false
+      repository_path: null
+      note: "Cópia original fornecida pelo usuário; material protegido não é versionado."
     scope_used:
       - "valores característicos de ações permanentes"
       - "ações variáveis de uso e ocupação"
@@ -149,8 +172,8 @@ standards:
   - key: "nbr_6123_2023_corrected_er1_2025"
     identification: "ABNT NBR 6123:2023"
     title: "Forças devidas ao vento em edificações"
-    edition: "2023"
-    publication_date: null
+    edition: "2"
+    publication_date: "2023-12-20"
     amendment_or_errata:
       required:
         - identification: "versão corrigida"
@@ -163,11 +186,18 @@ standards:
           status: "NORMATIVE_REVIEW_REQUIRED"
     current_status:
       value: "NORMATIVE_REVIEW_REQUIRED"
-      reason: "A funcionalidade de vento não existe e as cópias normativas não foram fornecidas."
+      reason: "A edição original integral foi fornecida, sem identificação de versão corrigida ou Errata 1:2025; a funcionalidade de vento permanece fora do escopo."
     consulted_copy:
-      available: false
-      sha256: null
+      available: true
+      filename_record: "ABNT NBR 6123 - 2023.pdf"
+      sha256: "5C8A936D80F6AEA47DA21694DC636411645B7A2AB2850C861BD1A12C6871D6B1"
+      pdf_pages: 107
+      numbered_pages: 95
+      encrypted: false
+      visual_cover_verified: false
       full_text_review_complete: false
+      repository_path: null
+      note: "Cópia original fornecida pelo usuário; material protegido não é versionado."
     scope_used:
       - "ações de vento somente quando a funcionalidade for implementada"
     affected_functions:

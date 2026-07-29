@@ -8,7 +8,7 @@ Este documento registra quais fontes estavam realmente disponíveis em 2026-07-2
 substitui as normas e não declara conformidade. Nenhuma fórmula proveniente de fonte ausente pode
 ser incluída, corrigida ou atualizada por inferência.
 
-## Cópia integral disponível
+## Cópias integrais disponíveis
 
 ### ABNT NBR 8800:2024
 
@@ -31,14 +31,45 @@ O arquivo consultado não contém ocorrência textual identificável de “Errat
 Portanto, ele é tratado como a edição original de 2024, sem incorporação comprovada da Errata
 1:2025.
 
-## Fontes obrigatórias ainda indisponíveis
+### ABNT NBR 8681:2025
+
+| Campo | Evidência |
+|---|---|
+| edição observada na capa | segunda edição |
+| data observada na capa | 24.09.2025 |
+| páginas do arquivo | 29 |
+| páginas numeradas declaradas | 23 |
+| SHA-256 | `0D275BBE0B4408309D395F03A26836384E50A35CDB3AC406C8D1F2769FEC7FAE` |
+| inspeção visual realizada | páginas numeradas 12 a 19, Seções 5.1.3 a 5.1.6 e Tabelas 1 a 7 |
+
+As equações de combinações últimas e de serviço e as tabelas de coeficientes foram conferidas
+visualmente. A fonte integral agora permite transcrição controlada, mas não resolve sozinha as
+divergências com as disposições específicas da NBR 8800:2024.
+
+### ABNT NBR 6120:2019
+
+A cópia é a segunda edição original de 30.09.2019, com 66 páginas de PDF e 60 páginas numeradas,
+SHA-256 `A525D9D084BBBD36ED4115C1EAD4ECB1A463165DA2C9D05D8B99A352ADEF2B61`.
+Ela não se identifica como versão corrigida e não contém errata incorporada comprovada.
+
+### ABNT NBR 6123:2023
+
+A cópia é a segunda edição original de 20.12.2023, com 107 páginas de PDF e 95 páginas numeradas,
+SHA-256 `5C8A936D80F6AEA47DA21694DC636411645B7A2AB2850C861BD1A12C6871D6B1`.
+Ela não se identifica como versão corrigida nem como incorporando Errata 1:2025.
+
+### Documento fora do escopo
+
+A pasta também contém a ABNT NBR 6118:2026. Ela não foi adotada como fonte de equações para o
+escopo atual de perfis de aço e não altera o manifesto desta aplicação.
+
+## Fontes obrigatórias ainda indisponíveis ou incompletas
 
 | Documento requerido | Cópia integral | Consequência |
 |---|---|---|
 | ABNT NBR 8800:2024/Er1:2025 | não fornecida | `NORMATIVE_REVIEW_REQUIRED`; nenhuma correção atribuída à errata pode ser aceita sem confronto |
-| ABNT NBR 8681:2025 | não fornecida | gerador de combinações novo não pode receber coeficientes presumidos |
-| ABNT NBR 6120:2019, versão corrigida e errata aplicável | não fornecida | categorias e valores de ações não podem ser codificados como normativos |
-| ABNT NBR 6123:2023, versão corrigida e Errata 1:2025 | não fornecida | vento permanece fora do escopo computacional |
+| ABNT NBR 6120:2019, versão corrigida e errata aplicável | somente edição original | valores afetados por correção não podem ser promovidos a revisados |
+| ABNT NBR 6123:2023, versão corrigida e Errata 1:2025 | somente edição original | vento permanece fora do escopo computacional |
 
 ## Relações identificadas na cópia da NBR 8800:2024
 
@@ -49,9 +80,11 @@ A cópia de 2024:
 - referencia a NBR 6123 para vento;
 - contém, em uma nota de tabela, referência explícita à NBR 8681:2003.
 
-Essa última constatação torna obrigatória uma decisão controlada sobre compatibilidade com a
-NBR 8681:2025. Até que a edição 2025 seja fornecida e revisada, a aplicação não pode afirmar que
-suas combinações representam simultaneamente as duas bases.
+O confronto visual entre as duas edições identificou diferenças em ações permanentes indiretas,
+na abrangência de categorias de ocupação e em casos de pontes rolantes. A NBR 8681:2025 declara
+que seus coeficientes são indicativos e podem ser alterados ou complementados por normas
+específicas. Portanto, a aplicação manterá bases separadas e não selecionará silenciosamente uma
+delas até a aprovação da decisão `ND-001`.
 
 ## Regra de mudança normativa
 
