@@ -66,5 +66,6 @@ no_implicit_optional = true
 disable_error_code = ["import-untyped"]
 
 [tool.mutmut]
-source_paths = ["src/perfis_metalicos/checks/flexure.py"]
+source_paths = ["src/perfis_metalicos"]
+only_mutate = ["src/perfis_metalicos/checks/flexure.py"]
 pytest_add_cli_args_test_selection = ["tests/test_flexure_piecewise.py"]
