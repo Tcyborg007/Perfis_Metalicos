@@ -1,0 +1,2 @@
+"""Verificações de estados-limite."""
+
