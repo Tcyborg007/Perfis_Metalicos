@@ -1,6 +1,6 @@
 import math
-from pathlib import Path
 import unittest
+from pathlib import Path
 
 import pandas as pd
 
@@ -9,7 +9,6 @@ from calculos_nbr8800_2024 import (
     local_compression_strength,
     shear_strength_i,
 )
-
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -46,6 +45,10 @@ class ProfileCatalogIntegrationTests(unittest.TestCase):
                 flexure = flexural_strength_i(
                     props, fy=34.5, fu=45.0, E=20_000.0,
                     Lb=500.0, Cb=1.0, fabrication=fabrication,
+                    section_symmetry="DOUBLE",
+                    symmetry_basis=(
+                        "Planilha atual representa mesas iguais por bf e tf únicos."
+                    ),
                 )
                 shear = shear_strength_i(props, fy=34.5, E=20_000.0)
                 local = local_compression_strength(

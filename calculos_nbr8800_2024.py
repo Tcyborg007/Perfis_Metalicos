@@ -1,8 +1,11 @@
-"""Núcleo de cálculo para vigas I/H conforme ABNT NBR 8800:2024 + Errata 1:2025.
+"""Adaptador legado de cálculo para vigas I/H baseado na ABNT NBR 8800:2024.
 
 Unidades internas: kN e cm. O módulo de elasticidade e as resistências são
 informados em kN/cm². Este módulo é deliberadamente independente do Streamlit
 para permitir ensaios unitários e revisão das equações.
+
+A Errata 1:2025 não foi fornecida integralmente e permanece
+``NORMATIVE_REVIEW_REQUIRED`` no manifesto normativo.
 """
 
 from __future__ import annotations
@@ -11,9 +14,19 @@ from dataclasses import dataclass
 import math
 from typing import Iterable
 
+from perfis_metalicos.checks.flexure import (
+    ANNEX_D_D21,
+    ANNEX_D_D22,
+    FlexuralRegime,
+    ltb_alternative_reduction,
+    piecewise_design_strength,
+)
+from perfis_metalicos.checks.localized_forces import flange_local_bending_resistance
+from perfis_metalicos.domain.units import Length, Moment, Stress
+
 
 NORMA = "ABNT NBR 8800:2024"
-ERRATA = "ABNT NBR 8800:2024/Er1:2025 — Errata 1 (25/02/2025)"
+ERRATA = "ABNT NBR 8800:2024/Er1:2025 — NORMATIVE_REVIEW_REQUIRED"
 GAMMA_A1 = 1.10
 GAMMA_A2 = 1.35
 
@@ -342,23 +355,6 @@ def _overall_flexural_cap(W: float, fy: float, gamma_a1: float) -> float:
     return 1.50 * W * fy / gamma_a1
 
 
-def _piecewise_strength(
-    slenderness: float,
-    lambda_p: float,
-    lambda_r: float,
-    plastic_or_yield: float,
-    residual: float,
-    critical: float,
-    gamma_a1: float,
-) -> tuple[float, str]:
-    if slenderness <= lambda_p:
-        return plastic_or_yield / gamma_a1, "plástico"
-    if slenderness <= lambda_r:
-        fraction = (slenderness - lambda_p) / (lambda_r - lambda_p)
-        return (plastic_or_yield - (plastic_or_yield - residual) * fraction) / gamma_a1, "inelástico"
-    return critical / gamma_a1, "elástico"
-
-
 def flexural_strength_i(
     props: dict,
     fy: float,
@@ -371,6 +367,8 @@ def flexural_strength_i(
     flt_applicable: bool = True,
     net_tension_flange_area: float | None = None,
     gross_tension_flange_area: float | None = None,
+    section_symmetry: str | None = None,
+    symmetry_basis: str | None = None,
     gamma_a1: float = GAMMA_A1,
     gamma_a2: float = GAMMA_A2,
 ) -> dict:
@@ -395,6 +393,15 @@ def flexural_strength_i(
     slender_web = web_lambda > web_lr
     warnings: list[str] = []
     applicability: list[str] = []
+    if section_symmetry != "DOUBLE":
+        applicability.append(
+            "A igualdade Wxc = Wxt = Wx exige seção I/H duplamente simétrica "
+            "explicitamente declarada."
+        )
+    if section_symmetry == "DOUBLE" and not (symmetry_basis or "").strip():
+        applicability.append(
+            "A declaração de dupla simetria exige base geométrica ou documental."
+        )
     Mr_flange = None
     Mcr_flange = None
     Mr_web = None
@@ -419,15 +426,12 @@ def flexural_strength_i(
             * math.sqrt((Cw / Iy) * (1.0 + 0.039 * J * Lb**2 / Cw))
         )
         lambda_lt = math.sqrt(Mpl / Mcr_ltb) if Mcr_ltb > 0 else math.inf
-        if lambda_lt <= 0.4:
-            chi_lt = 1.0
-            ltb_regime = "plástico"
-        elif lambda_lt <= 1.4:
-            chi_lt = 1.0 - 0.49 * (lambda_lt - 0.4)
-            ltb_regime = "inelástico"
-        else:
-            chi_lt = 1.0 / lambda_lt**2
-            ltb_regime = "elástico"
+        chi_lt, ltb_regime_value = ltb_alternative_reduction(lambda_lt)
+        ltb_regime = {
+            FlexuralRegime.PLASTIC_OR_YIELD: "plástico",
+            FlexuralRegime.INELASTIC: "inelástico",
+            FlexuralRegime.ELASTIC: "elástico",
+        }[ltb_regime_value]
         mrd_ltb = min(chi_lt * Mpl / gamma_a1, cap) if flt_applicable else None
 
         flange_lambda = bf / (2.0 * tf)
@@ -440,9 +444,22 @@ def flexural_strength_i(
             flange_lr = 0.83 * math.sqrt(E / (fy - sigma_r))
             Mcr_flange = 0.69 * E * W / flange_lambda**2
         Mr_flange = (fy - sigma_r) * W
-        mrd_flange, flange_regime = _piecewise_strength(
-            flange_lambda, flange_lp, flange_lr, Mpl, Mr_flange, Mcr_flange, gamma_a1
+        flange_result = piecewise_design_strength(
+            slenderness=flange_lambda,
+            lambda_p=flange_lp,
+            lambda_r=flange_lr,
+            plastic_or_yield_moment=Moment(Mpl),
+            residual_moment=Moment(Mr_flange),
+            elastic_critical_moment=Moment(Mcr_flange),
+            gamma_a1=gamma_a1,
+            reference=ANNEX_D_D22,
         )
+        mrd_flange = flange_result.design_moment.kN_cm
+        flange_regime = {
+            FlexuralRegime.PLASTIC_OR_YIELD: "plástico",
+            FlexuralRegime.INELASTIC: "inelástico",
+            FlexuralRegime.ELASTIC: "elástico",
+        }[flange_result.regime]
         mrd_flange = min(mrd_flange, cap)
 
         Mr_web = fy * W
@@ -482,7 +499,9 @@ def flexural_strength_i(
         if kpg <= 0:
             applicability.append("O fator kpg resultou não positivo.")
 
+        # A igualdade é permitida somente pela hipótese explícita verificada acima.
         Wxc = W
+        Wxt = W
         M_y = kpg * fy * Wxc
         M_r = kpg * (fy - sigma_r) * Wxc
         web_segment = hc / 6.0
@@ -493,9 +512,22 @@ def flexural_strength_i(
         ltb_lp = 1.10 * math.sqrt(E / fy)
         ltb_lr = math.pi * math.sqrt(E / (fy - sigma_r))
         Mcr_ltb = Cb * kpg * math.pi**2 * E * Wxc / ltb_lambda**2
-        mrd_ltb_value, ltb_regime = _piecewise_strength(
-            ltb_lambda, ltb_lp, ltb_lr, M_y, M_r, Mcr_ltb, gamma_a1
+        ltb_result = piecewise_design_strength(
+            slenderness=ltb_lambda,
+            lambda_p=ltb_lp,
+            lambda_r=ltb_lr,
+            plastic_or_yield_moment=Moment(M_y),
+            residual_moment=Moment(M_r),
+            elastic_critical_moment=Moment(Mcr_ltb),
+            gamma_a1=gamma_a1,
+            reference=ANNEX_D_D21,
         )
+        mrd_ltb_value = ltb_result.design_moment.kN_cm
+        ltb_regime = {
+            FlexuralRegime.PLASTIC_OR_YIELD: "plástico",
+            FlexuralRegime.INELASTIC: "inelástico",
+            FlexuralRegime.ELASTIC: "elástico",
+        }[ltb_result.regime]
         mrd_ltb = min(mrd_ltb_value, cap) if flt_applicable else None
         lambda_lt = ltb_lambda
         chi_lt = None
@@ -505,17 +537,24 @@ def flexural_strength_i(
         kc = max(0.35, min(4.0 / math.sqrt(h / tw), 0.76))
         flange_lr = 0.95 * math.sqrt(E * kc / (fy - sigma_r))
         Mcr_flange = 0.90 * kpg * E * kc * Wxc / flange_lambda**2
-        mrd_flange, flange_regime = _piecewise_strength(
-            flange_lambda,
-            flange_lp,
-            flange_lr,
-            M_y,
-            M_r,
-            Mcr_flange,
-            gamma_a1,
+        flange_result = piecewise_design_strength(
+            slenderness=flange_lambda,
+            lambda_p=flange_lp,
+            lambda_r=flange_lr,
+            plastic_or_yield_moment=Moment(M_y),
+            residual_moment=Moment(M_r),
+            elastic_critical_moment=Moment(Mcr_flange),
+            gamma_a1=gamma_a1,
+            reference=ANNEX_D_D22,
         )
+        mrd_flange = flange_result.design_moment.kN_cm
+        flange_regime = {
+            FlexuralRegime.PLASTIC_OR_YIELD: "plástico",
+            FlexuralRegime.INELASTIC: "inelástico",
+            FlexuralRegime.ELASTIC: "elástico",
+        }[flange_result.regime]
         mrd_flange = min(mrd_flange, cap)
-        mrd_tension = min(fy * W / gamma_a1, cap)
+        mrd_tension = min(fy * Wxt / gamma_a1, cap)
         mrd_web, web_regime = mrd_tension, "Anexo E — escoamento da mesa tracionada"
 
     rupture_limit = None
@@ -572,6 +611,9 @@ def flexural_strength_i(
         "M_y_annex_e": M_y,
         "M_r_annex_e": M_r,
         "Wxc": Wxc,
+        "Wxt": W if section_symmetry == "DOUBLE" else None,
+        "section_symmetry": section_symmetry,
+        "symmetry_basis": symmetry_basis,
         "hc": hc,
         "Iyc": Iyc,
         "Ayc": Ayc,
@@ -608,6 +650,10 @@ def shear_strength_i(
     stiffener_requested = bool(stiffener_spacing and stiffener_spacing > 0)
     stiffener_checks: list[dict] = []
     stiffener_valid = False
+    stiffener_geometric_valid = False
+    stiffener_design_complete = False
+    stiffener_normative_source_verified = False
+    stiffener_incomplete_items: list[str] = []
     a_h = math.inf
     j = None
     I_st = None
@@ -638,7 +684,24 @@ def shear_strength_i(
             {"name": "b/t", "value": b_t, "limit": slender_limit, "passed": b_t <= slender_limit},
             {"name": "inércia", "value": I_st, "limit": I_req, "passed": I_st >= I_req},
         ]
-        stiffener_valid = all(check["passed"] for check in stiffener_checks)
+        stiffener_geometric_valid = all(check["passed"] for check in stiffener_checks)
+        stiffener_incomplete_items = [
+            "resistência axial do enrijecedor",
+            "flambagem do enrijecedor",
+            "transferência da força para o enrijecedor",
+            "dimensionamento das soldas",
+            "contato e ligação com as mesas",
+            "requisitos de painéis extremos",
+            "confirmação da expressão de j na Errata 1:2025",
+        ]
+        # A geometria isolada não autoriza o aumento de kv. O caminho somente
+        # poderá ser liberado quando todos os itens e a fonte da errata forem
+        # verificados.
+        stiffener_valid = (
+            stiffener_geometric_valid
+            and stiffener_design_complete
+            and stiffener_normative_source_verified
+        )
 
     if stiffener_requested and stiffener_valid and a_h <= 3.0:
         kv = 5.0 + 5.0 / a_h**2
@@ -670,6 +733,10 @@ def shear_strength_i(
         "regime": regime,
         "stiffener_requested": stiffener_requested,
         "stiffener_valid": stiffener_valid,
+        "stiffener_geometric_valid": stiffener_geometric_valid,
+        "stiffener_design_complete": stiffener_design_complete,
+        "stiffener_normative_source_verified": stiffener_normative_source_verified,
+        "stiffener_incomplete_items": stiffener_incomplete_items,
         "stiffener_checks": stiffener_checks,
         "a_h": a_h,
         "j": j,
@@ -813,10 +880,18 @@ def local_compression_strength(
 def local_flange_bending_strength(
     tf: float, fy: float, distance_to_end: float, gamma_a1: float = GAMMA_A1
 ) -> float:
-    resistance = 6.25 * tf**2 * fy / gamma_a1
-    if distance_to_end < 10.0 * tf:
-        resistance *= 0.5
-    return resistance
+    """Compatibilidade legada; assume força distribuída por toda a largura da mesa."""
+
+    resistance = flange_local_bending_resistance(
+        flange_thickness=Length(tf),
+        yield_strength=Stress(fy),
+        distance_to_end=Length(distance_to_end),
+        transverse_load_length=Length(1.0),
+        flange_width=Length(1.0),
+        gamma_a1=gamma_a1,
+    )
+    assert resistance is not None
+    return resistance.kN
 
 
 def deflection_limit(
@@ -841,6 +916,8 @@ def overall_status(statuses: Iterable[str]) -> str:
         return "REPROVADO"
     if any(value == "NÃO VERIFICADO" for value in values):
         return "NÃO VERIFICADO"
-    if all(value in {"APROVADO", "N/A"} for value in values):
-        return "APROVADO"
+    if any(value == "N/A" for value in values):
+        return "NÃO VERIFICADO"
+    if all(value in {"APROVADO", "NÃO APLICÁVEL"} for value in values):
+        return "APROVADO NO ESCOPO COMPUTACIONAL DECLARADO"
     return "NÃO VERIFICADO"

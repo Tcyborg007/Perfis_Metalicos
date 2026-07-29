@@ -1,4 +1,3 @@
-import math
 import unittest
 
 from calculos_nbr8800_2024 import (
@@ -140,16 +139,32 @@ class ResistanceTests(unittest.TestCase):
     def test_flexural_strength_respects_global_elastic_cap(self):
         result = flexural_strength_i(
             self.props, fy=34.5, fu=45.0, E=20_000.0, Lb=5.0, Cb=1.0,
-            fabrication="Laminado"
+            fabrication="Laminado", section_symmetry="DOUBLE",
+            symmetry_basis="Geometria de teste duplamente simétrica.",
         )
         self.assertLessEqual(result["Mrd"], 1.5 * self.props["Wx"] * 34.5 / 1.10 + 1e-9)
         self.assertGreater(result["Mrd"], 0.0)
+
+    def test_flexure_never_assumes_double_symmetry_silently(self):
+        result = flexural_strength_i(
+            self.props,
+            fy=34.5,
+            fu=45.0,
+            E=20_000.0,
+            Lb=5.0,
+            Cb=1.0,
+            fabrication="Laminado",
+        )
+        self.assertEqual(result["Mrd"], 0.0)
+        self.assertTrue(
+            any("duplamente simétrica" in issue for issue in result["applicability_issues"])
+        )
 
     def test_unstiffened_web_uses_kv_5_34(self):
         result = shear_strength_i(self.props, fy=34.5, E=20_000.0)
         self.assertEqual(result["kv"], 5.34)
 
-    def test_errata_stiffener_j_expression(self):
+    def test_stiffener_j_expression_remains_blocked_until_errata_is_available(self):
         h = self.props["h_clear"]
         result = shear_strength_i(
             self.props,
@@ -162,7 +177,7 @@ class ResistanceTests(unittest.TestCase):
             stiffener_welded_to_web_and_flanges=True,
         )
         self.assertAlmostEqual(result["j"], 8.0, places=8)
-        self.assertIn("Errata", result["reference"])
+        self.assertIn("NORMATIVE_REVIEW_REQUIRED", result["reference"])
 
     def test_stiffener_inertia_uses_web_midplane_axis(self):
         b, t, tw = 10.0, 1.0, self.props["tw"]
@@ -174,6 +189,11 @@ class ResistanceTests(unittest.TestCase):
         )
         one_plate = t * b**3 / 12.0 + t * b * ((tw + b) / 2.0) ** 2
         self.assertAlmostEqual(result["I_st"], 2.0 * one_plate, places=8)
+        self.assertTrue(result["stiffener_geometric_valid"])
+        self.assertFalse(result["stiffener_design_complete"])
+        self.assertFalse(result["stiffener_valid"])
+        self.assertEqual(result["kv"], 5.34)
+        self.assertIn("dimensionamento das soldas", result["stiffener_incomplete_items"])
 
     def test_tension_flange_holes_can_govern(self):
         result = flexural_strength_i(
@@ -181,6 +201,8 @@ class ResistanceTests(unittest.TestCase):
             fabrication="Laminado",
             gross_tension_flange_area=24.0,
             net_tension_flange_area=8.0,
+            section_symmetry="DOUBLE",
+            symmetry_basis="Geometria de teste duplamente simétrica.",
         )
         self.assertFalse(result["rupture_condition_ok"])
         self.assertTrue(result["holes_checked"])
@@ -207,7 +229,8 @@ class ResistanceTests(unittest.TestCase):
         )
         result = flexural_strength_i(
             props, fy=34.5, fu=45.0, E=20_000.0, Lb=300.0, Cb=1.0,
-            fabrication="Soldado"
+            fabrication="Soldado", section_symmetry="DOUBLE",
+            symmetry_basis="Geometria de teste duplamente simétrica.",
         )
         self.assertTrue(result["slender_web"])
         self.assertEqual(result["applicability_issues"], [])
@@ -238,6 +261,18 @@ class CombinationAndStatusTests(unittest.TestCase):
         self.assertEqual(
             overall_status(["NÃO VERIFICADO", "REPROVADO", "APROVADO"]),
             "REPROVADO",
+        )
+
+    def test_na_never_authorizes_global_approval(self):
+        self.assertEqual(
+            overall_status(["APROVADO", "N/A"]),
+            "NÃO VERIFICADO",
+        )
+
+    def test_explicit_non_applicability_can_accompany_scoped_approval(self):
+        self.assertEqual(
+            overall_status(["APROVADO", "NÃO APLICÁVEL"]),
+            "APROVADO NO ESCOPO COMPUTACIONAL DECLARADO",
         )
 
 

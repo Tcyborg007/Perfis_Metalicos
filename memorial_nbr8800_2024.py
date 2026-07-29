@@ -42,7 +42,13 @@ def _esc(value):
 
 
 def _status_class(status):
-    return "pass" if status == "APROVADO" else "pending" if status in {"N/A", "NÃO VERIFICADO"} else "fail"
+    return (
+        "pass"
+        if status in {"APROVADO", "APROVADO NO ESCOPO COMPUTACIONAL DECLARADO"}
+        else "pending"
+        if status in {"N/A", "NÃO APLICÁVEL", "NÃO VERIFICADO"}
+        else "fail"
+    )
 
 
 def _eq(*lines):
@@ -1071,6 +1077,12 @@ def _shear_section(bundle):
     )
     if s["stiffener_requested"]:
         checks = {c["name"]: c for c in s["stiffener_checks"]}
+        inertia_comparator = (
+            r"\ge" if checks["inércia"]["passed"] else "<"
+        )
+        slenderness_comparator = (
+            r"\le" if checks["b/t"]["passed"] else ">"
+        )
         out += _step(
             "6.2", "Validação dos enrijecedores transversais",
             "A Errata 1:2025 corrige a expressão de j. A inércia é calculada em relação ao eixo no plano médio da alma e comparada ao mínimo requerido.",
@@ -1081,8 +1093,8 @@ def _shear_section(bundle):
             ),
             _eq(
                 rf"j=\max\left[\frac{{2.5}}{{\left(\dfrac{{{_n(s['a_h']*p['h_clear'])}}}{{{_n(p['h_clear'])}}}\right)^2}}-2;\;0.5\right]={_n(s['j'])}",
-                rf"I_{{st}}={_n(s['I_st'])}\; {'\\ge' if checks['inércia']['passed'] else '<'}\; I_{{req}}={_n(s['a_h']*p['h_clear'])}\cdot{_n(p['tw'])}^3\cdot{_n(s['j'])}={_n(s['I_required'])}\;cm^4",
-                rf"\frac{{b}}{{t}}=\frac{{{_n(s['stiffener_width'])}}}{{{_n(s['stiffener_thickness'])}}}={_n(s['stiffener_slenderness'])}\; {'\\le' if checks['b/t']['passed'] else '>'}\;0.56\cdot\sqrt{{\frac{{{_n(E)}}}{{{_n(fy)}}}}}={_n(s['stiffener_slenderness_limit'])}",
+                rf"I_{{st}}={_n(s['I_st'])}\; {inertia_comparator}\; I_{{req}}={_n(s['a_h']*p['h_clear'])}\cdot{_n(p['tw'])}^3\cdot{_n(s['j'])}={_n(s['I_required'])}\;cm^4",
+                rf"\frac{{b}}{{t}}=\frac{{{_n(s['stiffener_width'])}}}{{{_n(s['stiffener_thickness'])}}}={_n(s['stiffener_slenderness'])}\; {slenderness_comparator}\;0.56\cdot\sqrt{{\frac{{{_n(E)}}}{{{_n(fy)}}}}}={_n(s['stiffener_slenderness_limit'])}",
             ),
             f"Enrijecedor <strong>{'validado' if s['stiffener_valid'] else 'não validado'}</strong>; soldagem às mesas e à alma: {'sim' if checks['soldagem']['passed'] else 'não'}.",
             "ABNT NBR 8800:2024, 5.4.3.1.3, com correção da Errata 1:2025.", "Somente enrijecedores integralmente aprovados alteram kv.",
@@ -1511,12 +1523,28 @@ def _els_section(bundle):
 def _scope_section(bundle):
     notes = "".join(f"<li>{_esc(item)}</li>" for item in bundle.get("scope_notes", [])) or "<li>Nenhuma hipótese adicional registrada.</li>"
     issues = "".join(f"<li>{_esc(item)}</li>" for item in bundle.get("scope_issues", [])) or "<li>Nenhuma pendência declarada.</li>"
+    external = bundle.get("external_evidence")
+    if external is None:
+        external_html = "<p>Nenhuma evidência externa registrada.</p>"
+    else:
+        checked = ", ".join(_esc(item) for item in external.checked_items)
+        external_html = f"""
+        <dl>
+          <dt>Documento</dt><dd>{_esc(external.document_id)} / {_esc(external.revision)}</dd>
+          <dt>Responsável</dt><dd>{_esc(external.responsible_engineer)} — {_esc(external.professional_registration)}</dd>
+          <dt>Data</dt><dd>{_esc(external.date.isoformat())}</dd>
+          <dt>SHA-256</dt><dd><code>{_esc(external.file_hash)}</code></dd>
+          <dt>Itens declarados</dt><dd>{checked}</dd>
+        </dl>
+        <p><strong>Classificação:</strong> evidência externa; não recalculada pelo programa.</p>
+        """
     cls = _status_class(bundle["status_global"])
     return f"""
     {_chapter('9. Escopo, hipóteses e conclusão', 'O status global inclui resistências, serviço, forças localizadas e limitações de aplicabilidade.')}
     <div class="scope-grid">
       <div class="info-card"><h4>Hipóteses adotadas</h4><ul>{notes}</ul></div>
       <div class="info-card"><h4>Pendências e exclusões</h4><ul>{issues}</ul></div>
+      <div class="info-card"><h4>Evidências externas</h4>{external_html}</div>
     </div>
     <div class="global-status {cls}"><span>STATUS GLOBAL</span><strong>{_esc(bundle['status_global'])}</strong></div>
     <div class="notice"><strong>Nota de responsabilidade:</strong> este memorial documenta o modelo declarado e não substitui a revisão do engenheiro responsável, o detalhamento das ligações, a estabilidade global da estrutura nem verificações fora do escopo explicitado.</div>

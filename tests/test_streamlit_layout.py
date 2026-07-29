@@ -6,7 +6,6 @@ import pandas as pd
 
 from main import style_classic_dataframe
 
-
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -48,6 +47,19 @@ class StreamlitLayoutTests(unittest.TestCase):
         self.assertNotIn("nav-button-secondary", source)
         self.assertNotIn("Logo HQ Engenharia", source)
         self.assertNotIn("lh3.googleusercontent.com", source)
+
+    def test_manual_mode_requires_documented_external_evidence(self):
+        source = (ROOT / "main.py").read_text(encoding="utf-8")
+        self.assertNotIn("Confirmo que forças localizadas e ELS", source)
+        self.assertNotIn("manual_external_checks", source)
+        self.assertIn("ExternalEvidence(", source)
+        self.assertIn("external_evidence_file", source)
+
+    def test_global_flt_disable_control_was_removed(self):
+        source = (ROOT / "main.py").read_text(encoding="utf-8")
+        self.assertNotIn("Contenção lateral contínua eficaz — FLT não aplicável", source)
+        self.assertNotIn("flt_condition", source)
+        self.assertIn("A FLT permanece ativa", source)
 
     def test_memorial_diagrams_have_responsive_and_print_styles(self):
         source = (ROOT / "main.py").read_text(encoding="utf-8")

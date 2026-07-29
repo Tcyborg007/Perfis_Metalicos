@@ -1,10 +1,13 @@
-import unittest
 import re
+import unittest
+from datetime import date
+
 import numpy as np
 
 from calculos_nbr8800_2024 import analyze_beam
 from main import compact_number, perform_all_checks
 from memorial_diagrams import deflection_diagram_visual, effort_diagrams_visual
+from perfis_metalicos.audit import ExternalEvidence
 
 
 class DetailedMemorialTests(unittest.TestCase):
@@ -86,12 +89,19 @@ class DetailedMemorialTests(unittest.TestCase):
         self.assertIn(r"x_\delta=\frac{L}{2}", memorial)
         self.assertNotIn(r"E\cdot I_x\cdot v(x)=C_1\cdot x", memorial)
         self.assertNotIn(r"C_1", memorial)
+        formula_html = "".join(
+            re.findall(
+                r'<div class="formula-chain">(.*?)</div>',
+                memorial,
+                flags=re.DOTALL,
+            )
+        )
         for invented_helper in (
             r"\Phi_t", r"\Phi_w", r"\Phi_{cr}", r"\Psi_{cr}",
             r"\alpha_f", r"M_{n,FLM}", r"\alpha_w", r"M_{n,FLA}",
             r"\alpha_{LT}", r"M_{n,FLT}", r"T_C", r"S_1",
         ):
-            self.assertNotIn(invented_helper, memorial)
+            self.assertNotIn(invented_helper, formula_html)
         for item_reference in (
             "D.2.8-a", "D.2.1 (procedimento alternativo)", "D.2.2",
             "5.4.3.1.1", "5.7.3.2", "5.7.4.2", "5.7.5.1",
@@ -111,6 +121,28 @@ class DetailedMemorialTests(unittest.TestCase):
         self.assertIn("Esforços informados", memorial)
         self.assertIn("nenhum diagrama é inventado", memorial)
         self.assertIn("Não calculado", memorial)
+        self.assertIn("exigem evidência externa documental", memorial)
+        self.assertIn("NÃO VERIFICADO", memorial)
+
+    def test_external_evidence_is_traceable_and_never_presented_as_program_calculation(self):
+        evidence = ExternalEvidence(
+            document_id="MEM-EXT-001",
+            revision="R2",
+            responsible_engineer="Engenheiro de Referência",
+            professional_registration="CREA-UF 123456",
+            date=date(2026, 7, 29),
+            file_hash="b" * 64,
+            checked_items=("LOCAL_FORCES", "ELS_DEFLECTION"),
+        )
+        memorial = self._run(
+            input_mode="Inserir Esforços Manualmente",
+            external_evidence=evidence,
+        )
+        self.assertIn("MEM-EXT-001", memorial)
+        self.assertIn("CREA-UF 123456", memorial)
+        self.assertIn("b" * 64, memorial)
+        self.assertIn("não recalculada pelo programa", memorial)
+        self.assertIn("NÃO VERIFICADO", memorial)
 
     def test_slender_welded_profile_documents_annex_e(self):
         props = dict(self.props)
