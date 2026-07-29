@@ -1,4 +1,5 @@
 import math
+import re
 
 import pytest
 
@@ -151,7 +152,10 @@ def test_ltb_alternative_exact_values(lambda_lt, expected, regime):
     (0.0, -1.0, math.inf, math.nan),
 )
 def test_piecewise_rejects_invalid_slenderness(invalid):
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match=re.escape("λ deve ser positivo e finito."),
+    ):
         piecewise_design_strength(
             slenderness=invalid,
             lambda_p=10.0,
@@ -165,23 +169,27 @@ def test_piecewise_rejects_invalid_slenderness(invalid):
 
 
 @pytest.mark.parametrize(
-    ("field", "invalid"),
+    ("field", "invalid", "label"),
     (
-        ("lambda_p", 0.0),
-        ("lambda_p", math.inf),
-        ("lambda_r", -1.0),
-        ("lambda_r", math.nan),
-        ("gamma_a1", 0.0),
-        ("gamma_a1", -1.0),
-        ("plastic", 0.0),
-        ("plastic", math.inf),
-        ("residual", 0.0),
-        ("residual", math.nan),
-        ("critical", 0.0),
-        ("critical", -1.0),
+        ("lambda_p", 0.0, "λp"),
+        ("lambda_p", math.inf, "λp"),
+        ("lambda_r", -1.0, "λr"),
+        ("lambda_r", math.nan, "λr"),
+        ("gamma_a1", 0.0, "γa1"),
+        ("gamma_a1", -1.0, "γa1"),
+        ("plastic", 0.0, "Momento de plastificação ou escoamento"),
+        ("plastic", -1.0, "Momento de plastificação ou escoamento"),
+        ("residual", 0.0, "Momento correspondente ao início do escoamento"),
+        ("residual", -1.0, "Momento correspondente ao início do escoamento"),
+        ("critical", 0.0, "Momento crítico elástico"),
+        ("critical", -1.0, "Momento crítico elástico"),
     ),
 )
-def test_piecewise_rejects_every_invalid_positive_finite_input(field, invalid):
+def test_piecewise_rejects_every_invalid_positive_finite_input(
+    field,
+    invalid,
+    label,
+):
     values = {
         "lambda_p": 10.0,
         "lambda_r": 20.0,
@@ -191,7 +199,10 @@ def test_piecewise_rejects_every_invalid_positive_finite_input(field, invalid):
         "critical": 70.0,
     }
     values[field] = invalid
-    with pytest.raises(ValueError, match="finito"):
+    with pytest.raises(
+        ValueError,
+        match=re.escape(f"{label} deve ser positivo e finito."),
+    ):
         piecewise_design_strength(
             slenderness=15.0,
             lambda_p=values["lambda_p"],
@@ -209,7 +220,10 @@ def test_piecewise_rejects_every_invalid_positive_finite_input(field, invalid):
     ((10.0, 10.0), (11.0, 10.0)),
 )
 def test_piecewise_rejects_non_increasing_slenderness_limits(lambda_p, lambda_r):
-    with pytest.raises(ValueError, match="λr deve ser maior"):
+    with pytest.raises(
+        ValueError,
+        match=re.escape("λr deve ser maior que λp."),
+    ):
         piecewise_design_strength(
             slenderness=10.0,
             lambda_p=lambda_p,
@@ -223,7 +237,12 @@ def test_piecewise_rejects_non_increasing_slenderness_limits(lambda_p, lambda_r)
 
 
 def test_piecewise_rejects_residual_moment_above_upper_moment():
-    with pytest.raises(ValueError, match="não pode superar"):
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            "O momento residual não pode superar o momento superior."
+        ),
+    ):
         piecewise_design_strength(
             slenderness=15.0,
             lambda_p=10.0,
@@ -236,7 +255,25 @@ def test_piecewise_rejects_residual_moment_above_upper_moment():
         )
 
 
+def test_piecewise_accepts_residual_moment_equal_to_upper_moment():
+    result = piecewise_design_strength(
+        slenderness=15.0,
+        lambda_p=10.0,
+        lambda_r=20.0,
+        plastic_or_yield_moment=Moment(100.0),
+        residual_moment=Moment(100.0),
+        elastic_critical_moment=Moment(70.0),
+        gamma_a1=1.10,
+        reference=ANNEX_D_D21,
+    )
+    assert result.nominal_moment.kN_cm == 100.0
+    assert result.regime is FlexuralRegime.INELASTIC
+
+
 @pytest.mark.parametrize("invalid", (0.0, -1.0, math.inf, math.nan))
 def test_ltb_alternative_rejects_invalid_slenderness(invalid):
-    with pytest.raises(ValueError, match="positivo e finito"):
+    with pytest.raises(
+        ValueError,
+        match=re.escape("λLT deve ser positivo e finito."),
+    ):
         ltb_alternative_reduction(invalid)
