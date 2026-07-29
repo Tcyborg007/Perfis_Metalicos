@@ -1,3 +1,5 @@
+import pytest
+
 from perfis_metalicos.analysis import analyze_combination_envelope
 from perfis_metalicos.combinations import (
     CombinationFamily,
@@ -61,7 +63,10 @@ def test_envelope_keeps_governing_combination_and_position():
         SecondMomentOfArea(8000.0),
     )
     assert envelope.absolute_maximum_moment.combination_id == "HEAVY"
-    assert envelope.absolute_maximum_moment.position.cm == 200.0
+    assert envelope.absolute_maximum_moment.position.cm == pytest.approx(
+        200.0,
+        abs=1e-9,
+    )
     assert envelope.absolute_maximum_shear.combination_id == "HEAVY"
     assert envelope.absolute_maximum_deflection.combination_id == "HEAVY"
     assert len(envelope.analyses) == 2
