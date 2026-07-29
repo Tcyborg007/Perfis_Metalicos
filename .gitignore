@@ -7,3 +7,8 @@ venv/
 .streamlit/secrets.toml
 tmp/
 *.log
+.coverage
+coverage.xml
+htmlcov/
+mutants/
+.mutmut-cache/

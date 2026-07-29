@@ -6,13 +6,13 @@ from perfis_metalicos.analysis import (
     Flange,
     LoadApplicationHeight,
     RestraintPoint,
+    analyze_prismatic_beam,
     build_unbraced_segments,
     continuous_flange_cb,
     evaluate_flt_segments,
     governing_flt_segment,
     segment_moment_data,
 )
-from perfis_metalicos.analysis import analyze_prismatic_beam
 from perfis_metalicos.domain import (
     BeamModel,
     Length,

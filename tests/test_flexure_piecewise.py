@@ -10,7 +10,6 @@ from perfis_metalicos.checks import (
 )
 from perfis_metalicos.domain import Moment
 
-
 EPSILON = 1e-8
 
 

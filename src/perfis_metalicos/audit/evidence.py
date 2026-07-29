@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from datetime import date
-import re
-
 
 _SHA256 = re.compile(r"^[0-9a-fA-F]{64}$")
 

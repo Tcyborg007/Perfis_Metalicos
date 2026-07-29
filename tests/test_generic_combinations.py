@@ -16,11 +16,10 @@ from perfis_metalicos.domain import (
     EffectNature,
     Force,
     Length,
+    LineLoad,
     NormativeReference,
     UniformLineLoad,
-    LineLoad,
 )
-
 
 TEST_REFERENCE = NormativeReference(
     standard="TEST_ONLY",

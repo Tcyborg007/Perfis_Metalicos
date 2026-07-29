@@ -2,7 +2,7 @@ schema_version: "1.0"
 workbook:
   filename: "perfis.xlsx"
   sha256: "EB95CEA376935EF62C8B9C311E0BB8BD72A80EE65BC69811E87CB2C8D2C08001"
-  status: "UNVALIDATED_CATALOG_SOURCE"
+  status: "INVALID_CATALOG_DATA"
   units:
     length: "mm"
     area: "cm2"

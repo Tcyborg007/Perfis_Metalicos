@@ -6,8 +6,8 @@ que números sem unidade atravessem as fronteiras entre interface e cálculo.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import math
+from dataclasses import dataclass
 
 
 def _finite(value: float, name: str) -> float:
@@ -25,11 +25,11 @@ class Length:
         object.__setattr__(self, "cm", _finite(self.cm, "Comprimento"))
 
     @classmethod
-    def from_mm(cls, value: float) -> "Length":
+    def from_mm(cls, value: float) -> Length:
         return cls(_finite(value, "Comprimento") / 10.0)
 
     @classmethod
-    def from_m(cls, value: float) -> "Length":
+    def from_m(cls, value: float) -> Length:
         return cls(_finite(value, "Comprimento") * 100.0)
 
     @property
@@ -40,7 +40,7 @@ class Length:
     def m(self) -> float:
         return self.cm / 100.0
 
-    def require_positive(self, name: str = "Comprimento") -> "Length":
+    def require_positive(self, name: str = "Comprimento") -> Length:
         if self.cm <= 0:
             raise ValueError(f"{name} deve ser positivo.")
         return self
@@ -62,7 +62,7 @@ class Moment:
         object.__setattr__(self, "kN_cm", _finite(self.kN_cm, "Momento"))
 
     @classmethod
-    def from_kN_m(cls, value: float) -> "Moment":
+    def from_kN_m(cls, value: float) -> Moment:
         return cls(_finite(value, "Momento") * 100.0)
 
     @property
@@ -78,7 +78,7 @@ class LineLoad:
         object.__setattr__(self, "kN_per_cm", _finite(self.kN_per_cm, "Carga linear"))
 
     @classmethod
-    def from_kN_per_m(cls, value: float) -> "LineLoad":
+    def from_kN_per_m(cls, value: float) -> LineLoad:
         return cls(_finite(value, "Carga linear") / 100.0)
 
     @property
@@ -94,14 +94,14 @@ class Stress:
         object.__setattr__(self, "kN_per_cm2", _finite(self.kN_per_cm2, "Tensão"))
 
     @classmethod
-    def from_mpa(cls, value: float) -> "Stress":
+    def from_mpa(cls, value: float) -> Stress:
         return cls(_finite(value, "Tensão") / 10.0)
 
     @property
     def mpa(self) -> float:
         return self.kN_per_cm2 * 10.0
 
-    def require_positive(self, name: str = "Tensão") -> "Stress":
+    def require_positive(self, name: str = "Tensão") -> Stress:
         if self.kN_per_cm2 <= 0:
             raise ValueError(f"{name} deve ser positiva.")
         return self
@@ -114,7 +114,7 @@ class Area:
     def __post_init__(self) -> None:
         object.__setattr__(self, "cm2", _finite(self.cm2, "Área"))
 
-    def require_positive(self, name: str = "Área") -> "Area":
+    def require_positive(self, name: str = "Área") -> Area:
         if self.cm2 <= 0:
             raise ValueError(f"{name} deve ser positiva.")
         return self
@@ -127,7 +127,7 @@ class SecondMomentOfArea:
     def __post_init__(self) -> None:
         object.__setattr__(self, "cm4", _finite(self.cm4, "Momento de inércia"))
 
-    def require_positive(self, name: str = "Momento de inércia") -> "SecondMomentOfArea":
+    def require_positive(self, name: str = "Momento de inércia") -> SecondMomentOfArea:
         if self.cm4 <= 0:
             raise ValueError(f"{name} deve ser positivo.")
         return self
@@ -140,7 +140,7 @@ class SectionModulus:
     def __post_init__(self) -> None:
         object.__setattr__(self, "cm3", _finite(self.cm3, "Módulo de seção"))
 
-    def require_positive(self, name: str = "Módulo de seção") -> "SectionModulus":
+    def require_positive(self, name: str = "Módulo de seção") -> SectionModulus:
         if self.cm3 <= 0:
             raise ValueError(f"{name} deve ser positivo.")
         return self
@@ -153,7 +153,7 @@ class WarpingConstant:
     def __post_init__(self) -> None:
         object.__setattr__(self, "cm6", _finite(self.cm6, "Constante de empenamento"))
 
-    def require_positive(self, name: str = "Constante de empenamento") -> "WarpingConstant":
+    def require_positive(self, name: str = "Constante de empenamento") -> WarpingConstant:
         if self.cm6 <= 0:
             raise ValueError(f"{name} deve ser positiva.")
         return self

@@ -10,7 +10,6 @@ from perfis_metalicos.catalog import (
     validate_catalog_workbook,
 )
 
-
 ROOT = Path(__file__).resolve().parents[1]
 
 

@@ -20,8 +20,8 @@ from perfis_metalicos.checks.localized_forces import (
 from perfis_metalicos.checks.serviceability import (
     ConstructionPhaseDeflection,
     DeflectionCriterion,
-    ServiceCombinationFamily,
     ServiceabilityLimit,
+    ServiceCombinationFamily,
     evaluate_serviceability_deflection,
     vibration_out_of_scope_result,
 )

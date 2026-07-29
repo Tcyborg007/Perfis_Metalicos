@@ -1,6 +1,7 @@
-import unittest
 import re
+import unittest
 from datetime import date
+
 import numpy as np
 
 from calculos_nbr8800_2024 import analyze_beam

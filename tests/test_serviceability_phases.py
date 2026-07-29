@@ -3,8 +3,8 @@ import pytest
 from perfis_metalicos.checks import (
     ConstructionPhaseDeflection,
     DeflectionCriterion,
-    ServiceCombinationFamily,
     ServiceabilityLimit,
+    ServiceCombinationFamily,
     evaluate_serviceability_deflection,
     vibration_out_of_scope_result,
 )

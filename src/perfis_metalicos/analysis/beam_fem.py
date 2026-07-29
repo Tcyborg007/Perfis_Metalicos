@@ -13,9 +13,9 @@ O refinamento da malha controla o erro estimado da resposta.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import math
-from typing import Iterable
+from collections.abc import Iterable
+from dataclasses import dataclass
 
 import numpy as np
 
@@ -212,7 +212,7 @@ def _nodes_for(
     subdivisions: int,
 ) -> np.ndarray:
     nodes: list[float] = [breakpoints[0]]
-    for start, end in zip(breakpoints, breakpoints[1:]):
+    for start, end in zip(breakpoints, breakpoints[1:], strict=False):
         nodes.extend(
             start + (end - start) * index / subdivisions
             for index in range(1, subdivisions + 1)
@@ -304,7 +304,7 @@ def _solve_once(
     )
     gauss_x, gauss_w = np.polynomial.legendre.leggauss(3)
 
-    for index, (start, end) in enumerate(zip(nodes, nodes[1:])):
+    for index, (start, end) in enumerate(zip(nodes, nodes[1:], strict=False)):
         length = end - start
         indices = np.array((2 * index, 2 * index + 1, 2 * index + 2, 2 * index + 3))
         stiffness[np.ix_(indices, indices)] += _element_stiffness(
@@ -349,7 +349,7 @@ def _solve_once(
 
     elements: list[BeamElementResponse] = []
     critical_positions = {0.0, model.length.cm}
-    for index, (start, end) in enumerate(zip(nodes, nodes[1:])):
+    for index, (start, end) in enumerate(zip(nodes, nodes[1:], strict=False)):
         indices = np.array((2 * index, 2 * index + 1, 2 * index + 2, 2 * index + 3))
         element = BeamElementResponse(
             start=float(start),
@@ -404,7 +404,7 @@ def _response_candidates(
     boundaries = set(_load_breakpoints(loads, model.length.cm))
     candidates = set(boundaries)
     ordered = sorted(boundaries)
-    for start, end in zip(ordered, ordered[1:]):
+    for start, end in zip(ordered, ordered[1:], strict=False):
         left = math.nextafter(start, end)
         right = math.nextafter(end, start)
         v_left = provisional.shear_at(left)

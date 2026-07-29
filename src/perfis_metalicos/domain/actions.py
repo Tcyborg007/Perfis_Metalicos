@@ -24,7 +24,7 @@ class EffectNature(Enum):
 
 
 class StructuralLoad(Protocol):
-    def scaled(self, factor: float) -> "StructuralLoad": ...
+    def scaled(self, factor: float) -> StructuralLoad: ...
 
 
 @dataclass(frozen=True, slots=True)
@@ -37,7 +37,7 @@ class UniformLineLoad:
         if self.end.cm <= self.start.cm:
             raise ValueError("O fim da carga uniforme deve estar após o início.")
 
-    def scaled(self, factor: float) -> "UniformLineLoad":
+    def scaled(self, factor: float) -> UniformLineLoad:
         return UniformLineLoad(
             self.start,
             self.end,
@@ -56,7 +56,7 @@ class LinearlyVaryingLoad:
         if self.end.cm <= self.start.cm:
             raise ValueError("O fim da carga variável deve estar após o início.")
 
-    def scaled(self, factor: float) -> "LinearlyVaryingLoad":
+    def scaled(self, factor: float) -> LinearlyVaryingLoad:
         multiplier = float(factor)
         return LinearlyVaryingLoad(
             self.start,
@@ -71,7 +71,7 @@ class ConcentratedLoad:
     position: Length
     force: Force
 
-    def scaled(self, factor: float) -> "ConcentratedLoad":
+    def scaled(self, factor: float) -> ConcentratedLoad:
         return ConcentratedLoad(self.position, Force(self.force.kN * float(factor)))
 
 
@@ -80,7 +80,7 @@ class AppliedMoment:
     position: Length
     moment: Moment
 
-    def scaled(self, factor: float) -> "AppliedMoment":
+    def scaled(self, factor: float) -> AppliedMoment:
         return AppliedMoment(self.position, Moment(self.moment.kN_cm * float(factor)))
 
 

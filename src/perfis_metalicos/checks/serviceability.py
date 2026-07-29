@@ -92,10 +92,11 @@ def evaluate_serviceability_deflection(
     phase: ConstructionPhaseDeflection,
     combination: ServiceCombinationFamily,
     limit: ServiceabilityLimit,
-    camber: Length = Length(0.0),
+    camber: Length | None = None,
     position: Length | None = None,
     engine_version: str = "0.1.0",
 ) -> VerificationResult:
+    camber = camber or Length(0.0)
     demand = _criterion_demand(phase, limit.criterion, camber)
     utilization = demand / limit.limit.cm
     reviewed = limit.reference.review_status not in {
@@ -165,4 +166,3 @@ def vibration_out_of_scope_result() -> VerificationResult:
             ),
         ),
     )
-

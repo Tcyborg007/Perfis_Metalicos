@@ -6,10 +6,10 @@ quando todas as regras possuem fonte e foram marcadas como revisadas.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 from enum import Enum
 from itertools import product
-from typing import Iterable
 
 from perfis_metalicos.domain.actions import (
     Action,

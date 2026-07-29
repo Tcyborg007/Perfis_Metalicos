@@ -6,7 +6,6 @@ import pandas as pd
 
 from main import style_classic_dataframe
 
-
 ROOT = Path(__file__).resolve().parents[1]
 
 

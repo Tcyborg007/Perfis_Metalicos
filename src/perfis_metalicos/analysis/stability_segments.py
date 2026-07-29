@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import math
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from enum import Enum
-import math
-from typing import Callable, Iterable
+from typing import TypedDict
 
 from perfis_metalicos.analysis.beam_fem import BeamAnalysisResult
+from perfis_metalicos.domain.actions import LinearlyVaryingLoad, UniformLineLoad
 from perfis_metalicos.domain.models import SupportCondition
 from perfis_metalicos.domain.status import VerificationStatus
 from perfis_metalicos.domain.units import Length, Moment
@@ -101,6 +103,17 @@ class SegmentFltCheck:
     justification: str
 
 
+class _SegmentMomentCommon(TypedDict):
+    segment: UnbracedSegment
+    mmax: Moment
+    mmax_position: Length
+    ma: Moment
+    mb: Moment
+    mc: Moment
+    rm: float | None
+    compressed_flange: Flange
+
+
 def build_unbraced_segments(
     beam_length: Length,
     restraint_points: Iterable[RestraintPoint],
@@ -119,7 +132,10 @@ def build_unbraced_segments(
         raise ValueError("Posições de contenção duplicadas.")
     intervals = tuple(continuous_restraints)
     segments: list[UnbracedSegment] = []
-    for index, (start, end) in enumerate(zip(points, points[1:]), start=1):
+    for index, (start, end) in enumerate(
+        zip(points, points[1:], strict=False),
+        start=1,
+    ):
         top = any(
             item.flange is Flange.TOP
             and item.start.cm <= start.position.cm + 1e-9
@@ -154,7 +170,7 @@ def _segment_candidates(
     start, end = segment.start.cm, segment.end.cm
     points = {start, end}
     for load in response.loads:
-        if hasattr(load, "start"):
+        if isinstance(load, (UniformLineLoad, LinearlyVaryingLoad)):
             if start <= load.start.cm <= end:
                 points.add(load.start.cm)
             if start <= load.end.cm <= end:
@@ -162,7 +178,7 @@ def _segment_candidates(
         elif start <= load.position.cm <= end:
             points.add(load.position.cm)
     ordered = sorted(points)
-    for left, right in zip(ordered, ordered[1:]):
+    for left, right in zip(ordered, ordered[1:], strict=False):
         v_left = response.shear_at(math.nextafter(left, right))
         v_right = response.shear_at(math.nextafter(right, left))
         if v_left * v_right < 0:
@@ -316,7 +332,7 @@ def segment_moment_data(
     mc = abs(response.moment_at(start + 3.0 * length / 4.0))
     compressed = _compressed_flange(response, candidates)
 
-    common = {
+    common: _SegmentMomentCommon = {
         "segment": segment,
         "mmax": Moment(mmax),
         "mmax_position": Length(mmax_position),
@@ -412,7 +428,7 @@ def segment_moment_data(
                 justification=str(error),
                 reference_item="ABNT NBR 8800:2024, 5.4.2.4",
             )
-        special_common = {
+        special_common: _SegmentMomentCommon = {
             **common,
             "mmax": Moment(abs(free_demand_signed)),
             "mmax_position": Length(free_demand_position),
@@ -581,4 +597,15 @@ def governing_flt_segment(
     checks: Iterable[SegmentFltCheck],
 ) -> SegmentFltCheck | None:
     comparable = tuple(item for item in checks if item.utilization is not None)
-    return max(comparable, key=lambda item: item.utilization) if comparable else None
+    return (
+        max(
+            comparable,
+            key=lambda item: (
+                item.utilization
+                if item.utilization is not None
+                else -math.inf
+            ),
+        )
+        if comparable
+        else None
+    )

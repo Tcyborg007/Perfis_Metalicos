@@ -1,6 +1,6 @@
 import math
-from pathlib import Path
 import unittest
+from pathlib import Path
 
 import pandas as pd
 
@@ -9,7 +9,6 @@ from calculos_nbr8800_2024 import (
     local_compression_strength,
     shear_strength_i,
 )
-
 
 ROOT = Path(__file__).resolve().parents[1]
 

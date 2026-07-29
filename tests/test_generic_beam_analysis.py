@@ -16,7 +16,6 @@ from perfis_metalicos.domain import (
     UniformLineLoad,
 )
 
-
 E = Stress(20_000.0)
 I = SecondMomentOfArea(10_000.0)
 L = 500.0

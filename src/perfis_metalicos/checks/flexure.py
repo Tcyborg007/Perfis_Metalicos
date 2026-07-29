@@ -7,13 +7,12 @@ no manifesto como ``NORMATIVE_REVIEW_REQUIRED``.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from enum import Enum
-import math
 
 from perfis_metalicos.domain.status import NormativeReference
 from perfis_metalicos.domain.units import Moment
-
 
 ANNEX_D_D21 = NormativeReference(
     standard="ABNT NBR 8800",
