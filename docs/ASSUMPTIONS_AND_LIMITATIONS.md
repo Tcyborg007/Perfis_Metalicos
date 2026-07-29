@@ -24,9 +24,8 @@ para fabricação ou substituir cálculo e revisão de engenheiro habilitado.
 
 ## Limitações computacionais conhecidas
 
-- não suporta coleção genérica de ações;
-- não alterna todas as ações variáveis como principais;
-- não gera envelope de combinações;
+- o núcleo suporta coleção genérica de ações, alterna variáveis principais e gera envelope, mas
+  não possui regras normativas de produção enquanto a NBR 8681:2025 não for fornecida e revisada;
 - a interface ainda não usa o solver novo que representa carregamento parcial, linear variável,
   vários pontos e momentos aplicados;
 - a interface ainda usa o motor legado para flecha; o solver novo resolve rotação nula por
@@ -34,8 +33,9 @@ para fabricação ou substituir cálculo e revisão de engenheiro habilitado.
 - o núcleo novo modela segmentos, mesa comprimida e contenções lateral/torcional/empenamento,
   porém ainda não está integrado à interface de produção;
 - a eficácia, resistência, rigidez e ligação das contenções não são dimensionadas pelo núcleo;
-- o caso de uma única mesa continuamente contida permanece bloqueado até a revisão completa de
-  5.4.2.4;
+- o caso de uma única mesa continuamente contida possui caminhos separados para 5.4.2.4-a/b/c
+  da edição 2024; influência eventual da Errata 1:2025 e dimensionamento da contenção permanecem
+  pendentes;
 - balanços permanecem bloqueados na seleção de `Cb` até a classificação explícita das restrições;
 - não verifica todos os requisitos de enrijecedores, soldas e transferência; a triagem geométrica
   é separada e não aumenta `kv` nem libera aprovação;
@@ -50,8 +50,8 @@ para fabricação ou substituir cálculo e revisão de engenheiro habilitado.
   `INVALID_CATALOG_DATA`;
 - a interface exige arquivo e metadados de evidência externa, mas ainda não importa resultados
   numéricos assinados para comparação;
-- os estados tipados e o agregador seguro existem; partes legadas ainda precisam ser removidas
-  para que todo o fluxo use exclusivamente esse domínio.
+- as equações antigas e sem chamadas foram removidas do Streamlit; o adaptador monolítico
+  `calculos_nbr8800_2024.py` ainda precisa ser integralmente migrado para resultados tipados.
 
 ## Fora do escopo declarado até implementação validada
 

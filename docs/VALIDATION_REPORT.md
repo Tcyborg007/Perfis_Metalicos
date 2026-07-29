@@ -1,0 +1,66 @@
+# Relatório de validação
+
+## Classificação
+
+**NÃO VALIDADO**
+
+Data da execução: 2026-07-29  
+Commit-base: `ab68c099e53a1f26974fd2adcbe752b0d4c8a6ec`  
+Versão do motor: `0.2.0`
+
+Esta classificação é obrigatória porque faltam fontes normativas integrais,
+evidência independente, rastreabilidade oficial do catálogo e atendimento das
+metas de teste. Aprovação da suíte não substitui revisão de engenheiro habilitado.
+
+## Verificações executadas
+
+| Verificação | Resultado |
+|---|---|
+| testes | 142 aprovados |
+| cobertura com branches | 88,99 %; meta de 95 % não atingida |
+| Ruff | aprovado no pacote, scripts e testes |
+| mypy | aprovado em 23 módulos do pacote |
+| determinismo | hash `7f147faeb25bfb590d0fdc4c39813da8c7a33ab80a022105006f850d65483ba7` |
+| manifesto | quatro documentos registrados; estado `NORMATIVE_REVIEW_REQUIRED` |
+| catálogo | 560 linhas, 14 ocorrências; estado `INVALID_CATALOG_DATA` |
+| mutação | `PENDING_CI_EXECUTION`; sem score local |
+| evidência independente | ausente |
+
+## Critérios de aceite
+
+| Critério | Estado | Evidência ou bloqueio |
+|---|---|---|
+| normas e erratas registradas | parcial | manifesto existe, mas três normas e a Errata 1:2025 não foram fornecidas |
+| compatibilidade NBR 8800 × NBR 8681 revisada | não | `ND-001` aguarda texto integral e revisor |
+| nenhuma fórmula normativa duplicada | não demonstrado | duplicações sem uso foram removidas do Streamlit; adaptador e memorial ainda exigem migração integral |
+| nenhuma constante normativa sem referência | não demonstrado | matriz cobre o núcleo novo; adaptador legado ainda requer inventário final |
+| várias ações e envelope | sim no núcleo | regras de produção continuam bloqueadas |
+| FLT, mesa comprimida e contenção por trecho | parcial | arquitetura e testes existem; integração completa e resistência das contenções faltam |
+| modo manual seguro | sim quanto ao bloqueio | evidência externa não se converte em cálculo do programa |
+| catálogo com origem e validações | não | validações existem; origem oficial e duplicidades faltam |
+| testes independentes dos estados-limites | não | não há golden cases assinados |
+| transições de regime testadas | sim para primitivas centralizadas | parâmetros completos ainda aguardam revisão |
+| suíte passa em CI | pendente | workflow criado, execução remota desta branch ainda não observada |
+| memorial integralmente rastreável | parcial | registro JSON da análise existe; resistências e memorial visual ainda não são reconstruídos integralmente |
+| revisão independente | não | profissional não designado |
+| limitações declaradas | sim | `ASSUMPTIONS_AND_LIMITATIONS.md` |
+
+## Riscos residuais
+
+1. Resultados de combinações de produção não podem ser alegados sem a NBR
+   8681:2025 controlada.
+2. A expressão atribuída à Errata 1:2025 permanece bloqueada.
+3. O catálogo atual não pode fundamentar aprovação executiva.
+4. Enrijecedores, soldas, contato, transferência e painéis extremos não possuem
+   verificação completa.
+5. O fluxo Streamlit ainda usa um adaptador monolítico para partes de resistência
+   e ELS.
+6. Nenhum resultado foi confrontado com memorial independente assinado ou
+   software de referência identificado.
+
+## Condição para mudança de classificação
+
+A classificação somente pode ser revista após fornecimento e hash das fontes
+normativas faltantes, resolução documentada das questões abertas, catálogo
+oficial rastreável, execução e triagem de testes de mutação, cobertura das metas,
+golden cases independentes e revisão formal por engenheiro habilitado.
