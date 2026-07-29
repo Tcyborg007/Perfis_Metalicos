@@ -1,11 +1,13 @@
 import pytest
 
 from perfis_metalicos.analysis import (
+    ContinuousFlangeCbCase,
     ContinuousFlangeRestraint,
     Flange,
     LoadApplicationHeight,
     RestraintPoint,
     build_unbraced_segments,
+    continuous_flange_cb,
     evaluate_flt_segments,
     governing_flt_segment,
     segment_moment_data,
@@ -125,6 +127,69 @@ def test_one_continuously_restrained_flange_uses_specific_blocking_path():
     assert data.cb is None
     assert data.status is VerificationStatus.NOT_CHECKED
     assert data.reference_item.endswith("5.4.2.4")
+
+
+def test_continuous_flange_item_a_uses_signed_end_and_center_moments():
+    cb = continuous_flange_cb(
+        case=ContinuousFlangeCbCase.ITEM_5_4_2_4_A,
+        free_flange=Flange.TOP,
+        moment_start=Moment(100.0),
+        moment_end=Moment(-20.0),
+        moment_center=Moment(40.0),
+    )
+    expected = 3.0 - (2.0 / 3.0) * (20.0 / -100.0) - (
+        8.0 / 3.0
+    ) * (-40.0 / (-100.0 + 20.0))
+    assert cb == pytest.approx(expected)
+
+
+def test_continuous_flange_item_b_requires_free_flange_not_compressed_at_ends():
+    assert continuous_flange_cb(
+        case=ContinuousFlangeCbCase.ITEM_5_4_2_4_B,
+        free_flange=Flange.TOP,
+        moment_start=Moment(-10.0),
+        moment_end=Moment(0.0),
+        moment_center=Moment(50.0),
+    ) == pytest.approx(2.0)
+    with pytest.raises(ValueError, match="extremidades"):
+        continuous_flange_cb(
+            case=ContinuousFlangeCbCase.ITEM_5_4_2_4_B,
+            free_flange=Flange.TOP,
+            moment_start=Moment(10.0),
+            moment_end=Moment(0.0),
+            moment_center=Moment(50.0),
+        )
+
+
+def test_continuous_flange_item_c_returns_one_only_after_explicit_classification():
+    assert continuous_flange_cb(
+        case=ContinuousFlangeCbCase.ITEM_5_4_2_4_C,
+        free_flange=Flange.BOTTOM,
+        moment_start=Moment(-10.0),
+        moment_end=Moment(10.0),
+        moment_center=Moment(-20.0),
+    ) == pytest.approx(1.0)
+
+
+def test_continuous_flange_segment_uses_free_flange_compression_as_demand():
+    beam = response()
+    segment = build_unbraced_segments(
+        beam.model.length,
+        (restraint(0, "A"), restraint(600, "B")),
+        (
+            ContinuousFlangeRestraint(
+                Length(0), Length(600), Flange.BOTTOM, "SLAB"
+            ),
+        ),
+    )[0]
+    data = segment_moment_data(
+        beam,
+        segment,
+        continuous_case=ContinuousFlangeCbCase.ITEM_5_4_2_4_C,
+    )
+    assert data.status is VerificationStatus.PASS
+    assert data.cb == pytest.approx(1.0)
+    assert data.mmax.kN_cm == pytest.approx(beam.maximum_moment.value)
 
 
 def test_load_above_mid_depth_requires_external_stability_evidence():

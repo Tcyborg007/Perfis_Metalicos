@@ -25,6 +25,12 @@ class LoadApplicationHeight(Enum):
     BELOW_MID_DEPTH = "BELOW_MID_DEPTH"
 
 
+class ContinuousFlangeCbCase(Enum):
+    ITEM_5_4_2_4_A = "ITEM_5_4_2_4_A"
+    ITEM_5_4_2_4_B = "ITEM_5_4_2_4_B"
+    ITEM_5_4_2_4_C = "ITEM_5_4_2_4_C"
+
+
 @dataclass(frozen=True, slots=True)
 class RestraintPoint:
     position: Length
@@ -228,11 +234,78 @@ def _restraint_deficiencies(
     return tuple(deficiencies)
 
 
+def _moment_signed_for_free_flange(moment: float, free_flange: Flange) -> float:
+    """Sinal de 5.4.2.4: negativo comprime e positivo traciona a mesa livre."""
+
+    if free_flange is Flange.TOP:
+        return -moment
+    if free_flange is Flange.BOTTOM:
+        return moment
+    raise ValueError("A mesa livre deve ser TOP ou BOTTOM.")
+
+
+def continuous_flange_cb(
+    *,
+    case: ContinuousFlangeCbCase,
+    free_flange: Flange,
+    moment_start: Moment,
+    moment_end: Moment,
+    moment_center: Moment,
+) -> float:
+    """Calcula Cb para exatamente uma mesa lateralmente contida, 5.4.2.4."""
+
+    signed_start = _moment_signed_for_free_flange(
+        moment_start.kN_cm,
+        free_flange,
+    )
+    signed_end = _moment_signed_for_free_flange(moment_end.kN_cm, free_flange)
+    signed_center = _moment_signed_for_free_flange(
+        moment_center.kN_cm,
+        free_flange,
+    )
+    tolerance = max(
+        abs(signed_start),
+        abs(signed_end),
+        abs(signed_center),
+        1.0,
+    ) * 1e-12
+
+    if case is ContinuousFlangeCbCase.ITEM_5_4_2_4_A:
+        if signed_start >= -tolerance and signed_end >= -tolerance:
+            raise ValueError(
+                "O caso 5.4.2.4-a exige compressão da mesa livre em ao menos "
+                "uma extremidade."
+            )
+        if signed_start <= signed_end:
+            m1, m2 = signed_start, signed_end
+        else:
+            m1, m2 = signed_end, signed_start
+        if abs(m1) <= tolerance or abs(m1 + m2) <= tolerance:
+            raise ValueError("A expressão de 5.4.2.4-a possui denominador nulo.")
+        cb = 3.0 - (2.0 / 3.0) * (m2 / m1) - (8.0 / 3.0) * (
+            signed_center / (m1 + m2)
+        )
+    elif case is ContinuousFlangeCbCase.ITEM_5_4_2_4_B:
+        if signed_start < -tolerance or signed_end < -tolerance:
+            raise ValueError(
+                "O caso 5.4.2.4-b exige momento nulo ou tração da mesa livre "
+                "nas extremidades."
+            )
+        cb = 2.0
+    else:
+        cb = 1.0
+
+    if not math.isfinite(cb) or cb <= 0:
+        raise ValueError("Cb resultou não positivo ou não finito.")
+    return cb
+
+
 def segment_moment_data(
     response: BeamAnalysisResult,
     segment: UnbracedSegment,
     *,
     rm: float | None = None,
+    continuous_case: ContinuousFlangeCbCase | None = None,
 ) -> SegmentMomentData:
     start, length = segment.start.cm, segment.length.cm
     candidates = _segment_candidates(response, segment)
@@ -253,25 +326,6 @@ def segment_moment_data(
         "rm": rm,
         "compressed_flange": compressed,
     }
-    if rm is None:
-        return SegmentMomentData(
-            **common,
-            cb=None,
-            status=VerificationStatus.NOT_CHECKED,
-            justification=(
-                "Rm não foi informado. O parâmetro de monossimetria deve ser "
-                "explicitamente classificado para o segmento."
-            ),
-            reference_item="ABNT NBR 8800:2024, 5.4.2.3-a",
-        )
-    if not math.isfinite(rm) or rm <= 0:
-        return SegmentMomentData(
-            **common,
-            cb=None,
-            status=VerificationStatus.INVALID_INPUT,
-            justification="Rm deve ser positivo e finito.",
-            reference_item="ABNT NBR 8800:2024, 5.4.2.3-a",
-        )
     if segment.load_application_height is LoadApplicationHeight.ABOVE_MID_DEPTH:
         return SegmentMomentData(
             **common,
@@ -284,15 +338,98 @@ def segment_moment_data(
             reference_item="ABNT NBR 8800:2024, 5.4.2.3",
         )
     if segment.top_continuous != segment.bottom_continuous:
-        return SegmentMomentData(
+        if continuous_case is None:
+            return SegmentMomentData(
+                **common,
+                cb=None,
+                status=VerificationStatus.NOT_CHECKED,
+                justification=(
+                    "Uma única mesa possui contenção lateral contínua, mas a "
+                    "aplicabilidade das alíneas de 5.4.2.4 não foi classificada."
+                ),
+                reference_item="ABNT NBR 8800:2024, 5.4.2.4",
+            )
+        free_flange = (
+            Flange.BOTTOM if segment.top_continuous else Flange.TOP
+        )
+        deficiencies = _restraint_deficiencies(segment, free_flange)
+        if deficiencies:
+            return SegmentMomentData(
+                **common,
+                cb=None,
+                status=VerificationStatus.EXTERNAL_EVIDENCE_REQUIRED,
+                justification=(
+                    "O trecho de uma mesa continuamente contida não possui todas "
+                    "as contenções eficazes nas extremidades: "
+                    + "; ".join(deficiencies)
+                    + "."
+                ),
+                reference_item="ABNT NBR 8800:2024, 4.12 e 5.4.2.4",
+            )
+        free_compression_candidates = tuple(
+            (
+                _moment_signed_for_free_flange(
+                    response.moment_at(position),
+                    free_flange,
+                ),
+                position,
+            )
+            for position in candidates
+        )
+        free_demand_signed, free_demand_position = min(
+            free_compression_candidates,
+            key=lambda item: item[0],
+        )
+        if free_demand_signed >= -1e-9:
+            return SegmentMomentData(
+                **common,
+                cb=None,
+                status=VerificationStatus.NOT_APPLICABLE,
+                justification=(
+                    "A mesa livre não está comprimida em nenhuma seção do trecho."
+                ),
+                reference_item="ABNT NBR 8800:2024, 5.4.2.4",
+                restraint_assumptions=(
+                    "O sinal do momento foi avaliado em todos os candidatos a "
+                    "extremo do trecho.",
+                ),
+            )
+        try:
+            cb = continuous_flange_cb(
+                case=continuous_case,
+                free_flange=free_flange,
+                moment_start=Moment(response.moment_at(segment.start.cm)),
+                moment_end=Moment(response.moment_at(segment.end.cm)),
+                moment_center=Moment(
+                    response.moment_at(segment.start.cm + length / 2.0)
+                ),
+            )
+        except ValueError as error:
+            return SegmentMomentData(
+                **common,
+                cb=None,
+                status=VerificationStatus.INVALID_INPUT,
+                justification=str(error),
+                reference_item="ABNT NBR 8800:2024, 5.4.2.4",
+            )
+        special_common = {
             **common,
-            cb=None,
-            status=VerificationStatus.NOT_CHECKED,
+            "mmax": Moment(abs(free_demand_signed)),
+            "mmax_position": Length(free_demand_position),
+        }
+        return SegmentMomentData(
+            **special_common,
+            cb=cb,
+            status=VerificationStatus.PASS,
             justification=(
-                "Uma única mesa possui contenção lateral contínua; aplicar o procedimento "
-                "específico somente após revisão completa de 5.4.2.4."
+                "Cb e demanda determinados para a mesa livre conforme o caso "
+                f"explicitamente classificado {continuous_case.value}."
             ),
             reference_item="ABNT NBR 8800:2024, 5.4.2.4",
+            restraint_assumptions=(
+                "A orientação e a posição das forças foram classificadas pelo "
+                "responsável pelo modelo.",
+            ),
         )
     if segment.top_continuous and segment.bottom_continuous:
         return SegmentMomentData(
@@ -314,6 +451,25 @@ def segment_moment_data(
                 "torcionais e de empenamento antes da seleção de Cb."
             ),
             reference_item="ABNT NBR 8800:2024, 5.4.2.3-b",
+        )
+    if rm is None:
+        return SegmentMomentData(
+            **common,
+            cb=None,
+            status=VerificationStatus.NOT_CHECKED,
+            justification=(
+                "Rm não foi informado. O parâmetro de monossimetria deve ser "
+                "explicitamente classificado para o segmento."
+            ),
+            reference_item="ABNT NBR 8800:2024, 5.4.2.3-a",
+        )
+    if not math.isfinite(rm) or rm <= 0:
+        return SegmentMomentData(
+            **common,
+            cb=None,
+            status=VerificationStatus.INVALID_INPUT,
+            justification="Rm deve ser positivo e finito.",
+            reference_item="ABNT NBR 8800:2024, 5.4.2.3-a",
         )
     deficiencies = _restraint_deficiencies(segment, compressed)
     if deficiencies:
@@ -352,6 +508,10 @@ def segment_moment_data(
 
 
 ResistanceProvider = Callable[[UnbracedSegment, float], Moment]
+ContinuousCaseProvider = Callable[
+    [UnbracedSegment],
+    ContinuousFlangeCbCase | None,
+]
 
 
 def evaluate_flt_segments(
@@ -360,10 +520,21 @@ def evaluate_flt_segments(
     resistance_provider: ResistanceProvider,
     *,
     rm: float | None,
+    continuous_case_provider: ContinuousCaseProvider | None = None,
 ) -> tuple[SegmentFltCheck, ...]:
     checks: list[SegmentFltCheck] = []
     for segment in segments:
-        data = segment_moment_data(response, segment, rm=rm)
+        continuous_case = (
+            continuous_case_provider(segment)
+            if continuous_case_provider is not None
+            else None
+        )
+        data = segment_moment_data(
+            response,
+            segment,
+            rm=rm,
+            continuous_case=continuous_case,
+        )
         if data.status is not VerificationStatus.PASS or data.cb is None:
             checks.append(
                 SegmentFltCheck(

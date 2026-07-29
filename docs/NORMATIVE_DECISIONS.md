@@ -47,8 +47,8 @@ Uma decisão somente passa a `APPROVED` quando contém:
 | problema | a UI permite tornar FLT globalmente não aplicável por uma seleção única |
 | fundamento de segurança | a aplicabilidade depende de segmento, sinal do momento, mesa comprimida e tipo de contenção |
 | decisão de software | o checkbox global foi removido; a arquitetura nova classifica contenções por mesa, extremidade e intervalo e não desativa FLT globalmente |
-| decisão normativa detalhada | pendente de revisão da NBR 8800:2024/Er1:2025 por item |
-| implementação | `analysis.stability_segments`; uma única mesa continuamente contida segue caminho separado e bloqueante |
+| decisão normativa detalhada | as alíneas 5.4.2.4-a/b/c da edição 2024 foram transcritas em caminho separado; a influência da Errata 1:2025 permanece pendente |
+| implementação | `analysis.stability_segments`; uma única mesa continuamente contida exige classificação explícita da alínea, orientação/posição das forças e usa a demanda que comprime a mesa livre |
 | testes | `tests/test_flt_segments.py` |
 | revisor estrutural | não designado |
 | data | não definida |
