@@ -1,0 +1,174 @@
+schema_version: "1.0"
+manifest_status: "NORMATIVE_REVIEW_REQUIRED"
+generated_on: "2026-07-29"
+baseline_commit: "ab68c099e53a1f26974fd2adcbe752b0d4c8a6ec"
+engine_version: "baseline-unversioned"
+protected_material_policy:
+  version_full_text: false
+  record_only:
+    - identification
+    - edition
+    - amendment_or_errata
+    - public_metadata
+    - consulted_copy_hash
+    - applicable_items
+    - review_evidence
+
+review_roles:
+  normative_software_reviewer: "Codex - preliminary software audit only"
+  responsible_structural_engineer: null
+  independent_structural_reviewer: null
+
+standards:
+  - key: "nbr_8800_2024"
+    identification: "ABNT NBR 8800:2024"
+    title: "Projeto de estruturas de aço e de estruturas mistas de aço e concreto de edificações"
+    edition: "3"
+    publication_date: "2024-10-02"
+    amendment_or_errata:
+      required:
+        - identification: "ABNT NBR 8800:2024/Er1:2025"
+          publication_date: null
+          full_text_available: false
+          status: "NORMATIVE_REVIEW_REQUIRED"
+      incorporated_in_consulted_copy: false
+    current_status:
+      value: "NORMATIVE_REVIEW_REQUIRED"
+      reason: "A vigência atual e a incorporação da Errata 1:2025 ainda não foram confirmadas em metadado oficial controlado."
+    consulted_copy:
+      available: true
+      filename_record: "NBR 8800 2024 Projeto de estruturas de aço e de estruturas mistas.pdf"
+      sha256: "8708DF99B709C996745C2D3AE3735063241CBFD3F89594DBB92FE34AA0C8D736"
+      pdf_pages: 293
+      numbered_pages: 276
+      encrypted: false
+      visual_cover_verified: true
+      full_text_review_complete: false
+      repository_path: null
+      note: "Cópia fornecida pelo usuário; material protegido não é versionado."
+    scope_used:
+      - "materiais de aço dentro do escopo declarado"
+      - "ações e combinações atualmente existentes no baseline"
+      - "análise estrutural de viga prismática de um vão"
+      - "flexão de perfis I/H duplamente simétricos no eixo forte"
+      - "cisalhamento de perfis I/H"
+      - "forças transversais localizadas"
+      - "deslocamentos verticais"
+    affected_functions:
+      - "calculos_nbr8800_2024.validate_material"
+      - "calculos_nbr8800_2024.calculate_cb"
+      - "calculos_nbr8800_2024.combine_elu_normal"
+      - "calculos_nbr8800_2024.combine_els"
+      - "calculos_nbr8800_2024.flexural_strength_i"
+      - "calculos_nbr8800_2024.shear_strength_i"
+      - "calculos_nbr8800_2024.local_compression_strength"
+      - "calculos_nbr8800_2024.local_flange_bending_strength"
+      - "calculos_nbr8800_2024.deflection_limit"
+      - "main.perform_all_checks"
+    existing_tests:
+      - "tests.test_nbr8800_2024"
+      - "tests.test_memorial_detailed"
+      - "tests.test_profile_catalog_integration"
+    review:
+      responsible_reviewer: null
+      review_date: null
+      independent_evidence: null
+      status: "NORMATIVE_REVIEW_REQUIRED"
+
+  - key: "nbr_8681_2025"
+    identification: "ABNT NBR 8681:2025"
+    title: "Ações e segurança nas estruturas - Procedimento"
+    edition: "2025"
+    publication_date: null
+    amendment_or_errata: []
+    current_status:
+      value: "NORMATIVE_REVIEW_REQUIRED"
+      reason: "A cópia integral e o metadado oficial controlado não foram fornecidos."
+    consulted_copy:
+      available: false
+      sha256: null
+      full_text_review_complete: false
+    scope_used:
+      - "classificação de ações"
+      - "efeitos favoráveis e desfavoráveis"
+      - "combinações últimas"
+      - "combinações de serviço"
+      - "compatibilidade com as disposições de ações da ABNT NBR 8800:2024"
+    affected_functions:
+      - "calculos_nbr8800_2024.combine_elu_normal"
+      - "calculos_nbr8800_2024.combine_els"
+      - "main.main"
+      - "main.perform_all_checks"
+    existing_tests:
+      - "tests.test_nbr8800_2024.CombinationAndStatusTests"
+    review:
+      responsible_reviewer: null
+      review_date: null
+      independent_evidence: null
+      status: "NORMATIVE_REVIEW_REQUIRED"
+
+  - key: "nbr_6120_2019_corrected"
+    identification: "ABNT NBR 6120:2019"
+    title: "Ações para o cálculo de estruturas de edificações"
+    edition: "2019"
+    publication_date: null
+    amendment_or_errata:
+      required:
+        - identification: "versão corrigida e errata aplicável"
+          publication_date: null
+          full_text_available: false
+          status: "NORMATIVE_REVIEW_REQUIRED"
+    current_status:
+      value: "NORMATIVE_REVIEW_REQUIRED"
+      reason: "A cópia integral, a identificação da versão corrigida e a errata aplicável não foram fornecidas."
+    consulted_copy:
+      available: false
+      sha256: null
+      full_text_review_complete: false
+    scope_used:
+      - "valores característicos de ações permanentes"
+      - "ações variáveis de uso e ocupação"
+      - "categorias de utilização"
+    affected_functions:
+      - "main.main"
+      - "future: perfis_metalicos.combinations"
+    existing_tests: []
+    review:
+      responsible_reviewer: null
+      review_date: null
+      independent_evidence: null
+      status: "NORMATIVE_REVIEW_REQUIRED"
+
+  - key: "nbr_6123_2023_corrected_er1_2025"
+    identification: "ABNT NBR 6123:2023"
+    title: "Forças devidas ao vento em edificações"
+    edition: "2023"
+    publication_date: null
+    amendment_or_errata:
+      required:
+        - identification: "versão corrigida"
+          publication_date: null
+          full_text_available: false
+          status: "NORMATIVE_REVIEW_REQUIRED"
+        - identification: "Errata 1:2025"
+          publication_date: null
+          full_text_available: false
+          status: "NORMATIVE_REVIEW_REQUIRED"
+    current_status:
+      value: "NORMATIVE_REVIEW_REQUIRED"
+      reason: "A funcionalidade de vento não existe e as cópias normativas não foram fornecidas."
+    consulted_copy:
+      available: false
+      sha256: null
+      full_text_review_complete: false
+    scope_used:
+      - "ações de vento somente quando a funcionalidade for implementada"
+    affected_functions:
+      - "future: perfis_metalicos.combinations"
+      - "future: perfis_metalicos.analysis"
+    existing_tests: []
+    review:
+      responsible_reviewer: null
+      review_date: null
+      independent_evidence: null
+      status: "OUT_OF_SCOPE"
